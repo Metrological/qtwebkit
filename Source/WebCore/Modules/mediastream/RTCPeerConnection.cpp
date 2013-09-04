@@ -225,8 +225,10 @@ void RTCPeerConnection::setLocalDescription(PassRefPtr<RTCSessionDescription> pr
 PassRefPtr<RTCSessionDescription> RTCPeerConnection::localDescription(ExceptionCode& ec)
 {
     RefPtr<RTCSessionDescriptionDescriptor> descriptor = m_peerHandler->localDescription();
-    if (!descriptor)
+    if (!descriptor) {
+        ec = INVALID_STATE_ERR;
         return 0;
+    }
 
     RefPtr<RTCSessionDescription> sessionDescription = RTCSessionDescription::create(descriptor.release());
     return sessionDescription.release();
@@ -252,8 +254,10 @@ void RTCPeerConnection::setRemoteDescription(PassRefPtr<RTCSessionDescription> p
 PassRefPtr<RTCSessionDescription> RTCPeerConnection::remoteDescription(ExceptionCode& ec)
 {
     RefPtr<RTCSessionDescriptionDescriptor> descriptor = m_peerHandler->remoteDescription();
-    if (!descriptor)
+    if (!descriptor) {
+        ec = INVALID_STATE_ERR;
         return 0;
+    }
 
     RefPtr<RTCSessionDescription> desc = RTCSessionDescription::create(descriptor.release());
     return desc.release();
