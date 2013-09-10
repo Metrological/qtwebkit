@@ -872,6 +872,8 @@ set(WebCore_SOURCES
     Modules/mediastream/LocalMediaStream.cpp
     Modules/mediastream/MediaConstraintsImpl.cpp
     Modules/mediastream/MediaStream.cpp
+    Modules/mediastream/MediaStreamComponent.cpp
+    Modules/mediastream/MediaStreamDescriptor.cpp
     Modules/mediastream/MediaStreamEvent.cpp
     Modules/mediastream/MediaStreamRegistry.cpp
     Modules/mediastream/MediaStreamTrack.cpp
