@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2011 Google Inc. All rights reserved.
  * Copyright (C) 2012 Motorola Mobility Inc.
+ * Copyright (C) 2013 Google Inc. All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,16 +24,41 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-[
-    GlobalContext=DOMWindow&WorkerGlobalScope,
-    Conditional=BLOB,
-    Constructor,
-    JSGenerateToNativeObject,
-    JSGenerateToJSObject,
-    JSNoStaticTables,
-    InterfaceName=URL,
-    ImplementationLacksVTable
-] interface DOMURL {
-    [CallWith=ScriptExecutionContext,TreatReturnedNullStringAs=Null] static DOMString createObjectURL(Blob? blob);
-    [CallWith=ScriptExecutionContext] static void revokeObjectURL(DOMString url);
-};
+#include "config.h"
+#include "PublicURLManager.h"
+
+#include "KURL.h"
+#include "URLRegistry.h"
+#include <wtf/text/StringHash.h>
+
+namespace WebCore {
+
+void PublicURLManager::registerURL(SecurityOrigin* origin, const KURL& url, URLRegistrable* registrable)
+{
+    RegistryURLMap::iterator found = m_registryToURL.add(&registrable->registry(), URLSet()).iterator;
+    found->key->registerURL(origin, url, registrable);
+    found->value.add(url.string());
+}
+
+void PublicURLManager::revoke(const KURL& url)
+{
+    for (RegistryURLMap::iterator i = m_registryToURL.begin(); i != m_registryToURL.end(); ++i) {
+        if (i->value.contains(url.string())) {
+            i->key->unregisterURL(url);
+            i->value.remove(url.string());
+            break;
+        }
+    }
+}
+
+void PublicURLManager::contextDestroyed()
+{
+    for (RegistryURLMap::iterator i = m_registryToURL.begin(); i != m_registryToURL.end(); ++i) {
+        for (URLSet::iterator j = i->value.begin(); j != i->value.end(); ++j)
+            i->key->unregisterURL(KURL(ParsedURLString, *j));
+    }
+
+    m_registryToURL.clear();
+}
+
+}

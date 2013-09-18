@@ -39,18 +39,7 @@
 #include "ResourceRequest.h"
 #include "ScriptExecutionContext.h"
 #include "SecurityOrigin.h"
-#include "ThreadableBlobRegistry.h"
 #include <wtf/MainThread.h>
-
-#if ENABLE(MEDIA_SOURCE)
-#include "MediaSource.h"
-#include "MediaSourceRegistry.h"
-#endif
-
-#if ENABLE(MEDIA_STREAM)
-#include "MediaStream.h"
-#include "MediaStreamRegistry.h"
-#endif
 
 namespace WebCore {
 
@@ -98,13 +87,16 @@ String DOMURL::createObjectURL(ScriptExecutionContext* scriptExecutionContext, B
 {
     if (!scriptExecutionContext || !blob)
         return String();
+    return createPublicURL(scriptExecutionContext, blob);
+}
 
+String DOMURL::createPublicURL(ScriptExecutionContext* scriptExecutionContext, URLRegistrable* registrable)
+{
     KURL publicURL = BlobURL::createPublicURL(scriptExecutionContext->securityOrigin());
     if (publicURL.isEmpty())
         return String();
 
-    ThreadableBlobRegistry::registerBlobURL(scriptExecutionContext->securityOrigin(), publicURL, blob->url());
-    scriptExecutionContext->publicURLManager().blobURLs().add(publicURL.string());
+    scriptExecutionContext->publicURLManager().registerURL(scriptExecutionContext->securityOrigin(), publicURL, registrable);
 
     return publicURL.string();
 }

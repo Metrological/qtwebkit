@@ -27,24 +27,19 @@
 #define PublicURLManager_h
 
 #if ENABLE(BLOB)
-#include "ScriptExecutionContext.h"
-#include "ThreadableBlobRegistry.h"
+#include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
+#include <wtf/PassOwnPtr.h>
+#include <wtf/RefCounted.h>
 #include <wtf/text/WTFString.h>
-
-#if ENABLE(MEDIA_STREAM)
-#include "MediaStream.h"
-#include "MediaStreamRegistry.h"
-#endif
-
-#if ENABLE(MEDIA_SOURCE)
-#include "MediaSource.h"
-#include "MediaSourceRegistry.h"
-#endif
 
 namespace WebCore {
 
+class KURL;
 class ScriptExecutionContext;
+class SecurityOrigin;
+class URLRegistry;
+class URLRegistrable;
 
 class PublicURLManager {
     WTF_MAKE_FAST_ALLOCATED;
@@ -68,22 +63,14 @@ public:
 #endif
     }
 
-    HashSet<String>& blobURLs() { return m_blobURLs; }
-#if ENABLE(MEDIA_STREAM)
-    HashSet<String>& streamURLs() { return m_streamURLs; }
-#endif
-#if ENABLE(MEDIA_SOURCE)
-    HashSet<String>& sourceURLs() { return m_sourceURLs; }
-#endif
+    void registerURL(SecurityOrigin*, const KURL&, URLRegistrable*);
+    void revoke(const KURL&);
+    void contextDestroyed();
 
 private:
-    HashSet<String> m_blobURLs;
-#if ENABLE(MEDIA_STREAM)
-    HashSet<String> m_streamURLs;
-#endif
-#if ENABLE(MEDIA_SOURCE)
-    HashSet<String> m_sourceURLs;
-#endif
+    typedef HashSet<String> URLSet;
+    typedef HashMap<URLRegistry*, URLSet > RegistryURLMap;
+    RegistryURLMap m_registryToURL;
 };
 
 } // namespace WebCore
