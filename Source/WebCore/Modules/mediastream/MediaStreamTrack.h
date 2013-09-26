@@ -46,13 +46,9 @@ class MediaStreamTrackSourcesCallback;
 
 class MediaStreamTrack : public RefCounted<MediaStreamTrack>, public ScriptWrappable, public ActiveDOMObject, public EventTarget, public MediaStreamSource::Observer {
 public:
-
-    static PassRefPtr<MediaStreamTrack> create(ScriptExecutionContext*, const Dictionary&);
-    static PassRefPtr<MediaStreamTrack> create(ScriptExecutionContext*, MediaStreamSource*);
-
     virtual ~MediaStreamTrack();
 
-    const AtomicString& kind() const;
+    virtual const AtomicString& kind() const = 0;
     const String& id() const;
     const String& label() const;
 
@@ -82,9 +78,10 @@ public:
     using RefCounted<MediaStreamTrack>::ref;
     using RefCounted<MediaStreamTrack>::deref;
 
-private:
+protected:
     MediaStreamTrack(ScriptExecutionContext*, MediaStreamSource*, const Dictionary*);
 
+private:
     void trackDidEnd();
 
     // EventTarget

@@ -62,6 +62,8 @@ webcore_built_sources += \
 	DerivedSources/WebCore/JSAudioParam.h \
 	DerivedSources/WebCore/JSAudioProcessingEvent.cpp \
 	DerivedSources/WebCore/JSAudioProcessingEvent.h \
+	DerivedSources/WebCore/JSAudioStreamTrack.cpp \
+	DerivedSources/WebCore/JSAudioStreamTrack.h \
 	DerivedSources/WebCore/JSAudioTrack.cpp \
 	DerivedSources/WebCore/JSAudioTrack.h \
 	DerivedSources/WebCore/JSAudioTrackList.cpp \
@@ -793,6 +795,8 @@ webcore_built_sources += \
 	DerivedSources/WebCore/JSValidityState.h \
 	DerivedSources/WebCore/JSVoidCallback.cpp \
 	DerivedSources/WebCore/JSVoidCallback.h \
+	DerivedSources/WebCore/JSVideoStreamTrack.h \
+	DerivedSources/WebCore/JSVideoStreamTrack.cpp \
 	DerivedSources/WebCore/JSVideoTrack.cpp \
 	DerivedSources/WebCore/JSVideoTrack.h \
 	DerivedSources/WebCore/JSVideoTrackList.cpp \
@@ -1289,6 +1293,7 @@ dom_binding_idls += \
 	$(WebCore)/Modules/mediasource/MediaSource.idl \
 	$(WebCore)/Modules/mediasource/SourceBuffer.idl \
 	$(WebCore)/Modules/mediasource/SourceBufferList.idl \
+	$(WebCore)/Modules/mediastream/AudioStreamTrack.idl \
 	$(WebCore)/Modules/mediastream/MediaStream.idl \
 	$(WebCore)/Modules/mediastream/MediaStreamEvent.idl \
 	$(WebCore)/Modules/mediastream/MediaStreamTrack.idl \
@@ -1312,6 +1317,7 @@ dom_binding_idls += \
 	$(WebCore)/Modules/mediastream/RTCStatsReport.idl \
 	$(WebCore)/Modules/mediastream/RTCStatsResponse.idl \
 	$(WebCore)/Modules/mediastream/SourceInfo.idl \
+	$(WebCore)/Modules/mediastream/VideoStreamTrack.idl \
 	$(WebCore)/Modules/navigatorcontentutils/NavigatorContentUtils.idl \
 	$(WebCore)/Modules/notifications/DOMWindowNotifications.idl \
 	$(WebCore)/Modules/notifications/Notification.idl \
@@ -2028,6 +2034,8 @@ webcore_modules_sources += \
 	Source/WebCore/Modules/mediasource/SourceBuffer.h \
 	Source/WebCore/Modules/mediasource/SourceBufferList.cpp \
 	Source/WebCore/Modules/mediasource/SourceBufferList.h \
+	Source/WebCore/Modules/mediastream/AudioStreamTrack.cpp \
+	Source/WebCore/Modules/mediastream/AudioStreamTrack.h \
 	Source/WebCore/Modules/mediastream/MediaConstraintsImpl.cpp \
 	Source/WebCore/Modules/mediastream/MediaConstraintsImpl.h \
 	Source/WebCore/Modules/mediastream/MediaStream.cpp \
@@ -2085,6 +2093,8 @@ webcore_modules_sources += \
 	Source/WebCore/Modules/mediastream/UserMediaController.cpp \
 	Source/WebCore/Modules/mediastream/UserMediaRequest.cpp \
 	Source/WebCore/Modules/mediastream/UserMediaRequest.h \
+	Source/WebCore/Modules/mediastream/VideoStreamTrack.cpp \
+	Source/WebCore/Modules/mediastream/VideoStreamTrack.h \
 	Source/WebCore/Modules/navigatorcontentutils/NavigatorContentUtils.cpp \
 	Source/WebCore/Modules/navigatorcontentutils/NavigatorContentUtils.h \
 	Source/WebCore/Modules/navigatorcontentutils/NavigatorContentUtilsClient.h \

@@ -123,7 +123,8 @@ BINDING_IDLS = \
     $(WebCore)/Modules/mediasource/MediaSource.idl \
     $(WebCore)/Modules/mediasource/SourceBuffer.idl \
     $(WebCore)/Modules/mediasource/SourceBufferList.idl \
-    $(WebCore)/Modules/mediastream/MediaStream.idl \
+	$(WebCore)/Modules/mediastream/AudioStreamTrack.idl \
+	$(WebCore)/Modules/mediastream/MediaStream.idl \
     $(WebCore)/Modules/mediastream/MediaStreamEvent.idl \
     $(WebCore)/Modules/mediastream/MediaStreamTrack.idl \
     $(WebCore)/Modules/mediastream/MediaStreamTrackEvent.idl \
@@ -145,6 +146,7 @@ BINDING_IDLS = \
     $(WebCore)/Modules/mediastream/RTCStatsCallback.idl \
     $(WebCore)/Modules/mediastream/RTCStatsReport.idl \
     $(WebCore)/Modules/mediastream/RTCStatsResponse.idl \
+	$(WebCore)/Modules/mediastream/VideoStreamTrack.idl \
     $(WebCore)/Modules/mediastream/SourceInfo.idl \
     $(WebCore)/Modules/notifications/DOMWindowNotifications.idl \
     $(WebCore)/Modules/notifications/Notification.idl \
