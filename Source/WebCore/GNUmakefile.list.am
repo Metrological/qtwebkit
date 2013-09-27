@@ -5600,6 +5600,8 @@ webcore_platform_sources += \
 	Source/WebCore/platform/mock/NetworkServicePublisherGssdpMock.h \
 	Source/WebCore/platform/mock/NetworkServicePublisherGupnpMock.cpp \
 	Source/WebCore/platform/mock/NetworkServicePublisherGupnpMock.h \
+	Source/WebCore/platform/mock/MockMediaStreamCenter.cpp \
+	Source/WebCore/platform/mock/MockMediaStreamCenter.h \
 	Source/WebCore/platform/mock/ScrollbarThemeMock.cpp \
 	Source/WebCore/platform/mock/ScrollbarThemeMock.h \
 	Source/WebCore/platform/network/BlobData.cpp \

@@ -2093,6 +2093,8 @@ set(WebCore_SOURCES
     platform/mock/NetworkServicePublisherGssdpMock.cpp
     platform/mock/NetworkServicePublisherGupnpMock.cpp
 
+    platform/mock/MockMediaStreamCenter.cpp
+
     platform/mock/ScrollbarThemeMock.cpp
 
     platform/network/AuthenticationChallengeBase.cpp

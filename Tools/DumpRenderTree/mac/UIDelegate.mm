@@ -308,6 +308,12 @@ DumpRenderTreeDraggingInfo *draggingInfo = nil;
     }
 }
 
+- (void)webView:(WebView *)webView decidePolicyForUserMediaRequestFromOrigin:(WebSecurityOrigin *)origin listener:(id<WebAllowDenyPolicyListener>)listener
+{
+    // Allow all user media requests for now.
+    [listener allow];
+}
+
 - (void)dealloc
 {
     [draggingInfo release];

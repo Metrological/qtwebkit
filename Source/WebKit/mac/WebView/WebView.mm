@@ -107,6 +107,7 @@
 #import "WebTextIterator.h"
 #import "WebUIDelegate.h"
 #import "WebUIDelegatePrivate.h"
+#import "WebUserMediaClient.h"
 #import <CoreFoundation/CFSet.h>
 #import <Foundation/NSURLConnection.h>
 #import <JavaScriptCore/APICast.h>
@@ -769,6 +770,9 @@ static bool shouldUseLegacyBackgroundSizeShorthandBehavior()
 #endif
 #if ENABLE(DEVICE_ORIENTATION)
     WebCore::provideDeviceOrientationTo(_private->page, new WebDeviceOrientationClient(self));
+#endif
+#if ENABLE(MEDIA_STREAM)
+    WebCore::provideUserMediaTo(_private->page, new WebUserMediaClient(self));
 #endif
 
     _private->page->setCanStartMedia([self window]);
@@ -6660,6 +6664,24 @@ static void glibContextIterationCallback(CFRunLoopObserverRef, CFRunLoopActivity
 }
 
 @end
+
+#if ENABLE(MEDIA_STREAM)
+@implementation WebView (WebViewUserMedia)
+
+- (void)_setUserMediaClient:(id<WebUserMediaClient>)userMediaClient
+{
+    if (_private)
+        _private->m_userMediaClient = userMediaClient;
+}
+
+- (id<WebUserMediaClient>)_userMediaClient
+{
+    if (_private)
+        return _private->m_userMediaClient;
+    return nil;
+}
+@end
+#endif
 
 @implementation WebView (WebViewGeolocation)
 
