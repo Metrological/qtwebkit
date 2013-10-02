@@ -804,6 +804,12 @@
     IMPL->setNullableStringValue(newNullableStringValue);
 }
 
+- (NSString *)attribute
+{
+    WebCore::JSMainThreadNullState state;
+    return IMPL->attribute();
+}
+
 - (void)voidMethod
 {
     WebCore::JSMainThreadNullState state;
@@ -1167,6 +1173,12 @@
 {
     WebCore::JSMainThreadNullState state;
     IMPL->variadicNodeMethod(core(head), core(tail));
+}
+
+- (void)any:(float)a b:(int)b
+{
+    WebCore::JSMainThreadNullState state;
+    IMPL->any(a, b);
 }
 
 @end

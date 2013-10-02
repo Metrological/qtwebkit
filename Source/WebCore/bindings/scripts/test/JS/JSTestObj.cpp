@@ -154,11 +154,13 @@ static const HashTableValue JSTestObjTableValues[] =
     { "nullableStringAttribute", DontDelete | ReadOnly, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjNullableStringAttribute), (intptr_t)0, NoIntrinsic },
     { "nullableLongSettableAttribute", DontDelete, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjNullableLongSettableAttribute), (intptr_t)setJSTestObjNullableLongSettableAttribute, NoIntrinsic },
     { "nullableStringValue", DontDelete, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjNullableStringValue), (intptr_t)setJSTestObjNullableStringValue, NoIntrinsic },
+    { "attribute", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjAttribute), (intptr_t)0 },
+    { "attributeWithReservedEnumType", DontDelete, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjAttributeWithReservedEnumType), (intptr_t)setJSTestObjAttributeWithReservedEnumType },
     { "constructor", DontEnum | ReadOnly, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjConstructor), (intptr_t)0, NoIntrinsic },
     { 0, 0, 0, 0, NoIntrinsic }
 };
 
-static const HashTable JSTestObjTable = { 265, 255, JSTestObjTableValues, 0 };
+static const HashTable JSTestObjTable = { 266, 255, JSTestObjTableValues, 0 };
 /* Hash table for constructor */
 
 static const HashTableValue JSTestObjConstructorTableValues[] =
@@ -178,6 +180,7 @@ static const HashTableValue JSTestObjConstructorTableValues[] =
     { "CONST_VALUE_13", DontDelete | ReadOnly, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_13), (intptr_t)0, NoIntrinsic },
     { "CONST_VALUE_14", DontDelete | ReadOnly, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_14), (intptr_t)0, NoIntrinsic },
     { "CONST_JAVASCRIPT", DontDelete | ReadOnly, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_JAVASCRIPT), (intptr_t)0, NoIntrinsic },
+    { "readonly", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjReadonly), (intptr_t)0 },
     { "staticReadOnlyLongAttr", DontDelete | ReadOnly, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjConstructorStaticReadOnlyLongAttr), (intptr_t)0, NoIntrinsic },
     { "staticStringAttr", DontDelete, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjConstructorStaticStringAttr), (intptr_t)setJSTestObjConstructorStaticStringAttr, NoIntrinsic },
     { "TestSubObj", DontDelete | ReadOnly, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjConstructorTestSubObj), (intptr_t)0, NoIntrinsic },
@@ -192,7 +195,7 @@ static const HashTableValue JSTestObjConstructorTableValues[] =
     { 0, 0, 0, 0, NoIntrinsic }
 };
 
-static const HashTable JSTestObjConstructorTable = { 38, 31, JSTestObjConstructorTableValues, 0 };
+static const HashTable JSTestObjConstructorTable = { 39, 31, JSTestObjConstructorTableValues, 0 };
 
 #if ENABLE(Condition1)
 COMPILE_ASSERT(0 == TestObj::CONDITIONAL_CONST, TestObjEnumCONDITIONAL_CONSTIsWrongUseDoNotCheckConstants);
@@ -209,6 +212,7 @@ COMPILE_ASSERT(0x01 == TestObj::CONST_VALUE_12, TestObjEnumCONST_VALUE_12IsWrong
 COMPILE_ASSERT(0X20 == TestObj::CONST_VALUE_13, TestObjEnumCONST_VALUE_13IsWrongUseDoNotCheckConstants);
 COMPILE_ASSERT(0x1abc == TestObj::CONST_VALUE_14, TestObjEnumCONST_VALUE_14IsWrongUseDoNotCheckConstants);
 COMPILE_ASSERT(15 == TestObj::CONST_IMPL, TestObjEnumCONST_IMPLIsWrongUseDoNotCheckConstants);
+COMPILE_ASSERT(0 == TestObj::readonly, TestObjEnumreadonlyIsWrongUseDoNotCheckConstants);
 
 EncodedJSValue JSC_HOST_CALL JSTestObjConstructor::constructJSTestObj(ExecState* exec)
 {
@@ -272,6 +276,7 @@ static const HashTableValue JSTestObjPrototypeTableValues[] =
     { "CONST_VALUE_13", DontDelete | ReadOnly, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_13), (intptr_t)0, NoIntrinsic },
     { "CONST_VALUE_14", DontDelete | ReadOnly, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_14), (intptr_t)0, NoIntrinsic },
     { "CONST_JAVASCRIPT", DontDelete | ReadOnly, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_JAVASCRIPT), (intptr_t)0, NoIntrinsic },
+    { "readonly", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjReadonly), (intptr_t)0 },
     { "voidMethod", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionVoidMethod), (intptr_t)0, NoIntrinsic },
     { "voidMethodWithArgs", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionVoidMethodWithArgs), (intptr_t)3, NoIntrinsic },
     { "byteMethod", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionByteMethod), (intptr_t)0, NoIntrinsic },
@@ -311,6 +316,59 @@ static const HashTableValue JSTestObjPrototypeTableValues[] =
     { "methodWithCallbackArg", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithCallbackArg), (intptr_t)1, NoIntrinsic },
     { "methodWithNonCallbackArgAndCallbackArg", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithNonCallbackArgAndCallbackArg), (intptr_t)2, NoIntrinsic },
     { "methodWithCallbackAndOptionalArg", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithCallbackAndOptionalArg), (intptr_t)0, NoIntrinsic },
+=======
+    { "CONST_VALUE_0", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_0), (intptr_t)0 },
+    { "CONST_VALUE_1", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_1), (intptr_t)0 },
+    { "CONST_VALUE_2", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_2), (intptr_t)0 },
+    { "CONST_VALUE_4", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_4), (intptr_t)0 },
+    { "CONST_VALUE_8", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_8), (intptr_t)0 },
+    { "CONST_VALUE_9", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_9), (intptr_t)0 },
+    { "CONST_VALUE_10", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_10), (intptr_t)0 },
+    { "CONST_VALUE_11", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_11), (intptr_t)0 },
+    { "CONST_VALUE_12", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_12), (intptr_t)0 },
+    { "CONST_VALUE_13", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_13), (intptr_t)0 },
+    { "CONST_VALUE_14", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_VALUE_14), (intptr_t)0 },
+    { "CONST_JAVASCRIPT", DontDelete | ReadOnly, NoIntrinsic, (intptr_t)static_cast<PropertySlot::GetValueFunc>(jsTestObjCONST_JAVASCRIPT), (intptr_t)0 },
+    { "voidMethod", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionVoidMethod), (intptr_t)0 },
+    { "voidMethodWithArgs", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionVoidMethodWithArgs), (intptr_t)3 },
+    { "byteMethod", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionByteMethod), (intptr_t)0 },
+    { "byteMethodWithArgs", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionByteMethodWithArgs), (intptr_t)3 },
+    { "octetMethod", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionOctetMethod), (intptr_t)0 },
+    { "octetMethodWithArgs", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionOctetMethodWithArgs), (intptr_t)3 },
+    { "longMethod", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionLongMethod), (intptr_t)0 },
+    { "longMethodWithArgs", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionLongMethodWithArgs), (intptr_t)3 },
+    { "objMethod", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionObjMethod), (intptr_t)0 },
+    { "objMethodWithArgs", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionObjMethodWithArgs), (intptr_t)3 },
+    { "methodWithSequenceArg", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithSequenceArg), (intptr_t)1 },
+    { "methodReturningSequence", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodReturningSequence), (intptr_t)1 },
+    { "methodWithEnumArg", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithEnumArg), (intptr_t)1 },
+    { "methodThatRequiresAllArgsAndThrows", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodThatRequiresAllArgsAndThrows), (intptr_t)2 },
+    { "serializedValue", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionSerializedValue), (intptr_t)1 },
+    { "optionsObject", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionOptionsObject), (intptr_t)1 },
+    { "methodWithException", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithException), (intptr_t)0 },
+    { "customMethod", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionCustomMethod), (intptr_t)0 },
+    { "customMethodWithArgs", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionCustomMethodWithArgs), (intptr_t)3 },
+    { "addEventListener", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionAddEventListener), (intptr_t)2 },
+    { "removeEventListener", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionRemoveEventListener), (intptr_t)2 },
+    { "withScriptStateVoid", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionWithScriptStateVoid), (intptr_t)0 },
+    { "withScriptStateObj", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionWithScriptStateObj), (intptr_t)0 },
+    { "withScriptStateVoidException", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionWithScriptStateVoidException), (intptr_t)0 },
+    { "withScriptStateObjException", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionWithScriptStateObjException), (intptr_t)0 },
+    { "withScriptExecutionContext", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionWithScriptExecutionContext), (intptr_t)0 },
+    { "withScriptExecutionContextAndScriptState", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionWithScriptExecutionContextAndScriptState), (intptr_t)0 },
+    { "withScriptExecutionContextAndScriptStateObjException", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionWithScriptExecutionContextAndScriptStateObjException), (intptr_t)0 },
+    { "withScriptExecutionContextAndScriptStateWithSpaces", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionWithScriptExecutionContextAndScriptStateWithSpaces), (intptr_t)0 },
+    { "withScriptArgumentsAndCallStack", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionWithScriptArgumentsAndCallStack), (intptr_t)0 },
+    { "methodWithOptionalArg", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithOptionalArg), (intptr_t)0 },
+    { "methodWithNonOptionalArgAndOptionalArg", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithNonOptionalArgAndOptionalArg), (intptr_t)1 },
+    { "methodWithNonOptionalArgAndTwoOptionalArgs", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithNonOptionalArgAndTwoOptionalArgs), (intptr_t)1 },
+    { "methodWithOptionalString", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithOptionalString), (intptr_t)0 },
+    { "methodWithOptionalStringIsUndefined", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithOptionalStringIsUndefined), (intptr_t)0 },
+    { "methodWithOptionalStringIsNullString", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithOptionalStringIsNullString), (intptr_t)0 },
+    { "methodWithCallbackArg", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithCallbackArg), (intptr_t)1 },
+    { "methodWithNonCallbackArgAndCallbackArg", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithNonCallbackArgAndCallbackArg), (intptr_t)2 },
+    { "methodWithCallbackAndOptionalArg", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithCallbackAndOptionalArg), (intptr_t)0 },
+>>>>>>> 9088434... IDL parser should remove a leading "_" from identifier names
 #if ENABLE(Condition1)
     { "conditionalMethod1", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionConditionalMethod1), (intptr_t)0, NoIntrinsic },
 #endif
@@ -320,6 +378,7 @@ static const HashTableValue JSTestObjPrototypeTableValues[] =
 #if ENABLE(Condition1) || ENABLE(Condition2)
     { "conditionalMethod3", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionConditionalMethod3), (intptr_t)0, NoIntrinsic },
 #endif
+<<<<<<< HEAD
     { "overloadedMethod", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionOverloadedMethod), (intptr_t)2, NoIntrinsic },
     { "classMethodWithClamp", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionClassMethodWithClamp), (intptr_t)2, NoIntrinsic },
     { "methodWithUnsignedLongSequence", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionMethodWithUnsignedLongSequence), (intptr_t)1, NoIntrinsic },
@@ -337,6 +396,7 @@ static const HashTableValue JSTestObjPrototypeTableValues[] =
     { "variadicStringMethod", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionVariadicStringMethod), (intptr_t)2, NoIntrinsic },
     { "variadicDoubleMethod", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionVariadicDoubleMethod), (intptr_t)2, NoIntrinsic },
     { "variadicNodeMethod", DontDelete | JSC::Function, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionVariadicNodeMethod), (intptr_t)2, NoIntrinsic },
+    { "any", DontDelete | JSC::Function, NoIntrinsic, (intptr_t)static_cast<NativeFunction>(jsTestObjPrototypeFunctionAny), (intptr_t)2 },
     { 0, 0, 0, 0, NoIntrinsic }
 };
 
@@ -1097,6 +1157,26 @@ JSValue jsTestObjNullableStringValue(ExecState* exec, JSValue slotBase, Property
 }
 
 
+JSValue jsTestObjAttribute(ExecState* exec, JSValue slotBase, PropertyName)
+{
+    JSTestObj* castedThis = jsCast<JSTestObj*>(asObject(slotBase));
+    UNUSED_PARAM(exec);
+    TestObj* impl = castedThis->impl();
+    JSValue result = jsStringWithCache(exec, impl->attribute());
+    return result;
+}
+
+
+JSValue jsTestObjAttributeWithReservedEnumType(ExecState* exec, JSValue slotBase, PropertyName)
+{
+    JSTestObj* castedThis = jsCast<JSTestObj*>(asObject(slotBase));
+    UNUSED_PARAM(exec);
+    TestObj* impl = castedThis->impl();
+    JSValue result = jsStringWithCache(exec, impl->attributeWithReservedEnumType());
+    return result;
+}
+
+
 JSValue jsTestObjConstructor(ExecState* exec, JSValue slotBase, PropertyName)
 {
     JSTestObj* domObject = jsCast<JSTestObj*>(asObject(slotBase));
@@ -1739,6 +1819,19 @@ void setJSTestObjNullableStringValue(ExecState* exec, JSObject* thisObject, JSVa
     impl->setNullableStringValue(nativeValue);
 }
 
+
+void setJSTestObjAttributeWithReservedEnumType(ExecState* exec, JSObject* thisObject, JSValue value)
+{
+    UNUSED_PARAM(exec);
+    JSTestObj* castedThis = jsCast<JSTestObj*>(thisObject);
+    TestObj* impl = castedThis->impl();
+    const String nativeValue(value.isEmpty() ? String() : value.toString(exec)->value(exec));
+    if (exec->hadException())
+        return;
+    if (nativeValue != "" && nativeValue != "OptionalValue1" && nativeValue != "OptionalValue2" && nativeValue != "OptionalValue3")
+        return;
+    impl->setAttributeWithReservedEnumType(nativeValue);
+}
 
 JSValue JSTestObj::getConstructor(ExecState* exec, JSGlobalObject* globalObject)
 {
@@ -3108,6 +3201,26 @@ EncodedJSValue JSC_HOST_CALL jsTestObjPrototypeFunctionVariadicNodeMethod(ExecSt
     return JSValue::encode(jsUndefined());
 }
 
+EncodedJSValue JSC_HOST_CALL jsTestObjPrototypeFunctionAny(ExecState* exec)
+{
+    JSValue thisValue = exec->hostThisValue();
+    if (!thisValue.inherits(JSTestObj::info()))
+        return throwVMTypeError(exec);
+    JSTestObj* castedThis = jsCast<JSTestObj*>(asObject(thisValue));
+    ASSERT_GC_OBJECT_INHERITS(castedThis, JSTestObj::info());
+    TestObj* impl = castedThis->impl();
+    if (exec->argumentCount() < 2)
+        return throwVMError(exec, createNotEnoughArgumentsError(exec));
+    float a(exec->argument(0).toFloat(exec));
+    if (exec->hadException())
+        return JSValue::encode(jsUndefined());
+    int b(toInt32(exec, exec->argument(1), NormalConversion));
+    if (exec->hadException())
+        return JSValue::encode(jsUndefined());
+    impl->any(a, b);
+    return JSValue::encode(jsUndefined());
+}
+
 void JSTestObj::visitChildren(JSCell* cell, SlotVisitor& visitor)
 {
     JSTestObj* thisObject = jsCast<JSTestObj*>(cell);
@@ -3198,6 +3311,12 @@ JSValue jsTestObjCONST_JAVASCRIPT(ExecState* exec, JSValue, PropertyName)
 {
     UNUSED_PARAM(exec);
     return jsNumber(static_cast<int>(15));
+}
+
+JSValue jsTestObjReadonly(ExecState* exec, JSValue, PropertyName)
+{
+    UNUSED_PARAM(exec);
+    return jsNumber(static_cast<int>(0));
 }
 
 static inline bool isObservable(JSTestObj* jsTestObj)

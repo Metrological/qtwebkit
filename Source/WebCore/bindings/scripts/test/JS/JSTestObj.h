@@ -232,6 +232,7 @@ JSC::EncodedJSValue JSC_HOST_CALL jsTestObjPrototypeFunctionStrictFunction(JSC::
 JSC::EncodedJSValue JSC_HOST_CALL jsTestObjPrototypeFunctionVariadicStringMethod(JSC::ExecState*);
 JSC::EncodedJSValue JSC_HOST_CALL jsTestObjPrototypeFunctionVariadicDoubleMethod(JSC::ExecState*);
 JSC::EncodedJSValue JSC_HOST_CALL jsTestObjPrototypeFunctionVariadicNodeMethod(JSC::ExecState*);
+JSC::EncodedJSValue JSC_HOST_CALL jsTestObjPrototypeFunctionAny(JSC::ExecState*);
 // Attributes
 
 JSC::JSValue jsTestObjReadOnlyLongAttr(JSC::ExecState*, JSC::JSValue, JSC::PropertyName);
@@ -364,6 +365,9 @@ JSC::JSValue jsTestObjNullableLongSettableAttribute(JSC::ExecState*, JSC::JSValu
 void setJSTestObjNullableLongSettableAttribute(JSC::ExecState*, JSC::JSObject*, JSC::JSValue);
 JSC::JSValue jsTestObjNullableStringValue(JSC::ExecState*, JSC::JSValue, JSC::PropertyName);
 void setJSTestObjNullableStringValue(JSC::ExecState*, JSC::JSObject*, JSC::JSValue);
+JSC::JSValue jsTestObjAttribute(JSC::ExecState*, JSC::JSValue, JSC::PropertyName);
+JSC::JSValue jsTestObjAttributeWithReservedEnumType(JSC::ExecState*, JSC::JSValue, JSC::PropertyName);
+void setJSTestObjAttributeWithReservedEnumType(JSC::ExecState*, JSC::JSObject*, JSC::JSValue);
 JSC::JSValue jsTestObjConstructor(JSC::ExecState*, JSC::JSValue, JSC::PropertyName);
 // Constants
 
@@ -382,6 +386,7 @@ JSC::JSValue jsTestObjCONST_VALUE_12(JSC::ExecState*, JSC::JSValue, JSC::Propert
 JSC::JSValue jsTestObjCONST_VALUE_13(JSC::ExecState*, JSC::JSValue, JSC::PropertyName);
 JSC::JSValue jsTestObjCONST_VALUE_14(JSC::ExecState*, JSC::JSValue, JSC::PropertyName);
 JSC::JSValue jsTestObjCONST_JAVASCRIPT(JSC::ExecState*, JSC::JSValue, JSC::PropertyName);
+JSC::JSValue jsTestObjReadonly(JSC::ExecState*, JSC::JSValue, JSC::PropertyName);
 
 } // namespace WebCore
 
