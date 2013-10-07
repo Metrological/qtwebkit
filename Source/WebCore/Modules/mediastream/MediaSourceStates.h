@@ -23,37 +23,44 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AudioStreamTrack_h
-#define AudioStreamTrack_h
+#ifndef MediaSourceStates_h
+#define MediaSourceStates_h
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "MediaStreamTrack.h"
+#include "MediaStreamSourceCapabilities.h"
+#include "ScriptWrappable.h"
+#include <wtf/Forward.h>
 #include <wtf/RefCounted.h>
-#include <wtf/Vector.h>
 
 namespace WebCore {
 
-class MediaStreamSource;
-class ScriptExecutionContext;
-
-class AudioStreamTrack FINAL : public MediaStreamTrack {
+class MediaSourceStates : public RefCounted<MediaSourceStates>, public ScriptWrappable {
 public:
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, const Dictionary&);
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, MediaStreamSource*);
-    static RefPtr<AudioStreamTrack> create(MediaStreamTrack*);
+    static RefPtr<MediaSourceStates> create(const MediaStreamSourceStates&);
 
-    virtual ~AudioStreamTrack() { }
-
-    virtual const AtomicString& kind() const OVERRIDE;
+    static const AtomicString& sourceType(MediaStreamSourceStates::SourceType);
+    static const AtomicString& facingMode(MediaStreamSourceStates::VideoFacingMode);
+    
+    const AtomicString& sourceType() const;
+    const AtomicString& sourceId() const { return m_SourceStates.sourceId; }
+    unsigned long width() const { return m_SourceStates.width; }
+    unsigned long height() const { return m_SourceStates.height; }
+    float frameRate() const { return m_SourceStates.frameRate; }
+    float aspectRatio() const { return m_SourceStates.aspectRatio; }
+    const AtomicString& facingMode() const;
+    unsigned long volume() const { return m_SourceStates.volume; }
+    
+    bool hasVideoSource() const { return m_SourceStates.sourceType == MediaStreamSourceStates::Camera; }
 
 private:
-    AudioStreamTrack(ScriptExecutionContext*, MediaStreamSource*, const Dictionary*);
-    explicit AudioStreamTrack(MediaStreamTrack*);
+    explicit MediaSourceStates(const MediaStreamSourceStates&);
+
+    MediaStreamSourceStates m_SourceStates;
 };
 
 } // namespace WebCore
 
-#endif // ENABLE(MEDIA_STREAM)
+#endif // MediaSourceStates_h
 
-#endif // AudioStreamTrack_h
+#endif

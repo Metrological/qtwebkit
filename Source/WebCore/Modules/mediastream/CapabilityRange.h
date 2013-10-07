@@ -10,7 +10,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY APPLE COMPUTER, INC. ``AS IS'' AND ANY
+ * THIS SOFTWARE IS PROVIDED BY APPLE, INC. ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE COMPUTER, INC. OR
@@ -20,40 +20,41 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ *
  */
 
-#ifndef AudioStreamTrack_h
-#define AudioStreamTrack_h
+#ifndef CapabilityRange_h
+#define CapabilityRange_h
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "MediaStreamTrack.h"
+#include "MediaStreamSourceCapabilities.h"
+#include "ScriptValue.h"
+#include "ScriptWrappable.h"
+#include <interpreter/CallFrame.h>
 #include <wtf/RefCounted.h>
-#include <wtf/Vector.h>
 
 namespace WebCore {
 
-class MediaStreamSource;
-class ScriptExecutionContext;
-
-class AudioStreamTrack FINAL : public MediaStreamTrack {
+class CapabilityRange : public RefCounted<CapabilityRange>, public ScriptWrappable {
 public:
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, const Dictionary&);
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, MediaStreamSource*);
-    static RefPtr<AudioStreamTrack> create(MediaStreamTrack*);
+    virtual ~CapabilityRange() { }
 
-    virtual ~AudioStreamTrack() { }
+    static RefPtr<CapabilityRange> create(const MediaStreamSourceCapabilityRange&);
 
-    virtual const AtomicString& kind() const OVERRIDE;
+    ScriptValue min(JSC::ExecState*) const;
+    ScriptValue max(JSC::ExecState*) const;
+    bool supported() const { return m_rangeInfo.supported(); }
 
 private:
-    AudioStreamTrack(ScriptExecutionContext*, MediaStreamSource*, const Dictionary*);
-    explicit AudioStreamTrack(MediaStreamTrack*);
+    CapabilityRange(const MediaStreamSourceCapabilityRange&);
+    
+    MediaStreamSourceCapabilityRange m_rangeInfo;
 };
 
 } // namespace WebCore
 
-#endif // ENABLE(MEDIA_STREAM)
+#endif // CapabilityRange_h
 
-#endif // AudioStreamTrack_h
+#endif

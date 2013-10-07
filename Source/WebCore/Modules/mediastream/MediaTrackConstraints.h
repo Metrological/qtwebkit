@@ -10,7 +10,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY APPLE COMPUTER, INC. ``AS IS'' AND ANY
+ * THIS SOFTWARE IS PROVIDED BY APPLE, INC. ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE COMPUTER, INC. OR
@@ -20,40 +20,41 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ *
  */
 
-#ifndef AudioStreamTrack_h
-#define AudioStreamTrack_h
+#ifndef MediaTrackConstraints_h
+#define MediaTrackConstraints_h
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "MediaStreamTrack.h"
+#include "MediaConstraintsImpl.h"
+#include "ScriptWrappable.h"
 #include <wtf/RefCounted.h>
-#include <wtf/Vector.h>
 
 namespace WebCore {
 
-class MediaStreamSource;
-class ScriptExecutionContext;
+class MediaTrackConstraint;
+class MediaTrackConstraintSet;
 
-class AudioStreamTrack FINAL : public MediaStreamTrack {
+class MediaTrackConstraints : public RefCounted<MediaTrackConstraints>, public ScriptWrappable {
 public:
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, const Dictionary&);
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, MediaStreamSource*);
-    static RefPtr<AudioStreamTrack> create(MediaStreamTrack*);
+    virtual ~MediaTrackConstraints() { }
 
-    virtual ~AudioStreamTrack() { }
+    static RefPtr<MediaTrackConstraints> create(PassRefPtr<MediaConstraintsImpl>);
 
-    virtual const AtomicString& kind() const OVERRIDE;
+    Vector<PassRefPtr<MediaTrackConstraint>> optional(bool) const;
+    RefPtr<MediaTrackConstraintSet> mandatory(bool) const;
 
 private:
-    AudioStreamTrack(ScriptExecutionContext*, MediaStreamSource*, const Dictionary*);
-    explicit AudioStreamTrack(MediaStreamTrack*);
+    explicit MediaTrackConstraints(PassRefPtr<MediaConstraintsImpl>);
+    
+    RefPtr<MediaConstraintsImpl> m_constraints;
 };
 
 } // namespace WebCore
 
-#endif // ENABLE(MEDIA_STREAM)
+#endif // MediaTrackConstraints_h
 
-#endif // AudioStreamTrack_h
+#endif

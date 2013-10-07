@@ -23,37 +23,55 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AudioStreamTrack_h
-#define AudioStreamTrack_h
+#ifndef MediaStreamAudioSource_h
+#define MediaStreamAudioSource_h
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "MediaStreamTrack.h"
+#include "AudioDestinationConsumer.h"
+#include "MediaStreamSource.h"
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>
+#include <wtf/text/WTFString.h>
 
 namespace WebCore {
 
-class MediaStreamSource;
-class ScriptExecutionContext;
+class AudioBus;
+class MediaStreamSourceCapabilities;
 
-class AudioStreamTrack FINAL : public MediaStreamTrack {
+class MediaStreamAudioSource : public MediaStreamSource {
 public:
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, const Dictionary&);
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, MediaStreamSource*);
-    static RefPtr<AudioStreamTrack> create(MediaStreamTrack*);
+    static RefPtr<MediaStreamAudioSource> create();
 
-    virtual ~AudioStreamTrack() { }
+    ~MediaStreamAudioSource() { }
 
-    virtual const AtomicString& kind() const OVERRIDE;
+    virtual bool isAudioStreamSource() const { return true; }
+    virtual bool useIDForTrackID() const { return true; }
+
+    virtual RefPtr<MediaStreamSourceCapabilities> capabilities() const;
+    virtual const MediaStreamSourceStates& states();
+    
+    const String& deviceId() const { return m_deviceId; }
+    void setDeviceId(const String& deviceId) { m_deviceId = deviceId; }
+
+    void setAudioFormat(size_t numberOfChannels, float sampleRate);
+    void consumeAudio(AudioBus*, size_t numberOfFrames);
+
+    void addAudioConsumer(PassRefPtr<AudioDestinationConsumer>);
+    bool removeAudioConsumer(AudioDestinationConsumer*);
+    const Vector<RefPtr<AudioDestinationConsumer>>& audioConsumers() const { return m_audioConsumers; }
 
 private:
-    AudioStreamTrack(ScriptExecutionContext*, MediaStreamSource*, const Dictionary*);
-    explicit AudioStreamTrack(MediaStreamTrack*);
+    MediaStreamAudioSource();
+
+    String m_deviceId;
+    Mutex m_audioConsumersLock;
+    Vector<RefPtr<AudioDestinationConsumer>> m_audioConsumers;
+    MediaStreamSourceStates m_currentStates;
 };
 
 } // namespace WebCore
 
 #endif // ENABLE(MEDIA_STREAM)
 
-#endif // AudioStreamTrack_h
+#endif // MediaStreamAudioSource_h

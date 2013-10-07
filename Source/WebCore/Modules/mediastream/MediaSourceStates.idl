@@ -20,40 +20,25 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
-#ifndef AudioStreamTrack_h
-#define AudioStreamTrack_h
+enum SourceTypeEnum { "none", "camera", "microphone" };
+enum VideoFacingModeEnum { "user", "environment", "left", "right" };
 
-#if ENABLE(MEDIA_STREAM)
+[
+    Conditional=MEDIA_STREAM,
+    ImplementationLacksVTable,
+    NoInterfaceObject,
+] interface MediaSourceStates {
+    readonly attribute SourceTypeEnum sourceType;
+    readonly attribute DOMString sourceId;
 
-#include "MediaStreamTrack.h"
-#include <wtf/RefCounted.h>
-#include <wtf/Vector.h>
-
-namespace WebCore {
-
-class MediaStreamSource;
-class ScriptExecutionContext;
-
-class AudioStreamTrack FINAL : public MediaStreamTrack {
-public:
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, const Dictionary&);
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, MediaStreamSource*);
-    static RefPtr<AudioStreamTrack> create(MediaStreamTrack*);
-
-    virtual ~AudioStreamTrack() { }
-
-    virtual const AtomicString& kind() const OVERRIDE;
-
-private:
-    AudioStreamTrack(ScriptExecutionContext*, MediaStreamSource*, const Dictionary*);
-    explicit AudioStreamTrack(MediaStreamTrack*);
+    [CustomGetter] readonly attribute unsigned long width;
+    [CustomGetter] readonly attribute unsigned long height;
+    [CustomGetter] readonly attribute float frameRate;
+    [CustomGetter] readonly attribute float aspectRatio;
+    [CustomGetter] readonly attribute VideoFacingModeEnum facingMode;
+    [CustomGetter] readonly attribute unsigned long volume;
 };
 
-} // namespace WebCore
-
-#endif // ENABLE(MEDIA_STREAM)
-
-#endif // AudioStreamTrack_h

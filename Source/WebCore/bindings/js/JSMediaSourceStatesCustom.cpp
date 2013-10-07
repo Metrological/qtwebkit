@@ -23,37 +23,66 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AudioStreamTrack_h
-#define AudioStreamTrack_h
+#include "config.h"
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "MediaStreamTrack.h"
-#include <wtf/RefCounted.h>
-#include <wtf/Vector.h>
+#include "JSMediaSourceStates.h"
+
+#include "MediaSourceStates.h"
+
+using namespace JSC;
 
 namespace WebCore {
 
-class MediaStreamSource;
-class ScriptExecutionContext;
+JSValue JSMediaSourceStates::width(ExecState*) const
+{
+    if (!impl()->hasVideoSource())
+        return jsUndefined();
 
-class AudioStreamTrack FINAL : public MediaStreamTrack {
-public:
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, const Dictionary&);
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, MediaStreamSource*);
-    static RefPtr<AudioStreamTrack> create(MediaStreamTrack*);
+    return jsNumber(impl()->width());
+}
 
-    virtual ~AudioStreamTrack() { }
+JSValue JSMediaSourceStates::height(ExecState*) const
+{
+    if (!impl()->hasVideoSource())
+        return jsUndefined();
+    
+    return jsNumber(impl()->height());
+}
 
-    virtual const AtomicString& kind() const OVERRIDE;
+JSValue JSMediaSourceStates::frameRate(ExecState*) const
+{
+    if (!impl()->hasVideoSource())
+        return jsUndefined();
+    
+    return jsNumber(impl()->frameRate());
+}
 
-private:
-    AudioStreamTrack(ScriptExecutionContext*, MediaStreamSource*, const Dictionary*);
-    explicit AudioStreamTrack(MediaStreamTrack*);
-};
+JSValue JSMediaSourceStates::aspectRatio(ExecState*) const
+{
+    if (!impl()->hasVideoSource())
+        return jsUndefined();
+    
+    return jsNumber(impl()->aspectRatio());
+}
+
+JSValue JSMediaSourceStates::facingMode(ExecState* exec) const
+{
+    if (!impl()->hasVideoSource())
+        return jsUndefined();
+
+    return jsStringWithCache(exec, impl()->facingMode());
+}
+
+JSValue JSMediaSourceStates::volume(ExecState*) const
+{
+    if (impl()->hasVideoSource())
+        return jsUndefined();
+    
+    return jsNumber(impl()->volume());
+}
 
 } // namespace WebCore
 
-#endif // ENABLE(MEDIA_STREAM)
-
-#endif // AudioStreamTrack_h
+#endif

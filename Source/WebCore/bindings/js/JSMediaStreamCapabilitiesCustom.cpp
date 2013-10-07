@@ -20,40 +20,34 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
-#ifndef AudioStreamTrack_h
-#define AudioStreamTrack_h
+#include "config.h"
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "MediaStreamTrack.h"
-#include <wtf/RefCounted.h>
-#include <wtf/Vector.h>
+#include "JSMediaStreamCapabilities.h"
+
+#include "JSAllAudioCapabilities.h"
+#include "JSAllVideoCapabilities.h"
+#include "MediaStreamCapabilities.h"
+
+using namespace JSC;
 
 namespace WebCore {
 
-class MediaStreamSource;
-class ScriptExecutionContext;
+JSC::JSValue toJS(JSC::ExecState* exec, JSDOMGlobalObject* globalObject, MediaStreamCapabilities* object)
+{
+    if (!object)
+        return jsNull();
 
-class AudioStreamTrack FINAL : public MediaStreamTrack {
-public:
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, const Dictionary&);
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, MediaStreamSource*);
-    static RefPtr<AudioStreamTrack> create(MediaStreamTrack*);
+    if (object->hasVideoSource())
+        return wrap<JSAllVideoCapabilities>(exec, globalObject, static_cast<AllVideoCapabilities*>(object));
 
-    virtual ~AudioStreamTrack() { }
-
-    virtual const AtomicString& kind() const OVERRIDE;
-
-private:
-    AudioStreamTrack(ScriptExecutionContext*, MediaStreamSource*, const Dictionary*);
-    explicit AudioStreamTrack(MediaStreamTrack*);
-};
+    return wrap<JSAllAudioCapabilities>(exec, globalObject, static_cast<AllAudioCapabilities*>(object));
+}
 
 } // namespace WebCore
 
 #endif // ENABLE(MEDIA_STREAM)
-
-#endif // AudioStreamTrack_h

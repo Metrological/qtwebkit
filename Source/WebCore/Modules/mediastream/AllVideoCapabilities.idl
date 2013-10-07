@@ -20,40 +20,19 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
-#ifndef AudioStreamTrack_h
-#define AudioStreamTrack_h
-
-#if ENABLE(MEDIA_STREAM)
-
-#include "MediaStreamTrack.h"
-#include <wtf/RefCounted.h>
-#include <wtf/Vector.h>
-
-namespace WebCore {
-
-class MediaStreamSource;
-class ScriptExecutionContext;
-
-class AudioStreamTrack FINAL : public MediaStreamTrack {
-public:
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, const Dictionary&);
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, MediaStreamSource*);
-    static RefPtr<AudioStreamTrack> create(MediaStreamTrack*);
-
-    virtual ~AudioStreamTrack() { }
-
-    virtual const AtomicString& kind() const OVERRIDE;
-
-private:
-    AudioStreamTrack(ScriptExecutionContext*, MediaStreamSource*, const Dictionary*);
-    explicit AudioStreamTrack(MediaStreamTrack*);
+[
+    NoInterfaceObject,
+    Conditional=MEDIA_STREAM,
+    JSGenerateToJSObject,
+] interface AllVideoCapabilities : MediaStreamCapabilities {
+    readonly attribute DOMString[] sourceType;
+    readonly attribute DOMString[] sourceId;
+    readonly attribute CapabilityRange width;
+    readonly attribute CapabilityRange height;
+    readonly attribute CapabilityRange frameRate;
+    readonly attribute CapabilityRange aspectRatio;
+    readonly attribute DOMString[]  facingMode;
 };
-
-} // namespace WebCore
-
-#endif // ENABLE(MEDIA_STREAM)
-
-#endif // AudioStreamTrack_h

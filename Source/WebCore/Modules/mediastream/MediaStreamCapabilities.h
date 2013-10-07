@@ -23,37 +23,47 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AudioStreamTrack_h
-#define AudioStreamTrack_h
+#ifndef MediaStreamCapabilities_h
+#define MediaStreamCapabilities_h
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "MediaStreamTrack.h"
+#include "MediaStreamCapabilities.h"
+#include "MediaStreamSourceCapabilities.h"
+#include "ScriptWrappable.h"
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>
+#include <wtf/text/WTFString.h>
 
 namespace WebCore {
 
-class MediaStreamSource;
-class ScriptExecutionContext;
+class CapabilityRange;
+class MediaStreamSourceCapabilities;
 
-class AudioStreamTrack FINAL : public MediaStreamTrack {
+class MediaStreamCapabilities : public RefCounted<MediaStreamCapabilities>, public ScriptWrappable {
 public:
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, const Dictionary&);
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, MediaStreamSource*);
-    static RefPtr<AudioStreamTrack> create(MediaStreamTrack*);
+    static RefPtr<MediaStreamCapabilities> create(PassRefPtr<MediaStreamSourceCapabilities>);
+    virtual ~MediaStreamCapabilities() { }
 
-    virtual ~AudioStreamTrack() { }
+    virtual Vector<String> sourceType() const;
+    virtual Vector<String> sourceId() const;
+    virtual RefPtr<CapabilityRange> width() const;
+    virtual RefPtr<CapabilityRange> height() const;
+    virtual RefPtr<CapabilityRange> frameRate() const;
+    virtual RefPtr<CapabilityRange> aspectRatio() const;
+    virtual Vector<String> facingMode() const;
+    virtual RefPtr<CapabilityRange> volume() const;
+    
+    bool hasVideoSource() { return m_SourceCapabilities->hasVideoSource(); }
 
-    virtual const AtomicString& kind() const OVERRIDE;
+protected:
+    explicit MediaStreamCapabilities(PassRefPtr<MediaStreamSourceCapabilities>);
 
-private:
-    AudioStreamTrack(ScriptExecutionContext*, MediaStreamSource*, const Dictionary*);
-    explicit AudioStreamTrack(MediaStreamTrack*);
+    RefPtr<MediaStreamSourceCapabilities> m_SourceCapabilities;
 };
 
 } // namespace WebCore
 
-#endif // ENABLE(MEDIA_STREAM)
+#endif // MediaStreamCapabilities_h
 
-#endif // AudioStreamTrack_h
+#endif

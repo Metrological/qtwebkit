@@ -23,37 +23,35 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AudioStreamTrack_h
-#define AudioStreamTrack_h
+#ifndef AllVideoCapabilities_h
+#define AllVideoCapabilities_h
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "MediaStreamTrack.h"
-#include <wtf/RefCounted.h>
-#include <wtf/Vector.h>
+#include "MediaStreamCapabilities.h"
 
 namespace WebCore {
 
-class MediaStreamSource;
-class ScriptExecutionContext;
+class CapabilityRange;
+class MediaStreamSourceCapabilities;
 
-class AudioStreamTrack FINAL : public MediaStreamTrack {
+class AllVideoCapabilities : public MediaStreamCapabilities {
 public:
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, const Dictionary&);
-    static RefPtr<AudioStreamTrack> create(ScriptExecutionContext*, MediaStreamSource*);
-    static RefPtr<AudioStreamTrack> create(MediaStreamTrack*);
-
-    virtual ~AudioStreamTrack() { }
-
-    virtual const AtomicString& kind() const OVERRIDE;
+    static RefPtr<AllVideoCapabilities> create(PassRefPtr<MediaStreamSourceCapabilities> capabilities)
+    {
+        return adoptRef(new AllVideoCapabilities(capabilities));
+    }
+    virtual ~AllVideoCapabilities() { }
 
 private:
-    AudioStreamTrack(ScriptExecutionContext*, MediaStreamSource*, const Dictionary*);
-    explicit AudioStreamTrack(MediaStreamTrack*);
+    explicit AllVideoCapabilities(PassRefPtr<MediaStreamSourceCapabilities> capabilities)
+        : MediaStreamCapabilities(capabilities)
+    {
+    }
 };
 
 } // namespace WebCore
 
-#endif // ENABLE(MEDIA_STREAM)
+#endif // AllVideoCapabilities_h
 
-#endif // AudioStreamTrack_h
+#endif
