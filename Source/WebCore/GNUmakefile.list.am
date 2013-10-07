@@ -1290,9 +1290,16 @@ dom_binding_idls += \
 	$(WebCore)/Modules/indexeddb/IDBTransaction.idl \
 	$(WebCore)/Modules/indexeddb/IDBVersionChangeEvent.idl \
 	$(WebCore)/Modules/indexeddb/WorkerGlobalScopeIndexedDatabase.idl \
+	$(WebCore)/Modules/mediasource/DOMURLMediaSource.idl \
 	$(WebCore)/Modules/mediasource/MediaSource.idl \
 	$(WebCore)/Modules/mediasource/SourceBuffer.idl \
 	$(WebCore)/Modules/mediasource/SourceBufferList.idl \
+<<<<<<< HEAD
+=======
+	$(WebCore)/Modules/mediasource/WebKitMediaSource.idl \
+	$(WebCore)/Modules/mediasource/WebKitSourceBuffer.idl \
+	$(WebCore)/Modules/mediasource/WebKitSourceBufferList.idl \
+>>>>>>> fd58295... URLMediaSource.idl and URLMediaStream.idl are wrong
 	$(WebCore)/Modules/mediastream/AudioStreamTrack.idl \
 	$(WebCore)/Modules/mediastream/MediaStream.idl \
 	$(WebCore)/Modules/mediastream/MediaStreamEvent.idl \

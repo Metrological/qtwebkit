@@ -34,19 +34,19 @@
 #if ENABLE(MEDIA_SOURCE)
 
 #include "DOMURL.h"
-#include "MediaSource.h"
+#include "MediaSourceBase.h"
 #include <wtf/MainThread.h>
 
 namespace WebCore {
 
-String DOMURLMediaSource::createObjectURL(ScriptExecutionContext* scriptExecutionContext, MediaSource* source)
+String DOMURLMediaSource::createObjectURL(ScriptExecutionContext* scriptExecutionContext, MediaSourceBase* source)
 {
     // Since WebWorkers cannot obtain MediaSource objects, we should be on the main thread.
     ASSERT(isMainThread());
 
     if (!scriptExecutionContext || !source)
         return String();
-    return DOMURL::createObjectURL(scriptExecutionContext, source);
+    return DOMURL::createPublicURL(scriptExecutionContext, source);
 }
 
 } // namespace WebCore

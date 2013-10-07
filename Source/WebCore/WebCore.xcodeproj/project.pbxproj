@@ -5358,6 +5358,16 @@
 		CD82030D1395AB6A00F956C6 /* WebVideoFullscreenHUDWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CD8203091395AB6A00F956C6 /* WebVideoFullscreenHUDWindowController.mm */; };
 		CD8203101395ACE700F956C6 /* WebWindowAnimation.h in Headers */ = {isa = PBXBuildFile; fileRef = CD82030E1395ACE700F956C6 /* WebWindowAnimation.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		CD8203111395ACE700F956C6 /* WebWindowAnimation.mm in Sources */ = {isa = PBXBuildFile; fileRef = CD82030F1395ACE700F956C6 /* WebWindowAnimation.mm */; };
+		CD9DE17417AAC74C00EA386D /* JSMediaSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CD9DE17217AAC74C00EA386D /* JSMediaSource.cpp */; };
+		CD9DE17517AAC74C00EA386D /* JSMediaSource.h in Headers */ = {isa = PBXBuildFile; fileRef = CD9DE17317AAC74C00EA386D /* JSMediaSource.h */; };
+		CD9DE17A17AAC75B00EA386D /* JSSourceBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CD9DE17617AAC75B00EA386D /* JSSourceBuffer.cpp */; };
+		CD9DE17B17AAC75B00EA386D /* JSSourceBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = CD9DE17717AAC75B00EA386D /* JSSourceBuffer.h */; };
+		CD9DE17C17AAC75B00EA386D /* JSSourceBufferList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CD9DE17817AAC75B00EA386D /* JSSourceBufferList.cpp */; };
+		CD9DE17D17AAC75B00EA386D /* JSSourceBufferList.h in Headers */ = {isa = PBXBuildFile; fileRef = CD9DE17917AAC75B00EA386D /* JSSourceBufferList.h */; };
+		CD9DE18117AAD6A400EA386D /* DOMURLMediaSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CD9DE17E17AAD64E00EA386D /* DOMURLMediaSource.cpp */; };
+		CD9DE18217AAD6A400EA386D /* DOMURLMediaSource.h in Headers */ = {isa = PBXBuildFile; fileRef = CD9DE17F17AAD64E00EA386D /* DOMURLMediaSource.h */; };
+		CD9DE18517AB0CF300EA386D /* HTMLMediaSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CD9DE18317AB0CF300EA386D /* HTMLMediaSource.cpp */; };
+		CD9DE18617AB0CF300EA386D /* HTMLMediaSource.h in Headers */ = {isa = PBXBuildFile; fileRef = CD9DE18417AB0CF300EA386D /* HTMLMediaSource.h */; };
 		CDA79824170A258300D45C55 /* AudioSession.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CDA79823170A258300D45C55 /* AudioSession.cpp */; };
 		CDA79827170A279100D45C55 /* AudioSessionIOS.mm in Sources */ = {isa = PBXBuildFile; fileRef = CDA79825170A279000D45C55 /* AudioSessionIOS.mm */; };
 		CDA7982A170A3D0000D45C55 /* AudioSession.h in Headers */ = {isa = PBXBuildFile; fileRef = CDA79821170A22DC00D45C55 /* AudioSession.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -12282,6 +12292,17 @@
 		CD8203091395AB6A00F956C6 /* WebVideoFullscreenHUDWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebVideoFullscreenHUDWindowController.mm; sourceTree = "<group>"; };
 		CD82030E1395ACE700F956C6 /* WebWindowAnimation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebWindowAnimation.h; sourceTree = "<group>"; };
 		CD82030F1395ACE700F956C6 /* WebWindowAnimation.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebWindowAnimation.mm; sourceTree = "<group>"; };
+		CD9DE17217AAC74C00EA386D /* JSMediaSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JSMediaSource.cpp; sourceTree = "<group>"; };
+		CD9DE17317AAC74C00EA386D /* JSMediaSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSMediaSource.h; sourceTree = "<group>"; };
+		CD9DE17617AAC75B00EA386D /* JSSourceBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JSSourceBuffer.cpp; sourceTree = "<group>"; };
+		CD9DE17717AAC75B00EA386D /* JSSourceBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSSourceBuffer.h; sourceTree = "<group>"; };
+		CD9DE17817AAC75B00EA386D /* JSSourceBufferList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JSSourceBufferList.cpp; sourceTree = "<group>"; };
+		CD9DE17917AAC75B00EA386D /* JSSourceBufferList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSSourceBufferList.h; sourceTree = "<group>"; };
+		CD9DE17E17AAD64E00EA386D /* DOMURLMediaSource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DOMURLMediaSource.cpp; sourceTree = "<group>"; };
+		CD9DE17F17AAD64E00EA386D /* DOMURLMediaSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DOMURLMediaSource.h; sourceTree = "<group>"; };
+		CD9DE18017AAD64E00EA386D /* DOMURLMediaSource.idl */ = {isa = PBXFileReference; lastKnownFileType = text; path = DOMURLMediaSource.idl; sourceTree = "<group>"; };
+		CD9DE18317AB0CF300EA386D /* HTMLMediaSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HTMLMediaSource.cpp; sourceTree = "<group>"; };
+		CD9DE18417AB0CF300EA386D /* HTMLMediaSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HTMLMediaSource.h; sourceTree = "<group>"; };
 		CDA79821170A22DC00D45C55 /* AudioSession.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AudioSession.h; sourceTree = "<group>"; };
 		CDA79822170A24F400D45C55 /* AudioSessionListener.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AudioSessionListener.h; sourceTree = "<group>"; };
 		CDA79823170A258300D45C55 /* AudioSession.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AudioSession.cpp; sourceTree = "<group>"; };
@@ -22124,6 +22145,7 @@
 				85BA4D150AA688680088052D /* DOMHTMLOListElement.h in Headers */,
 				85E711BE0AC5D5350053270F /* DOMHTMLOListElementInternal.h in Headers */,
 				85F32AEE0AA63B8700FF3184 /* DOMHTMLOptGroupElement.h in Headers */,
+				CD9DE18217AAD6A400EA386D /* DOMURLMediaSource.h in Headers */,
 				85E711BF0AC5D5350053270F /* DOMHTMLOptGroupElementInternal.h in Headers */,
 				8540756B0AD6CBF900620C57 /* DOMHTMLOptionElement.h in Headers */,
 				8540756D0AD6CBF900620C57 /* DOMHTMLOptionElementInternal.h in Headers */,
@@ -27510,6 +27532,7 @@
 				93F19A9D08245E59001E9ABC /* TextResourceDecoder.cpp in Sources */,
 				376DCCE113B4F966002EBEFC /* TextRun.cpp in Sources */,
 				B2C3DA4A0D006C1D00EF6F26 /* TextStream.cpp in Sources */,
+				CD9DE18117AAD6A400EA386D /* DOMURLMediaSource.cpp in Sources */,
 				9759E93F14EF1CF80026A2DD /* TextTrack.cpp in Sources */,
 				9759E94214EF1CF80026A2DD /* TextTrackCue.cpp in Sources */,
 				071A9EC2168FBC43002629F9 /* TextTrackCueGeneric.cpp in Sources */,
