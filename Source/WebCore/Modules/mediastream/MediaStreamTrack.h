@@ -69,11 +69,11 @@ public:
     bool ended() const;
 
     // EventTarget
-    virtual const AtomicString& interfaceName() const OVERRIDE;
-    virtual ScriptExecutionContext* scriptExecutionContext() const OVERRIDE;
+    virtual const AtomicString& interfaceName() const OVERRIDE FINAL;
+    virtual ScriptExecutionContext* scriptExecutionContext() const OVERRIDE FINAL;
 
     // ActiveDOMObject
-    virtual void stop() OVERRIDE;
+    virtual void stop() OVERRIDE FINAL;
 
     using RefCounted<MediaStreamTrack>::ref;
     using RefCounted<MediaStreamTrack>::deref;
@@ -85,14 +85,14 @@ private:
     void trackDidEnd();
 
     // EventTarget
-    virtual EventTargetData* eventTargetData() OVERRIDE;
-    virtual EventTargetData* ensureEventTargetData() OVERRIDE;
-    virtual void refEventTarget() OVERRIDE { ref(); }
-    virtual void derefEventTarget() OVERRIDE { deref(); }
+    virtual EventTargetData* eventTargetData() OVERRIDE FINAL;
+    virtual EventTargetData* ensureEventTargetData() OVERRIDE FINAL;
+    virtual void refEventTarget() OVERRIDE FINAL { ref(); }
+    virtual void derefEventTarget() OVERRIDE FINAL { deref(); }
     EventTargetData m_eventTargetData;
 
     // MediaStreamSourceObserver
-    virtual void sourceChangedState() OVERRIDE;
+    virtual void sourceChangedState() OVERRIDE FINAL;
 
     RefPtr<MediaStreamSource> m_source;
     RefPtr<MediaConstraints> m_constraints;
