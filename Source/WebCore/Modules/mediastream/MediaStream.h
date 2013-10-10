@@ -64,7 +64,7 @@ public:
 
     bool ended() const;
     void setEnded();
-    void stop();
+    PassRefPtr<MediaStream> clone();
 
     DEFINE_ATTRIBUTE_EVENT_LISTENER(ended);
     DEFINE_ATTRIBUTE_EVENT_LISTENER(addtrack);
@@ -106,7 +106,7 @@ private:
     void scheduleDispatchEvent(PassRefPtr<Event>);
     void scheduledEventTimerFired(Timer<MediaStream>*);
 
-    bool m_stopped;
+    void cloneMediaStreamTrackVector(MediaStreamTrackVector&, const MediaStreamTrackVector&);
 
     EventTargetData m_eventTargetData;
 
