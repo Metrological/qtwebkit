@@ -47,6 +47,8 @@ MediaStreamSourceGStreamer(const AtomicString& id, const AtomicString& name, Med
     const String& factoryKey() const { return m_factoryKey; }
     const String& device() const { return m_device; }
 
+    GRefPtr<GstElement> createGStreamerElement(GRefPtr<GstPad>& sourcePad);
+
 private:
     RefPtr<MediaStreamSourceCapabilities> m_capabilities;
     MediaStreamSourceStates m_currentStates;

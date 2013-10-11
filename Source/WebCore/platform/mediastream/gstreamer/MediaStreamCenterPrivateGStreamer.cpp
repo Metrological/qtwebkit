@@ -58,7 +58,7 @@ static GRefPtr<GstElement> findDeviceSource(const char* elementName)
 
 static RefPtr<MediaStreamSourceGStreamer> probeSource(GstElement* source, MediaStreamSource::Type type)
 {
-    // FIXME: gstreamer 1.0 doesn't have an equivalent to GstPropertyProbe,
+    // TODO: gstreamer 1.0 doesn't have an equivalent to GstPropertyProbe,
     // so we don't support choosing a particular device yet.
     // see https://bugzilla.gnome.org/show_bug.cgi?id=678402
 
@@ -74,10 +74,11 @@ static RefPtr<MediaStreamSourceGStreamer> probeSource(GstElement* source, MediaS
 
     RefPtr<MediaStreamSourceGStreamer> mediaStreamSource = adoptRef(new MediaStreamSourceGStreamer(deviceId, deviceName.get(), type, "default", strFactoryName));
 
-    // TODO: fill source capabilities and states.
+    // TODO: fill source capabilities and states, see bug #123345.
 
     return mediaStreamSource;
 }
+
 
 MediaStreamCenterPrivateGStreamer::MediaStreamCenterPrivateGStreamer()
 {

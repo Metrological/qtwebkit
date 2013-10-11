@@ -45,6 +45,16 @@ public:
 
     bool handleMessage(GstMessage*);
 
+    float currentTime() const;
+
+    bool connectToSource(PassRefPtr<MediaStreamSourceGStreamer>, GstElement* sink, GstPad* sinkPad = 0);
+    bool disconnectFromSource(PassRefPtr<MediaStreamSourceGStreamer>, GstElement* sink, GstPad* sinkPad = 0);
+
+    void disconnectSinkFromPipelinePadBlocked(GstElement* sink, GstPad* sourcePad);
+    void disconnectUnusedSource(GstElement* tee);
+
+    GstElement* pipeline() const;
+
 private:
     class Source {
     public:
@@ -65,6 +75,9 @@ private:
 
     typedef HashMap<String, Source> PipelineMap;
     typedef HashMap<String, String> SourceIdLookupMap;
+
+    bool connectAndGetSourceElement(PassRefPtr<MediaStreamSourceGStreamer> source, GRefPtr<GstElement>& sourceElement, GRefPtr<GstPad>& sourcePad);
+    void disconnectSinkFromTee(GstElement* tee, GstElement* sink, GstPad*);
 
     GRefPtr<GstElement> m_pipeline;
     PipelineMap m_pipelineMap;
