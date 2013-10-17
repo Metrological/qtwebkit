@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2011 Ericsson AB. All rights reserved.
  * Copyright (C) 2012 Google Inc. All rights reserved.
+ * Copyright (C) 2013 Igalia S.L. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,20 +33,17 @@
 #ifndef MediaStreamCenterGStreamer_h
 #define MediaStreamCenterGStreamer_h
 
-#if ENABLE(MEDIA_STREAM)
+#if ENABLE(MEDIA_STREAM) && USE(GSTREAMER)
 
 #include "MediaStreamCenter.h"
 
 #include <wtf/PassRefPtr.h>
-#include <wtf/text/WTFString.h>
 
 namespace WebCore {
 
-class MediaStreamPrivate;
-class MediaStreamSource;
-class MediaStreamSourcesQueryClient;
+class MediaStreamCenterPrivateGStreamer;
 
-class MediaStreamCenterGStreamer : public MediaStreamCenter {
+class MediaStreamCenterGStreamer final : public MediaStreamCenter {
 public:
     MediaStreamCenterGStreamer();
     ~MediaStreamCenterGStreamer();
@@ -53,10 +51,13 @@ public:
     virtual void validateRequestConstraints(PassRefPtr<MediaStreamCreationClient>, PassRefPtr<MediaConstraints> audioConstraints, PassRefPtr<MediaConstraints> videoConstraints);
     virtual void createMediaStream(PassRefPtr<MediaStreamCreationClient>, PassRefPtr<MediaConstraints> audioConstraints, PassRefPtr<MediaConstraints> videoConstraints);
     virtual bool getMediaStreamTrackSources(PassRefPtr<MediaStreamTrackSourcesRequestClient>) OVERRIDE;
+
+private:
+    OwnPtr<MediaStreamCenterPrivateGStreamer> m_private;
 };
 
 } // namespace WebCore
 
-#endif // ENABLE(MEDIA_STREAM)
+#endif // ENABLE(MEDIA_STREAM) && USE(GSTREAMER)
 
 #endif // MediaStreamCenterGStreamer_h
