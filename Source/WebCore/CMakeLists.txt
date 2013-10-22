@@ -2110,6 +2110,8 @@ set(WebCore_SOURCES
     platform/mock/NetworkServicePublisherGupnpMock.cpp
 
     platform/mock/MockMediaStreamCenter.cpp
+    platform/mock/RTCNotifiersMock.cpp
+    platform/mock/RTCPeerConnectionHandlerMock.cpp
 
     platform/mock/ScrollbarThemeMock.cpp
 

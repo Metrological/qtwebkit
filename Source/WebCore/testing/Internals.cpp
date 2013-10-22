@@ -158,6 +158,8 @@
 
 #if ENABLE(MEDIA_STREAM)
 #include "MockMediaStreamCenter.h"
+#include "RTCPeerConnection.h"
+#include "RTCPeerConnectionHandlerMock.h"
 #endif
 
 namespace WebCore {
@@ -306,9 +308,10 @@ Internals::Internals(Document* document)
     if (document && document->page())
         document->page()->group().captionPreferences()->setTestingMode(true);
 #endif
-    
+
 #if ENABLE(MEDIA_STREAM)
     MockMediaStreamCenter::registerMockMediaStreamCenter();
+    enableMockRTCPeerConnectionHandler();
 #endif
 }
 
@@ -779,7 +782,14 @@ void Internals::enableMockSpeechSynthesizer()
     synthesis->setPlatformSynthesizer(PlatformSpeechSynthesizerMock::create(synthesis));
 }
 #endif
-    
+
+#if ENABLE(MEDIA_STREAM)
+void Internals::enableMockRTCPeerConnectionHandler()
+{
+    RTCPeerConnectionHandler::create = RTCPeerConnectionHandlerMock::create;
+}
+#endif
+
 PassRefPtr<ClientRect> Internals::absoluteCaretBounds(ExceptionCode& ec)
 {
     Document* document = contextDocument();
