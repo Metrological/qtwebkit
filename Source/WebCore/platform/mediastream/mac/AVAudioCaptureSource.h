@@ -20,25 +20,40 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-enum SourceTypeEnum { "none", "camera", "microphone" };
-enum VideoFacingModeEnum { "user", "environment", "left", "right" };
+#ifndef AVAudioCaptureSource_h
+#define AVAudioCaptureSource_h
 
-[
-    Conditional=MEDIA_STREAM,
-    ImplementationLacksVTable,
-    NoInterfaceObject,
-] interface MediaSourceStates {
-    readonly attribute SourceTypeEnum sourceType;
-    readonly attribute DOMString sourceId;
+#if ENABLE(MEDIA_STREAM) && USE(AVFOUNDATION)
 
-    [CustomGetter] readonly attribute unsigned long? width;
-    [CustomGetter] readonly attribute unsigned long? height;
-    [CustomGetter] readonly attribute float? frameRate;
-    [CustomGetter] readonly attribute float? aspectRatio;
-    [CustomGetter] readonly attribute VideoFacingModeEnum? facingMode;
-    [CustomGetter] readonly attribute unsigned long? volume;
+#include "AVMediaCaptureSource.h"
+
+typedef const struct opaqueCMFormatDescription *CMFormatDescriptionRef;
+
+namespace WebCore {
+    
+class AVAudioCaptureSource : public AVMediaCaptureSource {
+public:
+    static RefPtr<AVMediaCaptureSource> create(AVCaptureDevice*, const AtomicString&, PassRefPtr<MediaConstraints>);
+    
+private:
+    AVAudioCaptureSource(AVCaptureDevice*, const AtomicString&, PassRefPtr<MediaConstraints>);
+    virtual ~AVAudioCaptureSource();
+    
+    virtual RefPtr<MediaStreamSourceCapabilities> capabilities() const OVERRIDE;
+    virtual void captureOutputDidOutputSampleBufferFromConnection(AVCaptureOutput*, CMSampleBufferRef, AVCaptureConnection*) OVERRIDE;
+    
+    virtual void setupCaptureSession() OVERRIDE;
+    virtual void updateStates() OVERRIDE;
+        
+    RetainPtr<AVCaptureConnection> m_audioConnection;
+    RetainPtr<CMFormatDescriptionRef> m_audioFormatDescription;
 };
 
+} // namespace WebCore
+
+#endif // ENABLE(MEDIA_STREAM)
+
+#endif // AVVideoCaptureSource_h

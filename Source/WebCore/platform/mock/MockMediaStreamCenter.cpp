@@ -91,25 +91,27 @@ static void initializeMockSources()
     mockSource1->m_capabilities->setAspectRatioRange(MediaStreamSourceCapabilityRange(4 / 3.0f, 16 / 9.0f, true));
     mockSource1->m_capabilities->setVolumeRange(MediaStreamSourceCapabilityRange(10UL, 90UL, true));
 
-    mockSource1->m_currentStates.sourceType = MediaStreamSourceStates::Camera;
-    mockSource1->m_currentStates.sourceId = mockSource1->id();
-    mockSource1->m_currentStates.facingMode = MediaStreamSourceStates::User;
-    mockSource1->m_currentStates.width = 1920;
-    mockSource1->m_currentStates.height = 1080;
-    mockSource1->m_currentStates.frameRate = 30;
-    mockSource1->m_currentStates.aspectRatio = 16 / 9.0f;
-    mockSource1->m_currentStates.volume = 70;
-    mockSourceMap().add(mockSource1->id(), mockSource1.release());
+    mockSource1->m_currentStates.setSourceType(MediaStreamSourceStates::Camera);
+    mockSource1->m_currentStates.setSourceId(mockSource1->id());
+    mockSource1->m_currentStates.setFacingMode(MediaStreamSourceStates::User);
+    mockSource1->m_currentStates.setWidth(1920);
+    mockSource1->m_currentStates.setHeight(1080);
+    mockSource1->m_currentStates.setFrameRate(30);
+    mockSource1->m_currentStates.setAspectRatio(16 / 9.0f);
+    mockSource1->m_currentStates.setVolume(70);
+    String mockSource1id = mockSource1->id();
+    mockSourceMap().add(mockSource1id, mockSource1.release());
 
     RefPtr<MockSource> mockSource2 = adoptRef(new MockSource(mockAudioSourceID(), "Mock audio device", MediaStreamSource::Audio));
     mockSource2->m_capabilities = MediaStreamSourceCapabilities::create();
     mockSource2->m_capabilities->setSourceId(mockSource2->id());
     mockSource2->m_capabilities->setVolumeRange(MediaStreamSourceCapabilityRange(0UL, 100UL, true));
 
-    mockSource2->m_currentStates.sourceType = MediaStreamSourceStates::Microphone;
-    mockSource2->m_currentStates.sourceId = mockSource2->id();
-    mockSource2->m_currentStates.volume = 50;
-    mockSourceMap().add(mockSource2->id(), mockSource2.release());
+    mockSource2->m_currentStates.setSourceType(MediaStreamSourceStates::Microphone);
+    mockSource2->m_currentStates.setSourceId(mockSource2->id());
+    mockSource2->m_currentStates.setVolume(50);
+    String mockSource2id = mockSource2->id();
+    mockSourceMap().add(mockSource2id, mockSource2.release());
 }
 
 void MockMediaStreamCenter::registerMockMediaStreamCenter()
@@ -202,15 +204,13 @@ void MockMediaStreamCenter::createMediaStream(PassRefPtr<MediaStreamCreationClie
             return;
         }
 
-        if (audioConstraints) {
-            MockSourceMap::iterator it = map.find(mockAudioSourceID());
-            ASSERT(it != map.end());
+        MockSourceMap::iterator it = map.find(mockAudioSourceID());
+        ASSERT(it != map.end());
 
-            RefPtr<MediaStreamSource> audioSource = it->value;
-            audioSource->reset();
-            audioSource->setReadyState(MediaStreamSource::Live);
-            audioSources.append(audioSource.release());
-        }
+        RefPtr<MediaStreamSource> audioSource = it->value;
+        audioSource->reset();
+        audioSource->setReadyState(MediaStreamSource::Live);
+        audioSources.append(audioSource.release());
     }
 
     if (videoConstraints) {
@@ -220,15 +220,13 @@ void MockMediaStreamCenter::createMediaStream(PassRefPtr<MediaStreamCreationClie
             return;
         }
 
-        if (videoConstraints) {
-            MockSourceMap::iterator it = map.find(mockVideoSourceID());
-            ASSERT(it != map.end());
+        MockSourceMap::iterator it = map.find(mockVideoSourceID());
+        ASSERT(it != map.end());
 
-            RefPtr<MediaStreamSource> videoSource = it->value;
-            videoSource->reset();
-            videoSource->setReadyState(MediaStreamSource::Live);
-            videoSources.append(videoSource.release());
-        }
+        RefPtr<MediaStreamSource> videoSource = it->value;
+        videoSource->reset();
+        videoSource->setReadyState(MediaStreamSource::Live);
+        videoSources.append(videoSource.release());
     }
     
     client->didCreateStream(MediaStreamDescriptor::create(audioSources, videoSources, MediaStreamDescriptor::IsNotEnded));

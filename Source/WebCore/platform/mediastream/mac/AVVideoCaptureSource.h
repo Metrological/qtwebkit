@@ -23,37 +23,46 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
+#ifndef AVVideoCaptureSource_h
+#define AVVideoCaptureSource_h
 
-#if ENABLE(MEDIA_STREAM)
+#if ENABLE(MEDIA_STREAM) && USE(AVFOUNDATION)
 
-#include "MediaSourceStates.h"
+#include "AVMediaCaptureSource.h"
 
-#include <wtf/NeverDestroyed.h>
+typedef const struct opaqueCMFormatDescription *CMFormatDescriptionRef;
 
 namespace WebCore {
 
-RefPtr<MediaSourceStates> MediaSourceStates::create(const MediaStreamSourceStates& states)
-{
-    return adoptRef(new MediaSourceStates(states));
-}
+class AVVideoCaptureSource : public AVMediaCaptureSource {
+public:
+    static RefPtr<AVMediaCaptureSource> create(AVCaptureDevice*, const AtomicString&, PassRefPtr<MediaConstraints>);
 
-MediaSourceStates::MediaSourceStates(const MediaStreamSourceStates& states)
-    : m_sourceStates(states)
-{
-}
+    virtual RefPtr<MediaStreamSourceCapabilities> capabilities() const OVERRIDE;
+    virtual void captureOutputDidOutputSampleBufferFromConnection(AVCaptureOutput*, CMSampleBufferRef, AVCaptureConnection*) OVERRIDE;
 
-const AtomicString& MediaSourceStates::sourceType() const
-{
-    return MediaStreamSourceStates::sourceType(m_sourceStates.sourceType());
-}
+private:
+    AVVideoCaptureSource(AVCaptureDevice*, const AtomicString&, PassRefPtr<MediaConstraints>);
+    virtual ~AVVideoCaptureSource();
 
-const AtomicString& MediaSourceStates::facingMode() const
-{
-    return MediaStreamSourceStates::facingMode(m_sourceStates.facingMode());
-}
+    virtual void setupCaptureSession() OVERRIDE;
+    virtual void updateStates() OVERRIDE;
 
+    bool applyConstraints(MediaConstraints*);
+    bool setFrameRateConstraint(float minFrameRate, float maxFrameRate);
+
+    void calculateFramerate(CMSampleBufferRef);
+
+    RetainPtr<AVCaptureConnection> m_videoConnection;
+    RetainPtr<CMFormatDescriptionRef> m_videoFormatDescription;
+    Vector<Float64> m_videoFrameTimeStamps;
+    Float64 m_frameRate;
+    int32_t m_width;
+    int32_t m_height;
+};
 
 } // namespace WebCore
 
-#endif
+#endif // ENABLE(MEDIA_STREAM)
+
+#endif // AVVideoCaptureSource_h

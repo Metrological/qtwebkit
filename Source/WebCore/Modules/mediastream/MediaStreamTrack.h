@@ -52,6 +52,7 @@ class MediaStreamTrack : public RefCounted<MediaStreamTrack>, public ScriptWrapp
 public:
     class Observer {
     public:
+        virtual ~Observer() { }
         virtual void trackDidEnd() = 0;
     };
 
@@ -67,6 +68,7 @@ public:
     bool muted() const;
     bool readonly() const;
     bool remote() const;
+    bool stopped() const;
 
     const AtomicString& readyState() const;
 
@@ -76,6 +78,7 @@ public:
     RefPtr<MediaSourceStates> states() const;
     RefPtr<MediaStreamCapabilities> capabilities() const;
     void applyConstraints(const Dictionary&);
+    void applyConstraints(PassRefPtr<MediaConstraints>);
 
     RefPtr<MediaStreamTrack> clone();
     void stopProducingData();
@@ -87,17 +90,11 @@ public:
     DEFINE_ATTRIBUTE_EVENT_LISTENER(overconstrained);
 
     MediaStreamSource* source() const { return m_privateTrack->source(); }
-    void setSource(MediaStreamSource*);
 
     bool ended() const;
 
     void addObserver(Observer*);
     void removeObserver(Observer*);
-    MediaStreamTrackPrivate* privateTrack() const { return m_privateTrack.get(); }
-
-    // MediaStreamTrackPrivateClient
-    void trackReadyStateChanged();
-    void trackMutedChanged();
 
     // EventTarget
     virtual const AtomicString& interfaceName() const OVERRIDE FINAL;
@@ -108,7 +105,10 @@ public:
 
 protected:
     explicit MediaStreamTrack(MediaStreamTrack*);
-    MediaStreamTrack(ScriptExecutionContext*, PassRefPtr<MediaStreamTrackPrivate>, const Dictionary*);
+    MediaStreamTrack(ScriptExecutionContext*, MediaStreamTrackPrivate&, const Dictionary*);
+
+    MediaStreamTrackPrivate& privateTrack() { return m_privateTrack.get(); }
+    void setSource(PassRefPtr<MediaStreamSource>);
 
 private:
 
@@ -127,11 +127,10 @@ private:
     virtual void derefEventTarget() OVERRIDE FINAL { deref(); }
     EventTargetData m_eventTargetData;
 
-    // MediaStreamSourceObserver
-    virtual void sourceStateChanged() OVERRIDE FINAL;
-    virtual void sourceMutedChanged() OVERRIDE FINAL;
-    virtual void sourceEnabledChanged() OVERRIDE FINAL;
-    virtual bool stopped() OVERRIDE FINAL;
+    // MediaStreamTrackPrivateClient
+    void trackReadyStateChanged();
+    void trackMutedChanged();
+    void trackEnabledChanged();
 
     Vector<RefPtr<Event>> m_scheduledEvents;
 
@@ -140,8 +139,10 @@ private:
 
     Vector<Observer*> m_observers;
 
-    RefPtr<MediaStreamTrackPrivate> m_privateTrack;
+    Ref<MediaStreamTrackPrivate> m_privateTrack;
     bool m_eventDispatchScheduled;
+
+    bool m_stoppingTrack;
 };
 
 typedef Vector<RefPtr<MediaStreamTrack> > MediaStreamTrackVector;
