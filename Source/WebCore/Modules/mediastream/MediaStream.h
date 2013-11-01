@@ -102,6 +102,11 @@ private:
     virtual void streamDidEnd() OVERRIDE FINAL;
     virtual void addRemoteSource(MediaStreamSource*) OVERRIDE FINAL;
     virtual void removeRemoteSource(MediaStreamSource*) OVERRIDE FINAL;
+    virtual void addRemoteTrack(MediaStreamTrackPrivate*) OVERRIDE FINAL;
+    virtual void removeRemoteTrack(MediaStreamTrackPrivate*) OVERRIDE FINAL;
+
+    bool removeTrack(PassRefPtr<MediaStreamTrack>);
+    bool addTrack(PassRefPtr<MediaStreamTrack>);
 
     bool haveTrackWithSource(PassRefPtr<MediaStreamSource>);
 
@@ -110,8 +115,9 @@ private:
 
     void cloneMediaStreamTrackVector(MediaStreamTrackVector&, const MediaStreamTrackVector&);
 
-    EventTargetData m_eventTargetData;
+    MediaStreamTrackVector* getTrackVectorForType(MediaStreamSource::Type);
 
+    EventTargetData m_eventTargetData;
     RefPtr<MediaStreamDescriptor> m_descriptor;
     MediaStreamTrackVector m_audioTracks;
     MediaStreamTrackVector m_videoTracks;
