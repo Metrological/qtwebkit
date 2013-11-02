@@ -115,7 +115,7 @@ private:
 
     void cloneMediaStreamTrackVector(MediaStreamTrackVector&, const MediaStreamTrackVector&);
 
-    MediaStreamTrackVector* getTrackVectorForType(MediaStreamSource::Type);
+    MediaStreamTrackVector* trackVectorForType(MediaStreamSource::Type);
 
     EventTargetData m_eventTargetData;
     RefPtr<MediaStreamDescriptor> m_descriptor;
