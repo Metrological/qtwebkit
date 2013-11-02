@@ -49,7 +49,7 @@ class MediaStream : public RefCounted<MediaStream>, public URLRegistrable, publi
 public:
     static PassRefPtr<MediaStream> create(ScriptExecutionContext*);
     static PassRefPtr<MediaStream> create(ScriptExecutionContext*, PassRefPtr<MediaStream>);
-    static PassRefPtr<MediaStream> create(ScriptExecutionContext*, const MediaStreamTrackVector&);
+    static PassRefPtr<MediaStream> create(ScriptExecutionContext*, const Vector<RefPtr<MediaStreamTrack>>&);
     static PassRefPtr<MediaStream> create(ScriptExecutionContext*, PassRefPtr<MediaStreamDescriptor>);
     virtual ~MediaStream();
 
@@ -59,8 +59,8 @@ public:
     void removeTrack(PassRefPtr<MediaStreamTrack>, ExceptionCode&);
     MediaStreamTrack* getTrackById(String);
 
-    MediaStreamTrackVector getAudioTracks() const { return m_audioTracks; }
-    MediaStreamTrackVector getVideoTracks() const { return m_videoTracks; }
+    Vector<RefPtr<MediaStreamTrack>> getAudioTracks() const { return m_audioTracks; }
+    Vector<RefPtr<MediaStreamTrack>> getVideoTracks() const { return m_videoTracks; }
 
     bool ended() const;
     void setEnded();
@@ -113,14 +113,14 @@ private:
     void scheduleDispatchEvent(PassRefPtr<Event>);
     void scheduledEventTimerFired(Timer<MediaStream>*);
 
-    void cloneMediaStreamTrackVector(MediaStreamTrackVector&, const MediaStreamTrackVector&);
+    void cloneMediaStreamTrackVector(Vector<RefPtr<MediaStreamTrack>>&, const Vector<RefPtr<MediaStreamTrack>>&);
 
-    MediaStreamTrackVector* trackVectorForType(MediaStreamSource::Type);
+    Vector<RefPtr<MediaStreamTrack>>* trackVectorForType(MediaStreamSource::Type);
 
     EventTargetData m_eventTargetData;
     RefPtr<MediaStreamDescriptor> m_descriptor;
-    MediaStreamTrackVector m_audioTracks;
-    MediaStreamTrackVector m_videoTracks;
+    Vector<RefPtr<MediaStreamTrack>> m_audioTracks;
+    Vector<RefPtr<MediaStreamTrack>> m_videoTracks;
 
     Timer<MediaStream> m_scheduledEventTimer;
     Vector<RefPtr<Event>> m_scheduledEvents;
