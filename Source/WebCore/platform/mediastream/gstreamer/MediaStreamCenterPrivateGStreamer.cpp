@@ -70,7 +70,10 @@ static RefPtr<MediaStreamSourceGStreamer> probeSource(GstElement* source, MediaS
     deviceId.append(";default");
 
     GUniqueOutPtr<gchar> deviceName;
-    g_object_get(source, "device-name", &deviceName.outPtr(), nullptr);
+    if (!g_getenv("VIDEOTEST"))
+        g_object_get(source, "device-name", &deviceName.outPtr(), nullptr);
+    else
+        deviceName.outPtr() = g_strdup("test");
 
     RefPtr<MediaStreamSourceGStreamer> mediaStreamSource = adoptRef(new MediaStreamSourceGStreamer(deviceId, deviceName.get(), type, "default", strFactoryName));
 
@@ -103,7 +106,7 @@ void MediaStreamCenterPrivateGStreamer::discoverDevices(MediaStreamSource::Type 
         elementName = "autoaudiosrc";
         break;
     case MediaStreamSource::Video:
-        elementName = "autovideosrc";
+        elementName = g_getenv("VIDEOTEST") ? "videotestsrc" : "autovideosrc";
         break;
     case MediaStreamSource::None:
         ASSERT_NOT_REACHED();
