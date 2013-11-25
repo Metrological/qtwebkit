@@ -55,7 +55,7 @@ void MediaStreamRegistry::unregisterURL(const KURL& url)
     m_mediaStreams.remove(url.string());
 }
 
-URLRegistrable* MediaStreamRegistry::lookup(const String& url)
+URLRegistrable* MediaStreamRegistry::lookup(const String& url) const
 {
     ASSERT(isMainThread());
     return m_mediaStreams.get(url);
