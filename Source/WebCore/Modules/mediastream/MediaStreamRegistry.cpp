@@ -46,19 +46,19 @@ void MediaStreamRegistry::registerURL(SecurityOrigin*, const KURL& url, URLRegis
 {
     ASSERT(&stream->registry() == this);
     ASSERT(isMainThread());
-    m_privateStreams.set(url.string(), static_cast<MediaStream*>(stream)->privateStream());
+    m_mediaStreams.set(url.string(), static_cast<MediaStream*>(stream));
 }
 
 void MediaStreamRegistry::unregisterURL(const KURL& url)
 {
     ASSERT(isMainThread());
-    m_privateStreams.remove(url.string());
+    m_mediaStreams.remove(url.string());
 }
 
-MediaStreamPrivate* MediaStreamRegistry::lookupMediaStreamPrivate(const String& url)
+URLRegistrable* MediaStreamRegistry::lookup(const String& url)
 {
     ASSERT(isMainThread());
-    return m_privateStreams.get(url);
+    return m_mediaStreams.get(url);
 }
 
 } // namespace WebCore
