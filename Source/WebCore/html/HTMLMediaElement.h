@@ -47,6 +47,10 @@
 #include "VideoTrack.h"
 #endif
 
+#if ENABLE(MEDIA_STREAM)
+#include "MediaStream.h"
+#endif
+
 namespace WebCore {
 
 #if USE(AUDIO_SESSION)
@@ -135,10 +139,15 @@ public:
 // error state
     PassRefPtr<MediaError> error() const;
 
-// network state
     void setSrc(const String&);
     const KURL& currentSrc() const { return m_currentSrc; }
 
+#if ENABLE(MEDIA_STREAM)
+    MediaStream* srcObject() const { return m_mediaStreamSrcObject.get(); }
+    void setSrcObject(MediaStream*);
+#endif
+
+// network state
     enum NetworkState { NETWORK_EMPTY, NETWORK_IDLE, NETWORK_LOADING, NETWORK_NO_SOURCE };
     NetworkState networkState() const;
 
@@ -774,6 +783,10 @@ private:
 
     OwnPtr<PageActivityAssertionToken> m_activityToken;
     size_t m_reportedExtraMemoryCost;
+
+#if ENABLE(MEDIA_STREAM)
+    RefPtr<MediaStream> m_mediaStreamSrcObject;
+#endif
 };
 
 #if ENABLE(VIDEO_TRACK)
