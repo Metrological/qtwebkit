@@ -48,10 +48,16 @@ class MediaStreamCenter;
 // FIXME: This class should be marked FINAL once <http://webkit.org/b/121747> is fixed.
 class MediaStream : public RefCounted<MediaStream>, public URLRegistrable, public ScriptWrappable, public MediaStreamDescriptorClient, public EventTarget, public ContextDestructionObserver {
 public:
+    class Observer {
+    public:
+        virtual void didAddOrRemoveTrack() = 0;
+    };
+
     static PassRefPtr<MediaStream> create(ScriptExecutionContext*);
     static PassRefPtr<MediaStream> create(ScriptExecutionContext*, PassRefPtr<MediaStream>);
     static PassRefPtr<MediaStream> create(ScriptExecutionContext*, const Vector<RefPtr<MediaStreamTrack>>&);
     static PassRefPtr<MediaStream> create(ScriptExecutionContext*, PassRefPtr<MediaStreamPrivate>);
+
     virtual ~MediaStream();
 
     String id() const { return m_private->id(); }
@@ -82,6 +88,9 @@ public:
 
     // URLRegistrable
     virtual URLRegistry& registry() const OVERRIDE;
+
+    void addObserver(Observer*);
+    void removeObserver(Observer*);
 
 protected:
     MediaStream(ScriptExecutionContext*, PassRefPtr<MediaStreamPrivate>);
@@ -125,6 +134,8 @@ private:
 
     Timer<MediaStream> m_scheduledEventTimer;
     Vector<RefPtr<Event>> m_scheduledEvents;
+
+    Vector<Observer*> m_observers;
 };
 
 typedef Vector<RefPtr<MediaStream> > MediaStreamVector;
