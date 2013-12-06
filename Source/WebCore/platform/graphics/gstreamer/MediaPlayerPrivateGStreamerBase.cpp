@@ -793,7 +793,7 @@ GRefPtr<GstCaps> MediaPlayerPrivateGStreamerBase::currentVideoSinkCaps() const
 
 // This function creates and initializes some internal variables, and returns a
 // pointer to the element that should receive the data flow first
-GstElement* MediaPlayerPrivateGStreamerBase::createVideoSink(GstElement* pipeline)
+GstElement* MediaPlayerPrivateGStreamerBase::createVideoSink()
 {
     if (!initializeGStreamer())
         return 0;
@@ -802,7 +802,6 @@ GstElement* MediaPlayerPrivateGStreamerBase::createVideoSink(GstElement* pipelin
     m_gstGWorld = GStreamerGWorld::createGWorld(pipeline);
     m_webkitVideoSink = webkitVideoSinkNew(m_gstGWorld.get());
 #else
-    m_pipeline = pipeline;
 #ifdef GST_API_VERSION_1
     m_webkitVideoSink = webkitVideoSinkNew();
     m_repaintHandler = g_signal_connect(m_webkitVideoSink.get(), "repaint-requested", G_CALLBACK(mediaPlayerPrivateRepaintCallback), this);

@@ -129,8 +129,7 @@ private:
 
     static bool isAvailable();
 
-    void updateAudioSink();
-    void createAudioSink();
+    GstElement* createAudioSink();
 
     float playbackPosition() const;
 
