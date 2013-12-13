@@ -250,7 +250,7 @@ set(WebCore_IDL_FILES
     Modules/mediastream/RTCDTMFToneChangeEvent.idl
     Modules/mediastream/RTCDataChannel.idl
     Modules/mediastream/RTCDataChannelEvent.idl
-    Modules/mediastream/RTCErrorCallback.idl
+    Modules/mediastream/RTCPeerConnectionErrorCallback.idl
     Modules/mediastream/RTCIceCandidate.idl
     Modules/mediastream/RTCIceCandidateEvent.idl
     Modules/mediastream/RTCPeerConnection.idl
