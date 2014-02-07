@@ -680,7 +680,8 @@ enable?(VIDEO_TRACK) {
     $$PWD/html/track/TextTrackList.idl \
     $$PWD/html/track/TrackEvent.idl \
     $$PWD/html/track/VideoTrack.idl \
-    $$PWD/html/track/VideoTrackList.idl
+    $$PWD/html/track/VideoTrackList.idl \
+    $$PWD/html/track/VTTCue.idl
 }
 
 enable?(MEDIA_SOURCE) {

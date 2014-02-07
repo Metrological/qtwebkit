@@ -2793,9 +2793,6 @@
     <ClCompile Include="..\rendering\RenderTextFragment.cpp">
       <Filter>rendering</Filter>
     </ClCompile>
-    <ClCompile Include="..\rendering\RenderTextTrackCue.cpp">
-      <Filter>rendering</Filter>
-    </ClCompile>
     <ClCompile Include="..\rendering\RenderTheme.cpp">
       <Filter>rendering</Filter>
     </ClCompile>
@@ -2806,6 +2803,9 @@
       <Filter>rendering</Filter>
     </ClCompile>
     <ClCompile Include="..\rendering\RenderTreeAsText.cpp">
+      <Filter>rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rendering\RenderVTTCue.cpp">
       <Filter>rendering</Filter>
     </ClCompile>
     <ClCompile Include="..\rendering\RenderVideo.cpp">
@@ -4372,6 +4372,9 @@
       <Filter>html\track</Filter>
     </ClCompile>
     <ClCompile Include="..\html\track\TrackEvent.cpp">
+      <Filter>html\track</Filter>
+    </ClCompile>
+    <ClCompile Include="..\html\track\VTTCue.cpp">
       <Filter>html\track</Filter>
     </ClCompile>
     <ClCompile Include="..\html\track\WebVTTParser.cpp">
@@ -9766,13 +9769,13 @@
     <ClInclude Include="..\rendering\RenderTextFragment.h">
       <Filter>rendering</Filter>
     </ClInclude>
-    <ClInclude Include="..\rendering\RenderTextTrackCue.h">
-      <Filter>rendering</Filter>
-    </ClInclude>
     <ClInclude Include="..\rendering\RenderTheme.h">
       <Filter>rendering</Filter>
     </ClInclude>
     <ClInclude Include="..\rendering\RenderTreeAsText.h">
+      <Filter>rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rendering\RenderVTTCue.h">
       <Filter>rendering</Filter>
     </ClInclude>
     <ClInclude Include="..\rendering\RenderVideo.h">
@@ -11531,6 +11534,9 @@
       <Filter>html\track</Filter>
     </ClInclude>
     <ClInclude Include="..\html\track\TrackEvent.h">
+      <Filter>html\track</Filter>
+    </ClInclude>
+    <ClInclude Include="..\html\track\VTTCue.h">
       <Filter>html\track</Filter>
     </ClInclude>
     <ClInclude Include="..\html\track\WebVTTParser.h">

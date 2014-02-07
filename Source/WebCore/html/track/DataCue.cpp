@@ -161,8 +161,7 @@ bool DataCue::doesExtendCue(const TextTrackCue& cue) const
     if (!cueContentsMatch(cue))
         return false;
 
-    // METRO VIDEOTRACK FIXME:
-    return /* TextTrackCue::doesExtendCue(cue) */ false;
+    return TextTrackCue::doesExtendCue(cue);
 }
 
 #if ENABLE(DATACUE_VALUE)

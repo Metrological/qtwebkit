@@ -1276,13 +1276,17 @@ void MediaControlTextTrackContainerElement::updateDisplay()
     // corresponding CSS boxes added to output, in text track cue order, run the
     // following substeps:
     for (size_t i = 0; i < activeCues.size(); ++i) {
-        TextTrackCue* cue = activeCues[i].data();
+        TextTrackCue* textTrackCue = activeCues[i].data();
+        if (!textTrackCue->isRenderable())
+            continue;
+
+        VTTCue* cue = toVTTCue(textTrackCue);
 
         ASSERT(cue->isActive());
         if (!cue->track() || !cue->track()->isRendered() || !cue->isActive() || cue->text().isEmpty())
             continue;
 
-        RefPtr<TextTrackCueBox> displayBox = cue->getDisplayTree(m_videoDisplaySize.size());
+        RefPtr<VTTCueBox> displayBox = cue->getDisplayTree(m_videoDisplaySize.size());
         if (displayBox->hasChildNodes() && !contains(displayBox.get())) {
             // Note: the display tree of a cue is removed when the active flag of the cue is unset.
             appendChild(displayBox, ASSERT_NO_EXCEPTION, AttachNow);
@@ -1332,7 +1336,10 @@ void MediaControlTextTrackContainerElement::updateTimerFired(Timer<MediaControlT
     CueList activeCues = mediaElement->currentlyActiveCues();
     for (size_t i = 0; i < activeCues.size(); ++i) {
         TextTrackCue* cue = activeCues[i].data();
-        cue->setFontSize(m_fontSize, m_videoDisplaySize.size(), m_fontSizeIsImportant);
+        if (!cue->isRenderable())
+            continue;
+
+        toVTTCue(cue)->setFontSize(m_fontSize, m_videoDisplaySize.size(), m_fontSizeIsImportant);
     }
     updateDisplay();
 }

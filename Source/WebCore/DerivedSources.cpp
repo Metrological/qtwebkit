@@ -502,6 +502,7 @@
 #include "JSTextTrackCueList.cpp"
 #include "JSTextTrackList.cpp"
 #include "JSTrackEvent.cpp"
+#include "JSVTTCue.cpp"
 #include "JSVideoTrack.cpp"
 #include "JSVideoTrackList.cpp"
 #endif

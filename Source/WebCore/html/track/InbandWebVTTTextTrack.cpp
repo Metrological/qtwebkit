@@ -79,19 +79,15 @@ void InbandWebVTTTextTrack::newCuesParsed()
     Vector<RefPtr<WebVTTCueData> > cues;
     parser()->getNewCues(cues);
 
-    // METRO VIDEOTRACK FIXME:
     for (size_t i = 0; i < cues.size(); ++i) {
         RefPtr<WebVTTCueData> cueData = cues[i];
-        // METRO VIDEOTRACK FIXME: Backport VTTCue
-        /*
-        RefPtr<VTTCue> vttCue = VTTCue::create(*scriptExecutionContext(), *cueData);
+        RefPtr<VTTCue> vttCue = VTTCue::create(scriptExecutionContext(), *cueData);
 
         if (hasCue(vttCue.get(), TextTrackCue::IgnoreDuration)) {
             LOG(Media, "InbandWebVTTTextTrack::newCuesParsed ignoring already added cue: start=%.2f, end=%.2f, content=\"%s\"\n", vttCue->startTime(), vttCue->endTime(), vttCue->text().utf8().data());
             return;
         }
-        addCue(vttCue.release(), ASSERT_NO_EXCEPTION);
-        */
+        addCue(vttCue.release());
     }
 }
     

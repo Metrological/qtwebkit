@@ -42,9 +42,9 @@
 #include "MediaControlElements.h"
 #include "PageGroup.h"
 #include "SoftLinking.h"
-#include "TextTrackCue.h"
 #include "TextTrackList.h"
 #include "UserStyleSheetTypes.h"
+#include "VTTCue.h"
 #include <wtf/NonCopyingSort.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/text/StringBuilder.h>
@@ -542,7 +542,7 @@ String CaptionUserPreferencesMediaAF::captionsStyleSheetOverride() const
     String windowCornerRadius = windowRoundedCornerRadiusCSS();
     if (!windowColor.isEmpty() || !windowCornerRadius.isEmpty()) {
         captionsOverrideStyleSheet.append(" video::");
-        captionsOverrideStyleSheet.append(TextTrackCueBox::textTrackCueBoxShadowPseudoId());
+        captionsOverrideStyleSheet.append(VTTCueBox::vttCueBoxShadowPseudoId());
         captionsOverrideStyleSheet.append('{');
         
         if (!windowColor.isEmpty())
