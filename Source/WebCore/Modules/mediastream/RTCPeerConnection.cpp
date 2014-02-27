@@ -153,17 +153,13 @@ PassRefPtr<RTCConfiguration> RTCPeerConnection::parseConfiguration(const Diction
     return rtcConfiguration.release();
 }
 
-PassRefPtr<RTCPeerConnection> RTCPeerConnection::create(ScriptExecutionContext* context, const Dictionary& rtcConfiguration, const Dictionary& mediaConstraints, ExceptionCode& ec)
+PassRefPtr<RTCPeerConnection> RTCPeerConnection::create(ScriptExecutionContext* context, const Dictionary& rtcConfiguration, ExceptionCode& ec)
 {
     RefPtr<RTCConfiguration> configuration = parseConfiguration(rtcConfiguration, ec);
     if (ec)
         return nullptr;
 
-    RefPtr<MediaConstraints> constraints = MediaConstraintsImpl::create(mediaConstraints, ec);
-    if (ec)
-        return nullptr;
-
-    RefPtr<RTCPeerConnection> peerConnection = adoptRef(new RTCPeerConnection(context, configuration.release(), constraints.release(), ec));
+    RefPtr<RTCPeerConnection> peerConnection = adoptRef(new RTCPeerConnection(context, configuration.release(), ec));
     peerConnection->suspendIfNeeded();
     if (ec)
         return nullptr;
@@ -171,7 +167,7 @@ PassRefPtr<RTCPeerConnection> RTCPeerConnection::create(ScriptExecutionContext* 
     return peerConnection.release();
 }
 
-RTCPeerConnection::RTCPeerConnection(ScriptExecutionContext* context, PassRefPtr<RTCConfiguration> configuration, PassRefPtr<MediaConstraints> constraints, ExceptionCode& ec)
+RTCPeerConnection::RTCPeerConnection(ScriptExecutionContext* context, PassRefPtr<RTCConfiguration> configuration, ExceptionCode& ec)
     : ActiveDOMObject(context)
     , m_signalingState(SignalingStateStable)
     , m_iceGatheringState(IceGatheringStateNew)
@@ -194,7 +190,7 @@ RTCPeerConnection::RTCPeerConnection(ScriptExecutionContext* context, PassRefPtr
 
     document->frame()->loader()->client()->dispatchWillStartUsingPeerConnectionHandler(m_peerHandler.get());
 
-    if (!m_peerHandler->initialize(configuration, constraints)) {
+    if (!m_peerHandler->initialize(configuration)) {
         ec = NOT_SUPPORTED_ERR;
         return;
     }
@@ -342,7 +338,7 @@ PassRefPtr<RTCSessionDescription> RTCPeerConnection::remoteDescription(Exception
     return desc.release();
 }
 
-void RTCPeerConnection::updateIce(const Dictionary& rtcConfiguration, const Dictionary& mediaConstraints, ExceptionCode& ec)
+void RTCPeerConnection::updateIce(const Dictionary& rtcConfiguration, ExceptionCode& ec)
 {
     if (m_signalingState == SignalingStateClosed) {
         ec = INVALID_STATE_ERR;
@@ -353,11 +349,7 @@ void RTCPeerConnection::updateIce(const Dictionary& rtcConfiguration, const Dict
     if (ec)
         return;
 
-    RefPtr<MediaConstraints> constraints = MediaConstraintsImpl::create(mediaConstraints, ec);
-    if (ec)
-        return;
-
-    bool valid = m_peerHandler->updateIce(configuration, constraints);
+    bool valid = m_peerHandler->updateIce(configuration);
     if (!valid)
         ec = SYNTAX_ERR;
 }
@@ -440,7 +432,7 @@ String RTCPeerConnection::iceConnectionState() const
     return String();
 }
 
-void RTCPeerConnection::addStream(PassRefPtr<MediaStream> prpStream, const Dictionary& mediaConstraints, ExceptionCode& ec)
+void RTCPeerConnection::addStream(PassRefPtr<MediaStream> prpStream, ExceptionCode& ec)
 {
     if (m_signalingState == SignalingStateClosed) {
         ec = INVALID_STATE_ERR;
@@ -456,11 +448,7 @@ void RTCPeerConnection::addStream(PassRefPtr<MediaStream> prpStream, const Dicti
     if (m_localStreams.contains(stream))
         return;
 
-    RefPtr<MediaConstraints> constraints = MediaConstraintsImpl::create(mediaConstraints, ec);
-    if (ec)
-        return;
-
-    bool valid = m_peerHandler->addStream(stream->privateStream(), constraints);
+    bool valid = m_peerHandler->addStream(stream->privateStream());
     if (!valid)
         ec = SYNTAX_ERR;
     else {
