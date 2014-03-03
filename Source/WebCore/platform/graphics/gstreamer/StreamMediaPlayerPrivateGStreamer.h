@@ -28,8 +28,8 @@
 
 namespace WebCore {
 
+class CentralPipelineUnit;
 class URL;
-class MediaStreamPrivate;
 class MediaStreamSourceGStreamer;
 class HTMLMediaSource;
 

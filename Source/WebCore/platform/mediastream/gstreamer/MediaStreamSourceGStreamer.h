@@ -25,6 +25,7 @@
 #include "MediaStreamSource.h"
 #include <wtf/HashMap.h>
 #include <wtf/RefPtr.h>
+#include "GstMediaStream.h"
 
 namespace WebCore {
 
@@ -32,10 +33,12 @@ class MediaStreamSourceCapabilities;
 
 class MediaStreamSourceGStreamer final : public MediaStreamSource {
 public:
-MediaStreamSourceGStreamer(const AtomicString& id, const AtomicString& name, MediaStreamSource::Type type, const String& device, const String& factoryKey)
+MediaStreamSourceGStreamer(GstMediaStream::StreamType streamType, const AtomicString& id, const AtomicString& name, MediaStreamSource::Type type, const String& device, const String& factoryKey, GstElement* element)
     : MediaStreamSource(id, type, name)
+    , m_streamType(streamType)
     , m_factoryKey(factoryKey)
     , m_device(device)
+    , m_element(element)
     {
     }
 
@@ -46,15 +49,17 @@ MediaStreamSourceGStreamer(const AtomicString& id, const AtomicString& name, Med
 
     const String& factoryKey() const { return m_factoryKey; }
     const String& device() const { return m_device; }
+    GstMediaStream::StreamType streamType() const { return m_streamType; }
 
     GRefPtr<GstElement> createGStreamerElement(GRefPtr<GstPad>& sourcePad);
 
 private:
     RefPtr<MediaStreamSourceCapabilities> m_capabilities;
     MediaStreamSourceStates m_currentStates;
-
+    GstMediaStream::StreamType m_streamType;
     String m_factoryKey;
     String m_device;
+    GstElement* m_element;
 };
 
 typedef HashMap<String, RefPtr<MediaStreamSourceGStreamer>> MediaStreamSourceGStreamerMap;

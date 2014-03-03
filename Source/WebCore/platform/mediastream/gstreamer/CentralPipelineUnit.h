@@ -34,24 +34,33 @@ typedef struct _GstPad GstPad;
 namespace WebCore {
 class MediaStreamSourceGStreamer;
 
+typedef void (*SourceInsertedCallback)(GstElement* source, GstPad* pad, gpointer userData);
+
+gchar* createUniqueName(const gchar* prefix);
+
 class CentralPipelineUnit {
     WTF_MAKE_NONCOPYABLE(CentralPipelineUnit);
-protected:
-    CentralPipelineUnit();
 public:
+    CentralPipelineUnit(const String& id);
     virtual ~CentralPipelineUnit();
 
-    static CentralPipelineUnit& instance();
+    void dumpPipeline();
+
+    bool doesSourceExist(const String& key);
 
     bool handleMessage(GstMessage*);
 
     float currentTime() const;
 
-    bool connectToSource(PassRefPtr<MediaStreamSourceGStreamer>, GstElement* sink, GstPad* sinkPad = 0);
+    bool connectToSource(PassRefPtr<MediaStreamSourceGStreamer>, const String& sourceId, GstElement* sink, GstPad* sinkPad = 0);
     bool disconnectFromSource(PassRefPtr<MediaStreamSourceGStreamer>, GstElement* sink, GstPad* sinkPad = 0);
 
     void disconnectSinkFromPipelinePadBlocked(GstElement* sink, GstPad* sourcePad);
     void disconnectUnusedSource(GstElement* tee);
+
+    gboolean insertSource(GstElement* source, GstPad* pad, const String& sourceId, SourceInsertedCallback, gpointer userData);
+
+    void registerSourceExtension(GstElement*, const String& sourceId, const String& extSrcId);
 
     GstElement* pipeline() const;
 
@@ -76,12 +85,19 @@ private:
     typedef HashMap<String, Source> PipelineMap;
     typedef HashMap<String, String> SourceIdLookupMap;
 
-    bool connectAndGetSourceElement(PassRefPtr<MediaStreamSourceGStreamer> source, GRefPtr<GstElement>& sourceElement, GRefPtr<GstPad>& sourcePad);
+    typedef struct {
+        GRefPtr<GstElement> extension;
+        String sourceToExtend;
+    } SourceExtensionInfo;
+    typedef HashMap<String, SourceExtensionInfo> SourceExtensionMap;
+
+    bool ensureSourceElement(PassRefPtr<MediaStreamSourceGStreamer> source, const String& id, GRefPtr<GstElement>& sourceElement, GRefPtr<GstPad>& sourcePad);
     void disconnectSinkFromTee(GstElement* tee, GstElement* sink, GstPad*);
 
     GRefPtr<GstElement> m_pipeline;
     PipelineMap m_pipelineMap;
     SourceIdLookupMap m_sourceIdLookupMap;
+    SourceExtensionMap m_sourceExtensionMap;
 };
 
 }

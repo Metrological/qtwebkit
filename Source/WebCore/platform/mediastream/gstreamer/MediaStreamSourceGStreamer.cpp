@@ -100,7 +100,11 @@ static GRefPtr<GstElement> createVideoSourceBin(GRefPtr<GstElement> source)
 
 GRefPtr<GstElement> MediaStreamSourceGStreamer::createGStreamerElement(GRefPtr<GstPad>& srcPad)
 {
-    LOG_MEDIA_MESSAGE("Creating source with id=%s", id().utf8().data());
+    LOG_MEDIA_MESSAGE("Creating source with id=%s factoryKey=%s", id().utf8().data(), factoryKey().utf8().data());
+
+    if (m_element && (m_streamType == GstMediaStream::Remote)) {
+        return m_element;
+    }
 
     GRefPtr<GstElementFactory> factory = gst_element_factory_find(factoryKey().utf8().data());
     if (!factory)
@@ -113,14 +117,14 @@ GRefPtr<GstElement> MediaStreamSourceGStreamer::createGStreamerElement(GRefPtr<G
     LOG_MEDIA_MESSAGE("sourceInfo.m_device=%s", device().utf8().data());
     // TODO: Device choosing is not implemented for gstreamer 1.0 yet.
 
+    GRefPtr<GstElement> bin;
     if (type() == MediaStreamSource::Audio)
-        source = createAudioSourceBin(source);
+        bin = createAudioSourceBin(source);
     else if (type() == MediaStreamSource::Video)
-        source = createVideoSourceBin(source);
+        bin = createVideoSourceBin(source);
 
-    srcPad = adoptGRef(gst_element_get_static_pad(source.get(), "src"));
-
-    return source;
+    srcPad = adoptGRef(gst_element_get_static_pad(bin.get(), "src"));
+    return bin;
 }
 
 } // namespace WebCore

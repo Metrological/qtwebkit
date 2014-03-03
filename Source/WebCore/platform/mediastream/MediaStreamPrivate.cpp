@@ -41,6 +41,10 @@
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>
 
+#if USE(GSTREAMER)
+#include "CentralPipelineUnit.h"
+#endif
+
 namespace WebCore {
 
 PassRefPtr<MediaStreamPrivate> MediaStreamPrivate::create(const Vector<RefPtr<MediaStreamSource> >& audioSources, const Vector<RefPtr<MediaStreamSource> >& videoSources)
@@ -142,6 +146,10 @@ MediaStreamPrivate::MediaStreamPrivate(const String& id, const Vector<RefPtr<Med
 
     if (providedSourcesSize > 0 && tracksSize > 0)
         m_isActive = true;
+
+#if USE(GSTREAMER)
+    m_centralPipelineUnit = new CentralPipelineUnit(id);
+#endif
 }
 
 MediaStreamPrivate::MediaStreamPrivate(const String& id, const Vector<RefPtr<MediaStreamTrackPrivate> >& audioPrivateTracks, const Vector<RefPtr<MediaStreamTrackPrivate> >& videoPrivateTracks)
@@ -161,6 +169,10 @@ MediaStreamPrivate::MediaStreamPrivate(const String& id, const Vector<RefPtr<Med
 
     if (providedTracksSize > 0 && tracksSize > 0)
         m_isActive = true;
+
+#if USE(GSTREAMER)
+    m_centralPipelineUnit = new CentralPipelineUnit(id);
+#endif
 }
 
 void MediaStreamPrivate::setActive(bool active)

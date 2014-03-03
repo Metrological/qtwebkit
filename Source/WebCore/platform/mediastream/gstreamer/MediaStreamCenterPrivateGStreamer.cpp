@@ -25,6 +25,7 @@
 
 #include "CentralPipelineUnit.h"
 #include "GStreamerUtilities.h"
+#include "GstMediaStream.h"
 #include <gst/gst.h>
 #include <wtf/gobject/GUniquePtr.h>
 #include <wtf/text/CString.h>
@@ -75,7 +76,7 @@ static RefPtr<MediaStreamSourceGStreamer> probeSource(GstElement* source, MediaS
     else
         deviceName.outPtr() = g_strdup("test");
 
-    RefPtr<MediaStreamSourceGStreamer> mediaStreamSource = adoptRef(new MediaStreamSourceGStreamer(deviceId, deviceName.get(), type, "default", strFactoryName));
+    RefPtr<MediaStreamSourceGStreamer> mediaStreamSource = adoptRef(new MediaStreamSourceGStreamer(GstMediaStream::Local, deviceId, deviceName.get(), type, "default", strFactoryName, 0));
 
     // TODO: fill source capabilities and states, see bug #123345.
 
@@ -103,6 +104,7 @@ void MediaStreamCenterPrivateGStreamer::discoverDevices(MediaStreamSource::Type 
     const char* elementName = nullptr;
     switch (type) {
     case MediaStreamSource::Audio:
+        //elementName = g_getenv("VIDEOTEST") ? "videotestsrc" : "autoaudiosrc";
         elementName = "autoaudiosrc";
         break;
     case MediaStreamSource::Video:
@@ -116,6 +118,13 @@ void MediaStreamCenterPrivateGStreamer::discoverDevices(MediaStreamSource::Type 
     GRefPtr<GstElement> deviceSource = findDeviceSource(elementName);
     if (!deviceSource)
         return;
+
+    if (type == MediaStreamSource::Video) {
+        static int patternNumber = 0;
+        if (!strcmp(elementName, "videotestsrc"))
+            g_object_set(deviceSource.get(), "pattern", patternNumber, NULL);
+        patternNumber++;
+    }
 
     RefPtr<MediaStreamSourceGStreamer> source = probeSource(deviceSource.get(), type);
     String id = source->id();

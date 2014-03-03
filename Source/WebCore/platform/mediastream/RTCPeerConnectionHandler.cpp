@@ -37,12 +37,20 @@
 
 #include <wtf/PassOwnPtr.h>
 
+#if USE(GSTREAMER)
+#include "PeerConnectionHandlerPrivateGStreamer.h"
+#endif
+
 namespace WebCore {
 class RTCPeerConnectionHandlerClient;
 
 static PassOwnPtr<RTCPeerConnectionHandler> createHandler(RTCPeerConnectionHandlerClient*)
 {
+#if USE(GSTREAMER)
+    return std::unique_ptr<RTCPeerConnectionHandler>(new PeerConnectionHandlerPrivateGStreamer(client));
+#else
     return nullptr;
+#endif
 }
 
 CreatePeerConnectionHandler RTCPeerConnectionHandler::create = createHandler;

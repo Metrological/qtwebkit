@@ -14,6 +14,8 @@ list(APPEND WebCore_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/platform/graphics/opengl"
     "${WEBCORE_DIR}/platform/linux"
     "${WEBCORE_DIR}/platform/mediastream/gstreamer"
+    "${WEBCORE_DIR}/platform/mediastream/gstreamer/sdp"
+    "${WEBCORE_DIR}/platform/mock/mediasource"
     "${WEBCORE_DIR}/platform/network/gtk"
     "${WEBCORE_DIR}/platform/network/soup"
     "${WEBCORE_DIR}/platform/text/gtk"
@@ -164,6 +166,12 @@ list(APPEND WebCore_SOURCES
     platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp
     platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
     platform/graphics/gstreamer/PlatformVideoWindowGtk.cpp
+    platform/graphics/gstreamer/MediaSourceGStreamer.cpp
+    platform/graphics/gstreamer/SourceBufferPrivateGStreamer.cpp
+    platform/graphics/gstreamer/StreamMediaPlayerPrivateGStreamer.cpp
+    platform/graphics/gstreamer/TextCombinerGStreamer.cpp
+    platform/graphics/gstreamer/TextSinkGStreamer.cpp
+    platform/graphics/gstreamer/TrackPrivateBaseGStreamer.cpp
     platform/graphics/gstreamer/VideoSinkGStreamer.cpp
     platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp
 
@@ -185,6 +193,19 @@ list(APPEND WebCore_SOURCES
     platform/linux/GamepadDeviceLinux.cpp
 
     platform/mediastream/gstreamer/MediaStreamCenterGStreamer.cpp
+    platform/mediastream/gstreamer/CallbackProxy.cpp
+    platform/mediastream/gstreamer/CentralPipelineUnit.cpp
+    platform/mediastream/gstreamer/Codec.cpp
+    platform/mediastream/gstreamer/GstMediaStream.cpp
+    platform/mediastream/gstreamer/IceAgent.cpp
+    platform/mediastream/gstreamer/MediaStreamCenterPrivateGStreamer.cpp
+    platform/mediastream/gstreamer/MediaStreamSourceGStreamer.cpp
+    platform/mediastream/gstreamer/PeerConnectionHandlerConfiguration.cpp
+    platform/mediastream/gstreamer/PeerConnectionHandlerPrivateGStreamer.cpp
+    platform/mediastream/gstreamer/sdp/Candidate.cpp
+    platform/mediastream/gstreamer/sdp/MediaDescription.cpp
+    platform/mediastream/gstreamer/sdp/Payload.cpp
+    platform/mediastream/gstreamer/sdp/SignalingMessage.cpp
 
     platform/network/gtk/CredentialBackingStore.cpp
 
@@ -321,6 +342,15 @@ if (ENABLE_WEB_AUDIO)
     list(APPEND WebCore_LIBRARIES
         ${GSTREAMER_AUDIO_LIBRARIES}
         ${GSTREAMER_FFT_LIBRARIES}
+    )
+endif ()
+
+if (ENABLE_MEDIA_STREAM)
+    list(APPEND WebCore_INCLUDE_DIRECTORIES
+        ${NICE_INCLUDE_DIRS}
+    )
+    list(APPEND WebCore_LIBRARIES
+        ${NICE_LIBRARIES}
     )
 endif ()
 

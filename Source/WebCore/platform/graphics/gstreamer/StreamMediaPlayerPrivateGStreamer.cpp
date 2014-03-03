@@ -26,7 +26,9 @@
 
 #include "CentralPipelineUnit.h"
 #include "GStreamerUtilities.h"
+#include "GstMediaStream.h"
 #include "MediaPlayer.h"
+#include "MediaStreamPrivate.h"
 #include "MediaStreamRegistry.h"
 #include "MediaStreamSourceGStreamer.h"
 #include "URL.h"
@@ -53,10 +55,6 @@ StreamMediaPlayerPrivateGStreamer::StreamMediaPlayerPrivateGStreamer(MediaPlayer
 
         createVideoSink();
         createGSTAudioSinkBin();
-
-        GRefPtr<GstBus> bus = adoptGRef(gst_pipeline_get_bus(GST_PIPELINE(CentralPipelineUnit::instance().pipeline())));
-        gst_bus_add_signal_watch(bus.get());
-        g_signal_connect(bus.get(), "message", G_CALLBACK(streamMediaPlayerPrivateMessageCallback), this);
     }
 }
 
@@ -66,7 +64,8 @@ StreamMediaPlayerPrivateGStreamer::~StreamMediaPlayerPrivateGStreamer()
 
     stop();
 
-    GRefPtr<GstBus> bus = adoptGRef(gst_pipeline_get_bus(GST_PIPELINE(CentralPipelineUnit::instance().pipeline())));
+    CentralPipelineUnit* cpu = m_stream->privateStream()->centralPipelineUnit();
+    GRefPtr<GstBus> bus = adoptGRef(gst_pipeline_get_bus(GST_PIPELINE(cpu->pipeline())));
     g_signal_handlers_disconnect_by_func(bus.get(), reinterpret_cast<gpointer>(streamMediaPlayerPrivateMessageCallback), this);
     gst_bus_remove_signal_watch(bus.get());
 }
@@ -104,8 +103,7 @@ bool StreamMediaPlayerPrivateGStreamer::hasAudio() const
 
 float StreamMediaPlayerPrivateGStreamer::currentTime() const
 {
-    CentralPipelineUnit& cpu = CentralPipelineUnit::instance();
-    return cpu.currentTime();
+    return m_stream->privateStream()->centralPipelineUnit()->currentTime();
 }
 
 void StreamMediaPlayerPrivateGStreamer::load(const String &url)
@@ -172,14 +170,14 @@ void StreamMediaPlayerPrivateGStreamer::stop()
 {
     if (!m_stopped) {
         m_stopped = true;
-        CentralPipelineUnit& cpu = CentralPipelineUnit::instance();
+        CentralPipelineUnit* cpu = m_stream->privateStream()->centralPipelineUnit();
         if (m_audioSource) {
             LOG_MEDIA_MESSAGE("Stop: disconnecting audio");
-            cpu.disconnectFromSource(m_audioSource, m_audioSinkBin.get());
+            cpu->disconnectFromSource(m_audioSource, m_audioSinkBin.get());
         }
         if (m_videoSource) {
             LOG_MEDIA_MESSAGE("Stop: disconnecting video");
-            cpu.disconnectFromSource(m_videoSource, m_videoSinkBin.get());
+            cpu->disconnectFromSource(m_videoSource, m_videoSinkBin.get());
         }
         m_audioSource = nullptr;
         m_videoSource = nullptr;
@@ -223,7 +221,7 @@ void StreamMediaPlayerPrivateGStreamer::createGSTAudioSinkBin()
     GRefPtr<GstElement> volume = gst_element_factory_make("volume", "volume");
     setStreamVolumeElement(GST_STREAM_VOLUME(volume.get()));
 
-    GstElement* audioSink = gst_element_factory_make("autoaudiosink", 0);
+    GstElement* audioSink = gst_element_factory_make("fakesink", 0);
     gst_bin_add_many(GST_BIN(m_audioSinkBin.get()), volume.get(), audioSink, NULL);
     gst_element_link_many(volume.get(), audioSink, NULL);
 
@@ -235,9 +233,10 @@ void StreamMediaPlayerPrivateGStreamer::sourceReadyStateChanged()
 {
     LOG_MEDIA_MESSAGE("Source state changed");
 
-    CentralPipelineUnit& cpu = CentralPipelineUnit::instance();
     if (!m_stream || m_stream->ended())
         stop();
+
+    CentralPipelineUnit* cpu = m_stream->privateStream()->centralPipelineUnit();
 
     // check if the source should be ended
     if (m_audioSource) {
@@ -247,7 +246,7 @@ void StreamMediaPlayerPrivateGStreamer::sourceReadyStateChanged()
             audioTrack = audioTracks[i];
             MediaStreamSourceGStreamer* source = reinterpret_cast<MediaStreamSourceGStreamer*>(audioTrack->source());
             if (!audioTrack->enabled() && source == m_audioSource) {
-                cpu.disconnectFromSource(m_audioSource, m_audioSinkBin.get());
+                cpu->disconnectFromSource(m_audioSource, m_audioSinkBin.get());
                 m_audioSource = nullptr;
                 break;
             }
@@ -262,7 +261,7 @@ void StreamMediaPlayerPrivateGStreamer::sourceReadyStateChanged()
             videoTrack = videoTracks[i];
             MediaStreamSourceGStreamer* source = reinterpret_cast<MediaStreamSourceGStreamer*>(videoTrack->source());
             if (!videoTrack->enabled() && source == m_videoSource) {
-                cpu.disconnectFromSource(m_videoSource, m_videoSinkBin.get());
+                cpu->disconnectFromSource(m_videoSource, m_videoSinkBin.get());
                 m_videoSource = nullptr;
                 break;
             }
@@ -291,17 +290,21 @@ bool StreamMediaPlayerPrivateGStreamer::connectToGSTLiveStream(MediaStream* stre
     if (!stream)
         return false;
 
+    CentralPipelineUnit* cpu = stream->privateStream()->centralPipelineUnit();
+    GRefPtr<GstBus> bus = adoptGRef(gst_pipeline_get_bus(GST_PIPELINE(cpu->pipeline())));
+    gst_bus_add_signal_watch(bus.get());
+    g_signal_connect(bus.get(), "message", G_CALLBACK(streamMediaPlayerPrivateMessageCallback), this);
+
     // FIXME: Error handling.. this could fail.. and this method never returns false.
 
-    CentralPipelineUnit& cpu = CentralPipelineUnit::instance();
 
     if (m_audioSource) {
-        cpu.disconnectFromSource(m_audioSource, m_audioSinkBin.get());
+        cpu->disconnectFromSource(m_audioSource, m_audioSinkBin.get());
         m_audioSource = nullptr;
     }
 
     if (m_videoSource) {
-        cpu.disconnectFromSource(m_videoSource, m_videoSinkBin.get());
+        cpu->disconnectFromSource(m_videoSource, m_videoSinkBin.get());
         m_videoSource = nullptr;
     }
 
@@ -319,7 +322,8 @@ bool StreamMediaPlayerPrivateGStreamer::connectToGSTLiveStream(MediaStream* stre
 
         MediaStreamSourceGStreamer* source = reinterpret_cast<MediaStreamSourceGStreamer*>(audioTrack->source());
         if (source->type() == MediaStreamSource::Audio) {
-            if (cpu.connectToSource(source, m_audioSinkBin.get())) {
+            LOG_MEDIA_MESSAGE("Audio track %s type is %s", source->id().utf8().data(), source->streamType() == 0 ? "local":"remote");
+            if (cpu->connectToSource(source, "", m_audioSinkBin.get())) {
                 m_audioSource = source;
                 source->addObserver(this);
                 break;
@@ -336,7 +340,8 @@ bool StreamMediaPlayerPrivateGStreamer::connectToGSTLiveStream(MediaStream* stre
 
         MediaStreamSourceGStreamer* source = reinterpret_cast<MediaStreamSourceGStreamer*>(videoTrack->source());
         if (source->type() == MediaStreamSource::Video) {
-            if (cpu.connectToSource(source, m_videoSinkBin.get())) {
+            LOG_MEDIA_MESSAGE("Video track %s type is %s", source->id().utf8().data(), source->streamType() == 0 ? "local":"remote");
+            if (cpu->connectToSource(source, "", m_videoSinkBin.get())) {
                 m_videoSource = source;
                 source->addObserver(this);
                 break;
@@ -366,8 +371,10 @@ GstElement* StreamMediaPlayerPrivateGStreamer::createVideoSink()
 {
     GstElement* sink = MediaPlayerPrivateGStreamerBase::createVideoSink();
     m_videoSinkBin = gst_bin_new(0);
-    gst_bin_add(GST_BIN(m_videoSinkBin.get()), sink);
-    GRefPtr<GstPad> pad = adoptGRef(gst_element_get_static_pad(sink, "sink"));
+    GstElement* videoconvert = gst_element_factory_make("videoconvert", "streamplayervideoconvert");
+    gst_bin_add_many(GST_BIN(m_videoSinkBin.get()), videoconvert, sink, nullptr);
+    gst_element_link(videoconvert, sink);
+    GRefPtr<GstPad> pad = adoptGRef(gst_element_get_static_pad(videoconvert, "sink"));
     gst_element_add_pad(m_videoSinkBin.get(), gst_ghost_pad_new("sink", pad.get()));
 
     return m_videoSinkBin.get();

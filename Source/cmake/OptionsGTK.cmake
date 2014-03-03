@@ -96,6 +96,13 @@ add_definitions(-DWEBKITGTK_API_VERSION_STRING="3.0")
 add_definitions(-DUSER_AGENT_GTK_MAJOR_VERSION=537)
 add_definitions(-DUSER_AGENT_GTK_MINOR_VERSION=30)
 
+if (ENABLE_MEDIA_STREAM)
+    find_package(Nice)
+    if (NICE_FOUND)
+        add_definitions(-DWTF_USE_NICE)
+    endif ()
+endif ()
+
 # FIXME: These need to be configurable.
 add_definitions(-DWTF_PLATFORM_X11=1)
 add_definitions(-DMOZ_X11)

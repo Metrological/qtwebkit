@@ -43,6 +43,7 @@
 
 namespace WebCore {
 
+class CentralPipelineUnit;
 class MediaStreamTrackPrivate;
 
 class MediaStreamPrivateClient : public MediaStreamTrack::Observer {
@@ -95,6 +96,10 @@ public:
     void addRemoteTrack(MediaStreamTrackPrivate*);
     void removeRemoteTrack(MediaStreamTrackPrivate*);
 
+#if USE(GSTREAMER)
+    CentralPipelineUnit* centralPipelineUnit() const { return m_centralPipelineUnit; }
+#endif
+
 private:
     MediaStreamPrivate(const String& id, const Vector<RefPtr<MediaStreamSource> >& audioSources, const Vector<RefPtr<MediaStreamSource> >& videoSources);
     MediaStreamPrivate(const String& id, const Vector<RefPtr<MediaStreamTrackPrivate> >& audioPrivateTracks, const Vector<RefPtr<MediaStreamTrackPrivate> >& videoPrivateTracks);
@@ -107,6 +112,10 @@ private:
     Vector<RefPtr<MediaStreamTrackPrivate> > m_audioPrivateTracks;
     Vector<RefPtr<MediaStreamTrackPrivate> > m_videoPrivateTracks;
     bool m_isActive;
+
+#if USE(GSTREAMER)
+    CentralPipelineUnit* m_centralPipelineUnit;
+#endif
 };
 
 typedef Vector<RefPtr<MediaStreamPrivate> > MediaStreamPrivateVector;

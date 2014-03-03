@@ -27,6 +27,8 @@
       <dep package="gst-plugins-base"/>
       <dep package="gst-plugins-good"/>
       <dep package="gst-plugins-bad"/>
+      <dep package="gst-plugins-ugly"/>
+      <dep package="libnice"/>
       <dep package="gst-libav"/>
       <dep package="xserver"/>
       <dep package="avahi"/>
@@ -55,6 +57,8 @@
       href="http://www.freedesktop.org"/>
   <repository type="tarball" name="xorg"
       href="http://xorg.freedesktop.org"/>
+  <repository type="tarball" name="nice"
+      href="http://nice.freedesktop.org"/>
   <repository type="tarball" name="xmlsoft.org"
       href="ftp://xmlsoft.org"/>
   <repository type="tarball" name="gstreamer"
@@ -316,7 +320,28 @@
             md5sum="a2fdf125ee2ae46047dcbcfc305949ee"/>
   </autotools>
 
-  <autotools id="gst-libav" autogenargs="--with-libav-extra-configure='--disable-yasm'">
+  <autotools id="gst-plugins-ugly" autogenargs="--disable-examples  --disable-gtk-doc">
+    <dependencies>
+      <dep package="gst-plugins-base"/>
+    </dependencies>
+    <branch module="gst-plugins-ugly/gst-plugins-ugly-1.2.1.tar.xz" version="1.2.1"
+            repo="gstreamer"
+            hash="sha256:35ae5d45de54827604e24f57f54ab30a5ab2245b4c4120977273eb11d19c2395"
+            md5sum="553332a8d5153e788a6612642a57f416"/>
+  </autotools>
+
+
+  <autotools id="libnice">
+    <dependencies>
+      <dep package="gst-plugins-base"/>
+    </dependencies>
+    <branch module="releases/libnice-0.1.5.tar.gz" version="0.1.5"
+            repo="nice"
+            hash="sha256:0a2743b69c8f50b8ca85243abe81b8d884b210430f413ca94b55bcff62fdf097"
+            md5sum="8bf9a134850f02cde7eea8514062e23b"/>
+  </autotools>
+
+  <autotools id="gst-libav" autogenargs="--with-libav-extra-configure='--disable-yasm' --disable-gtk-doc">
     <dependencies>
       <dep package="gst-plugins-base"/>
     </dependencies>

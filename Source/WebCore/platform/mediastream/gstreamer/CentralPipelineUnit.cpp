@@ -29,6 +29,11 @@
 #include <wtf/gobject/GUniquePtr.h>
 #include <wtf/text/CString.h>
 
+#include <signal.h>
+
+#define RTC_LOG(fmt, args...) printf(fmt "\n", ##args)
+//#define RTC_LOG(fmt, args...) void(0)
+
 GST_DEBUG_CATEGORY_EXTERN(webkit_media_stream_debug);
 #define GST_CAT_DEFAULT webkit_media_stream_debug
 
@@ -47,30 +52,44 @@ static gboolean messageCallback(GstBus*, GstMessage* message, CentralPipelineUni
     return cpu->handleMessage(message);
 }
 
-CentralPipelineUnit& CentralPipelineUnit::instance()
+static gboolean doDump(gpointer data)
 {
-    ASSERT(isMainThread());
-    DEFINE_STATIC_LOCAL(CentralPipelineUnit, instance, ());
-    return instance;
+    CentralPipelineUnit* cpu = reinterpret_cast<CentralPipelineUnit*>(data);
+    cpu->dumpPipeline();
+    return FALSE;
 }
 
-CentralPipelineUnit::CentralPipelineUnit()
+CentralPipelineUnit::CentralPipelineUnit(const String& id)
 {
     initializeGStreamer();
 
-    m_pipeline = gst_pipeline_new("mediastream_pipeline");
+    m_pipeline = gst_pipeline_new(id.utf8().data());
     GRefPtr<GstBus> bus = adoptGRef(gst_pipeline_get_bus(GST_PIPELINE(m_pipeline.get())));
     gst_bus_add_signal_watch(bus.get());
     gst_bus_set_sync_handler(bus.get(), gst_bus_sync_signal_handler, 0, 0);
     g_signal_connect(bus.get(), "sync-message", G_CALLBACK(messageCallback), this);
 
     gst_element_set_state(m_pipeline.get(), GST_STATE_PLAYING);
+
+    g_timeout_add_seconds(10, doDump, this);
 }
 
 CentralPipelineUnit::~CentralPipelineUnit()
 {
     GRefPtr<GstBus> bus = adoptGRef(gst_pipeline_get_bus(GST_PIPELINE(m_pipeline.get())));
     gst_bus_remove_signal_watch(bus.get());
+}
+
+void CentralPipelineUnit::dumpPipeline()
+{
+    RTC_LOG(">>>>>> dumping pipeline");
+    GST_DEBUG_BIN_TO_DOT_FILE_WITH_TS(GST_BIN(m_pipeline.get()), GST_DEBUG_GRAPH_SHOW_ALL, "central-pipeline-unit");
+}
+
+bool CentralPipelineUnit::doesSourceExist(const String& key)
+{
+    PipelineMap::iterator sourceIterator = m_pipelineMap.find(key);
+    return (sourceIterator != m_pipelineMap.end());
 }
 
 bool CentralPipelineUnit::handleMessage(GstMessage* message)
@@ -115,7 +134,7 @@ bool CentralPipelineUnit::disconnectFromSource(PassRefPtr<MediaStreamSourceGStre
 {
     RefPtr<MediaStreamSourceGStreamer> source = prpSource;
     if (!sink || !source) {
-        LOG_MEDIA_MESSAGE("ERROR, No sink provided or empty source id");
+        ERROR_MEDIA_MESSAGE("No sink provided or empty source id");
         return false;
     }
 
@@ -132,7 +151,7 @@ bool CentralPipelineUnit::disconnectFromSource(PassRefPtr<MediaStreamSourceGStre
         LOG_MEDIA_MESSAGE("No pad was given as argument, trying the element static \"sink\" pad.");
         refSinkPad = adoptGRef(gst_element_get_static_pad(sink, "sink"));
         if (!refSinkPad) {
-            LOG_MEDIA_MESSAGE("ERROR, Unable to retrieve element sink pad");
+            ERROR_MEDIA_MESSAGE("Unable to retrieve element sink pad");
             return false;
         }
     }
@@ -168,7 +187,7 @@ static gboolean dropElement(gpointer userData)
     return FALSE;
 }
 
-static GstPadProbeReturn elementDrainedCallback(GstPad* pad, GstPadProbeInfo* info, gpointer userData)
+static GstPadProbeReturn elementDrainedCallback(GstPad*, GstPadProbeInfo*, gpointer userData)
 {
     g_idle_add(dropElement, userData);
     return GST_PAD_PROBE_DROP;
@@ -314,25 +333,37 @@ void CentralPipelineUnit::disconnectUnusedSource(GstElement* tee)
 
 }
 
-bool CentralPipelineUnit::connectAndGetSourceElement(PassRefPtr<MediaStreamSourceGStreamer> prpSource, GRefPtr<GstElement>& sourceElement, GRefPtr<GstPad>& sourcePad)
+bool CentralPipelineUnit::ensureSourceElement(PassRefPtr<MediaStreamSourceGStreamer> prpSource, const String& id, GRefPtr<GstElement>& sourceElement, GRefPtr<GstPad>& sourcePad)
 {
     RefPtr<MediaStreamSourceGStreamer> source = prpSource;
-    LOG_MEDIA_MESSAGE("Connecting to source element %s", source->id().utf8().data());
+    String sourceId = id.isEmpty() ? source->id() : id;
 
-    CentralPipelineUnit::PipelineMap::iterator sourceIterator = m_pipelineMap.find(source->id());
+    LOG_MEDIA_MESSAGE("Connecting to source element %s", sourceId.utf8().data());
+
+    PipelineMap::iterator sourceIterator = m_pipelineMap.find(sourceId);
     if (sourceIterator != m_pipelineMap.end()) {
         Source& storedSource = sourceIterator->value;
-        LOG_MEDIA_MESSAGE("Source element %s already in pipeline, using it.", source->id().utf8().data());
+        LOG_MEDIA_MESSAGE("Source element %s already in pipeline, using it.", sourceId.utf8().data());
         sourceElement = storedSource.m_sourceElement;
         sourcePad = storedSource.m_sourcePad;
-        return true;
-    }
-
-    sourceElement = source->createGStreamerElement(sourcePad);
-    if (!sourceElement) {
-        LOG_MEDIA_MESSAGE("ERROR, unable to create source element");
         return false;
     }
+
+    if (source) {
+        RTC_LOG("creating source element");
+        sourceElement = source->createGStreamerElement(sourcePad);
+    } else {
+        RTC_LOG("looking up source element");
+        SourceExtensionMap::iterator extensionIterator = m_sourceExtensionMap.find(sourceId);
+        if (extensionIterator != m_sourceExtensionMap.end())
+            sourceElement = extensionIterator->value.extension;
+    }
+
+    if (!sourceElement) {
+        ERROR_MEDIA_MESSAGE("Unable to create source element");
+        return false;
+    }
+    RTC_LOG("sourceElement name: %s", GST_ELEMENT_NAME(sourceElement.get()));
 
     if (!sourcePad) {
         LOG_MEDIA_MESSAGE("SourceFactory could not create a source pad, trying the element static \"src\" pad");
@@ -340,93 +371,164 @@ bool CentralPipelineUnit::connectAndGetSourceElement(PassRefPtr<MediaStreamSourc
     }
 
     if (!sourcePad) {
-        LOG_MEDIA_MESSAGE("ERROR, unable to retrieve element source pad");
+        ERROR_MEDIA_MESSAGE("Unable to retrieve element source pad");
         sourceElement.clear();
         return false;
     }
 
-    GstElement* tee = gst_element_factory_make("tee", 0);
-    if (!tee) {
-        LOG_MEDIA_MESSAGE("ERROR, Got no tee element");
-        sourceElement.clear();
-        sourcePad.clear();
-        return false;
-    }
-
-    gst_bin_add_many(GST_BIN(m_pipeline.get()), sourceElement.get(), tee, NULL);
-
-    gst_element_sync_state_with_parent(sourceElement.get());
-    gst_element_sync_state_with_parent(tee);
-
-    GRefPtr<GstPad> sinkpad = adoptGRef(gst_element_get_static_pad(tee, "sink"));
-    gst_pad_link(sourcePad.get(), sinkpad.get());
-
-    return false;
+    m_pipelineMap.add(sourceId, Source(sourceElement, sourcePad, true));
+    m_sourceIdLookupMap.add(generateElementPadId(sourceElement.get(), sourcePad.get()), sourceId);
+    return true;
 }
 
-bool CentralPipelineUnit::connectToSource(PassRefPtr<MediaStreamSourceGStreamer> prpSource, GstElement* sink, GstPad* sinkpad)
+bool CentralPipelineUnit::connectToSource(PassRefPtr<MediaStreamSourceGStreamer> prpSource, const String& sourceId, GstElement* sink, GstPad* sinkpad)
 {
     RefPtr<MediaStreamSourceGStreamer> source = prpSource;
-    if (!sink || !source) {
-        LOG_MEDIA_MESSAGE("ERROR, No sink provided or empty source id");
+    if (!source && sourceId.isEmpty()) {
+        ERROR_MEDIA_MESSAGE("Empty source id");
         return false;
     }
 
-    LOG_MEDIA_MESSAGE("Connecting to source with id=%s, sink=%p, sinkpad=%p", source->id().utf8().data(), sink, sinkpad);
+    if (!sink) {
+        ERROR_MEDIA_MESSAGE("No sink provided");
+        return false;
+    }
+
+    GRefPtr<GstElement> sourceElement;
+    GRefPtr<GstPad> sourcePad;
+    bool wasAddedInPipeline = ensureSourceElement(source, sourceId, sourceElement, sourcePad);
+
+    if (!sourceElement || !sourcePad) {
+        ERROR_MEDIA_MESSAGE("Unable to retrieve source element or pad");
+        return false;
+    }
+
+    LOG_MEDIA_MESSAGE("Connecting source %s to sink %s", GST_ELEMENT_NAME(sourceElement.get()), GST_ELEMENT_NAME(sink));
+
     GRefPtr<GstPad> refSinkPad(sinkpad);
     if (!refSinkPad) {
         LOG_MEDIA_MESSAGE("No pad was given as argument, trying the element static \"sink\" pad.");
         refSinkPad = adoptGRef(gst_element_get_static_pad(sink, "sink"));
         if (!refSinkPad) {
-            LOG_MEDIA_MESSAGE("ERROR, Unable to retrieve element sink pad");
+            ERROR_MEDIA_MESSAGE("Unable to retrieve element sink pad");
             return false;
         }
     }
 
-    GRefPtr<GstElement> sourceElement;
-    GRefPtr<GstPad> sourcePad;
-
-    bool haveSources = connectAndGetSourceElement(source, sourceElement, sourcePad);
-    if (!sourceElement) {
-        LOG_MEDIA_MESSAGE("ERROR, Unable to get source element");
-        return false;
-    }
-
-    GRefPtr<GstElement> queue = gst_element_factory_make("queue", 0);
-    if (!queue) {
-        LOG_MEDIA_MESSAGE("ERROR, Got no queue element");
-        return false;
-    }
+    GUniquePtr<gchar> sourceName(gst_element_get_name(sourceElement.get()));
+    String teeName = String::format("tee_for_source_%s", sourceName.get());
+    GRefPtr<GstElement> tee;
+    if (wasAddedInPipeline) {
+        tee = gst_element_factory_make("tee", teeName.utf8().data());
+        gst_bin_add_many(GST_BIN(m_pipeline.get()), sourceElement.get(), tee.get(), NULL);
+        GRefPtr<GstPad> teeSinkPad = adoptGRef(gst_element_get_static_pad(tee.get(), "sink"));
+        gst_pad_link(sourcePad.get(), teeSinkPad.get());
+        gst_element_sync_state_with_parent(sourceElement.get());
+        gst_element_sync_state_with_parent(tee.get());
+    } else
+        tee = gst_bin_get_by_name(GST_BIN(m_pipeline.get()), teeName.utf8().data());
 
     GRefPtr<GstElement> sinkParent = adoptGRef(GST_ELEMENT(gst_element_get_parent(sink)));
     if (!sinkParent) {
         LOG_MEDIA_MESSAGE("Sink not in pipeline, adding.");
         gst_bin_add(GST_BIN(m_pipeline.get()), sink);
     } else if (sinkParent.get() != m_pipeline.get()) {
-        LOG_MEDIA_MESSAGE("ERROR, Sink already added to another element. Pipeline is now broken!");
+        ERROR_MEDIA_MESSAGE("Sink already added to another pipeline: %p. Our pipeline (%p) is now broken!", sinkParent.get(), m_pipeline.get());
+        dumpPipeline();
         return false;
-    }
+    } else
+        LOG_MEDIA_MESSAGE("Sink parent: %s", GST_ELEMENT_NAME(sinkParent.get()));
 
+    GRefPtr<GstElement> queue = gst_element_factory_make("queue", 0);
     gst_bin_add(GST_BIN(m_pipeline.get()), queue.get());
 
-    GRefPtr<GstPad> teeSinkPad = adoptGRef(gst_pad_get_peer(sourcePad.get()));
-    GRefPtr<GstElement> tee = adoptGRef(gst_pad_get_parent_element(teeSinkPad.get()));
-
-    gst_element_sync_state_with_parent(sink);
-    gst_element_sync_state_with_parent(queue.get());
-
-    gst_element_link_pads_full(tee.get(), 0, queue.get(), "sink", GST_PAD_LINK_CHECK_DEFAULT);
+    gboolean ret = gst_element_link_pads_full(tee.get(), 0, queue.get(), "sink", GST_PAD_LINK_CHECK_DEFAULT);
+    RTC_LOG("tee linked to queue: %d", ret);
     GRefPtr<GstPad> queueSrcPad = adoptGRef(gst_element_get_static_pad(queue.get(), "src"));
-    gst_pad_link(queueSrcPad.get(), refSinkPad.get());
+    ret = gst_pad_link(queueSrcPad.get(), refSinkPad.get());
+    RTC_LOG("queue linked downstream: %d", ret);
 
-    if (!haveSources) {
-        m_pipelineMap.add(source->id(), Source(sourceElement, sourcePad, true));
-        m_sourceIdLookupMap.add(generateElementPadId(sourceElement.get(), sourcePad.get()), source->id());
-    }
+    gst_element_sync_state_with_parent(queue.get());
+    gst_element_sync_state_with_parent(sink);
 
     gst_element_set_state(m_pipeline.get(), GST_STATE_PLAYING);
+    return true;
+}
+
+gboolean CentralPipelineUnit::insertSource(GstElement* sourceElement, GstPad* pad, const String& sourceId, SourceInsertedCallback callback, gpointer userData)
+{
+    LOG_MEDIA_MESSAGE("Source = %s, sourceId = %s", GST_OBJECT_NAME(sourceElement), sourceId.ascii().data());
+
+    if (sourceId.isNull() || sourceId.isEmpty() || sourceElement == NULL)
+        return FALSE;
+
+    PipelineMap::iterator sourceIt = m_pipelineMap.find(sourceId);
+    if (sourceIt != m_pipelineMap.end())
+        return FALSE;
+
+    GstElement* parent = (GstElement*)gst_element_get_parent(sourceElement);
+    if (!parent) {
+        LOG_MEDIA_MESSAGE("Added source element to pipeline %p", m_pipeline.get());
+        gst_bin_add(GST_BIN(m_pipeline.get()), sourceElement);
+    }
+
+    if (pad) {
+        LOG_MEDIA_MESSAGE("Pad available. Adding tee and fakesink to it.");
+        GstElement* tee = gst_element_factory_make("tee", NULL);
+        gst_bin_add(GST_BIN(m_pipeline.get()), tee);
+        GstPad* teeSinkPad = gst_element_get_static_pad(tee, "sink");
+        gst_pad_link(pad, teeSinkPad);
+
+        // FIXME: How can we do this without the fakesink? We get link-error if tee is not connected to something.
+        // FIXMEPHIL
+        GstElement* fakesink = gst_element_factory_make("fakesink", NULL);
+        g_object_set(fakesink,
+                     "sync", FALSE,
+                     "async", FALSE,
+                     NULL);
+        gst_bin_add(GST_BIN(m_pipeline.get()), fakesink);
+        gst_element_link(tee, fakesink);
+        LOG_MEDIA_MESSAGE("Trying to sync state");
+        gst_element_sync_state_with_parent(sourceElement);
+        gst_element_sync_state_with_parent(tee);
+        gst_element_sync_state_with_parent(fakesink);
+    }
+    else {
+        LOG_MEDIA_MESSAGE("Trying to sync state");
+        gst_element_sync_state_with_parent(sourceElement);
+    }
+
+    m_pipelineMap.add(sourceId, Source(sourceElement, pad, false));
+    m_sourceIdLookupMap.add(generateElementPadId(sourceElement, pad), sourceId);
+
+    if (callback) {
+        callback(sourceElement, pad, userData);
+    }
+
+    // FIXMEPHIL
+    // if (pad)
+    //     gst_pad_set_blocked_async(pad, FALSE, gstPadBlockCallback, 0);
 
     return true;
+}
+
+void CentralPipelineUnit::registerSourceExtension(GstElement* ext, const String& sourceId, const String& extSrcId)
+{
+    if (m_sourceExtensionMap.find(sourceId) == m_sourceExtensionMap.end()) {
+        SourceExtensionInfo sei;
+        sei.extension = ext;
+        sei.sourceToExtend = sourceId;
+        m_sourceExtensionMap.add(extSrcId, sei);
+    }
+}
+
+gchar* createUniqueName(const gchar* prefix)
+{
+    static int count = 0;
+    gchar* uniqueName = new gchar[50];
+    sprintf(uniqueName, "%s%d", prefix, count);
+    count++;
+    return uniqueName;
 }
 
 } // namespace WebCore
