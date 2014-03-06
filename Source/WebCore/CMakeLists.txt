@@ -910,6 +910,7 @@ set(WebCore_SOURCES
     Modules/mediastream/RTCDataChannelEvent.cpp
     Modules/mediastream/RTCIceCandidate.cpp
     Modules/mediastream/RTCIceCandidateEvent.cpp
+    Modules/mediastream/RTCOfferAnswerOptions.cpp
     Modules/mediastream/RTCPeerConnection.cpp
     Modules/mediastream/RTCSessionDescription.cpp
     Modules/mediastream/RTCSessionDescriptionRequestImpl.cpp
