@@ -33,38 +33,17 @@
 
 #if ENABLE(MEDIA_STREAM)
 
+<<<<<<< HEAD
 #include "KURL.h"
+=======
+#include "RTCIceServer.h"
+>>>>>>> 311eeb5... [WebRTC] Updating RTCIceServer to match spec
 #include <wtf/PassRefPtr.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {
-
-class RTCIceServer : public RefCounted<RTCIceServer> {
-public:
-    static PassRefPtr<RTCIceServer> create(const KURL& uri, const String& credential, const String& username)
-    {
-        return adoptRef(new RTCIceServer(uri, credential, username));
-    }
-    virtual ~RTCIceServer() { }
-
-    const KURL& uri() { return m_uri; }
-    const String& credential() { return m_credential; }
-    const String& username() { return m_username; }
-
-private:
-    RTCIceServer(const KURL& uri, const String& credential, const String& username)
-        : m_uri(uri)
-        , m_credential(credential)
-        , m_username(username)
-    {
-    }
-
-    KURL m_uri;
-    String m_credential;
-    String m_username;
-};
 
 class RTCConfiguration : public RefCounted<RTCConfiguration> {
 public:
@@ -74,18 +53,22 @@ public:
     void appendServer(PassRefPtr<RTCIceServer> server) { m_servers.append(server); }
     size_t numberOfServers() { return m_servers.size(); }
     RTCIceServer* server(size_t index) { return m_servers[index].get(); }
+
     const String& iceTransports() const { return m_iceTransports; }
     void setIceTransports(const String& iceTransports)
     {
         if (iceTransports == "none" || iceTransports == "relay" || iceTransports == "all")
             m_iceTransports = iceTransports;
     }
+
     const String& requestIdentity() const { return m_requestIdentity; }
     void setRequestIdentity(const String& requestIdentity)
     {
         if (requestIdentity == "yes" || requestIdentity == "no" || requestIdentity == "ifconfigured")
             m_requestIdentity = requestIdentity;
     }
+
+    Vector<RefPtr<RTCIceServer>> iceServers() const { return m_servers; }
 
  private:
     RTCConfiguration()
