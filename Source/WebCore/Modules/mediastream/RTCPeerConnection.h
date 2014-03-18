@@ -85,9 +85,9 @@ public:
 
     RTCConfiguration* getConfiguration() const;
 
-    MediaStreamVector getLocalStreams() const;
+    Vector<RefPtr<MediaStream>> getLocalStreams() const;
 
-    MediaStreamVector getRemoteStreams() const;
+    Vector<RefPtr<MediaStream>> getRemoteStreams() const;
 
     MediaStream* getStreamById(const String& streamId);
 
@@ -160,8 +160,8 @@ private:
     IceGatheringState m_iceGatheringState;
     IceConnectionState m_iceConnectionState;
 
-    MediaStreamVector m_localStreams;
-    MediaStreamVector m_remoteStreams;
+    Vector<RefPtr<MediaStream>> m_localStreams;
+    Vector<RefPtr<MediaStream>> m_remoteStreams;
 
     Vector<RefPtr<RTCDataChannel> > m_dataChannels;
 
