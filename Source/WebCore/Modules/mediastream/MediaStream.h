@@ -69,11 +69,8 @@ public:
     Vector<RefPtr<MediaStreamTrack>> getAudioTracks() const { return m_audioTracks; }
     Vector<RefPtr<MediaStreamTrack>> getVideoTracks() const { return m_videoTracks; }
 
-    bool ended() const;
-    void setEnded();
     PassRefPtr<MediaStream> clone();
 
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(ended);
     DEFINE_ATTRIBUTE_EVENT_LISTENER(addtrack);
     DEFINE_ATTRIBUTE_EVENT_LISTENER(removetrack);
 
@@ -115,7 +112,6 @@ private:
 
     // MediaStreamPrivateClient
     virtual void trackDidEnd() OVERRIDE FINAL;
-    virtual void streamDidEnd() OVERRIDE FINAL;
     virtual void setStreamIsActive(bool) OVERRIDE FINAL;
     virtual void addRemoteSource(MediaStreamSource*) OVERRIDE FINAL;
     virtual void removeRemoteSource(MediaStreamSource*) OVERRIDE FINAL;
