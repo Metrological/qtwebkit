@@ -116,6 +116,10 @@
 #include "NetworkServicesClientQt.h"
 #endif
 
+#if ENABLE(MEDIA_STREAM)
+#include "UserMediaClientQt.h"
+#endif
+
 // from text/qfont.cpp
 QT_BEGIN_NAMESPACE
 extern Q_GUI_EXPORT int qt_defaultDpi();
@@ -289,6 +293,10 @@ void QWebPageAdapter::initializeWebCorePage()
 
 #if ENABLE(DISCOVERY)
     WebCore::provideNetworkServicesTo(page, new NetworkServicesClientQt(this));
+#endif
+
+#if ENABLE(MEDIA_STREAM)
+    WebCore::provideUserMediaTo(page, new UserMediaClientQt());
 #endif
 
     history.d = new QWebHistoryPrivate(static_cast<WebCore::BackForwardListImpl*>(page->backForwardList()));
