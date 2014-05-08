@@ -50,8 +50,8 @@ public:
     {
     }
 
-    static const AtomicString& sourceType(MediaStreamSourceStates::SourceType);
-    static const AtomicString& facingMode(MediaStreamSourceStates::VideoFacingMode);
+    static const String& sourceType(MediaStreamSourceStates::SourceType);
+    static const String& facingMode(MediaStreamSourceStates::VideoFacingMode);
 
     SourceType sourceType() const { return m_sourceType; }
     void setSourceType(SourceType type) { m_sourceType = type; }

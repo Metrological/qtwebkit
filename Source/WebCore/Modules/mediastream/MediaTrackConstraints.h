@@ -44,7 +44,7 @@ public:
 
     static RefPtr<MediaTrackConstraints> create(PassRefPtr<MediaConstraintsImpl>);
 
-    Vector<PassRefPtr<MediaTrackConstraint>> optional(bool) const;
+    Vector<PassRefPtr<MediaTrackConstraint> > optional(bool) const;
     RefPtr<MediaTrackConstraintSet> mandatory(bool) const;
 
 private:

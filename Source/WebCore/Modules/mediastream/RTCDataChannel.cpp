@@ -38,19 +38,18 @@
 #include "ScriptExecutionContext.h"
 #include <wtf/ArrayBuffer.h>
 #include <wtf/ArrayBufferView.h>
-#include <wtf/NeverDestroyed.h>
 
 namespace WebCore {
 
 static const AtomicString& blobKeyword()
 {
-    static NeverDestroyed<AtomicString> blob("blob", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, blob, ("blob", AtomicString::ConstructFromLiteral));
     return blob;
 }
 
 static const AtomicString& arraybufferKeyword()
 {
-    static NeverDestroyed<AtomicString> arraybuffer("arraybuffer", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, arraybuffer, ("arraybuffer", AtomicString::ConstructFromLiteral));
     return arraybuffer;
 }
 
@@ -72,13 +71,13 @@ PassRefPtr<RTCDataChannel> RTCDataChannel::create(ScriptExecutionContext* contex
     initData.maxRetransmitTime = maxRetransmitTimeStr.toUIntStrict(&maxRetransmitTimeConversion);
     if (maxRetransmitsConversion && maxRetransmitTimeConversion) {
         ec = SYNTAX_ERR;
-        return nullptr;
+        return 0;
     }
 
     OwnPtr<RTCDataChannelHandler> handler = peerConnectionHandler->createDataChannel(label, initData);
     if (!handler) {
         ec = NOT_SUPPORTED_ERR;
-        return nullptr;
+        return 0;
     }
     return adoptRef(new RTCDataChannel(context, handler.release()));
 }
@@ -141,10 +140,10 @@ unsigned short RTCDataChannel::id() const
 
 AtomicString RTCDataChannel::readyState() const
 {
-    static NeverDestroyed<AtomicString> connectingState("connecting", AtomicString::ConstructFromLiteral);
-    static NeverDestroyed<AtomicString> openState("open", AtomicString::ConstructFromLiteral);
-    static NeverDestroyed<AtomicString> closingState("closing", AtomicString::ConstructFromLiteral);
-    static NeverDestroyed<AtomicString> closedState("closed", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, connectingState, ("connecting", AtomicString::ConstructFromLiteral));
+    DEFINE_STATIC_LOCAL(AtomicString, openState, ("open", AtomicString::ConstructFromLiteral));
+    DEFINE_STATIC_LOCAL(AtomicString, closingState, ("closing", AtomicString::ConstructFromLiteral));
+    DEFINE_STATIC_LOCAL(AtomicString, closedState, ("closed", AtomicString::ConstructFromLiteral));
     
     switch (m_readyState) {
     case ReadyStateConnecting:

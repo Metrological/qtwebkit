@@ -75,14 +75,14 @@ PassRefPtr<UserMediaRequest> UserMediaRequest::create(ScriptExecutionContext* co
 
     RefPtr<MediaConstraints> audioConstraints = parseOptions(options, AtomicString("audio", AtomicString::ConstructFromLiteral), ec);
     if (ec)
-        return nullptr;
+        return 0;
 
     RefPtr<MediaConstraints> videoConstraints = parseOptions(options, AtomicString("video", AtomicString::ConstructFromLiteral), ec);
     if (ec)
-        return nullptr;
+        return 0;
 
     if (!audioConstraints && !videoConstraints)
-        return nullptr;
+        return 0;
 
     return adoptRef(new UserMediaRequest(context, controller, audioConstraints.release(), videoConstraints.release(), successCallback, errorCallback));
 }
@@ -106,7 +106,7 @@ SecurityOrigin* UserMediaRequest::securityOrigin() const
     if (m_scriptExecutionContext)
         return m_scriptExecutionContext->securityOrigin();
 
-    return nullptr;
+    return 0;
 }
     
 void UserMediaRequest::start()
@@ -166,12 +166,12 @@ void UserMediaRequest::callSuccessHandler(PassRefPtr<MediaStreamPrivate> private
 
     RefPtr<MediaStream> stream = MediaStream::create(m_scriptExecutionContext, privateStream);
 
-    Vector<RefPtr<MediaStreamTrack>> tracks = stream->getAudioTracks();
-    for (auto iter = tracks.begin(); iter != tracks.end(); ++iter)
+    Vector<RefPtr<MediaStreamTrack> > tracks = stream->getAudioTracks();
+    for (Vector<RefPtr<MediaStreamTrack> >::iterator iter = tracks.begin(); iter != tracks.end(); ++iter)
         (*iter)->applyConstraints(m_audioConstraints);
 
     tracks = stream->getVideoTracks();
-    for (auto iter = tracks.begin(); iter != tracks.end(); ++iter)
+    for (Vector<RefPtr<MediaStreamTrack> >::iterator iter = tracks.begin(); iter != tracks.end(); ++iter)
         (*iter)->applyConstraints(m_videoConstraints);
 
     m_successCallback->handleEvent(stream.get());

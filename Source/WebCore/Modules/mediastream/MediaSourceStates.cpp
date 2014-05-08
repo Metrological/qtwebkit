@@ -29,8 +29,6 @@
 
 #include "MediaSourceStates.h"
 
-#include <wtf/NeverDestroyed.h>
-
 namespace WebCore {
 
 RefPtr<MediaSourceStates> MediaSourceStates::create(const MediaStreamSourceStates& states)

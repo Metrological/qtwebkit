@@ -40,7 +40,7 @@ class ScriptExecutionContext;
 class VideoStreamTrack FINAL : public MediaStreamTrack {
 public:
     static RefPtr<VideoStreamTrack> create(ScriptExecutionContext*, const Dictionary&);
-    static RefPtr<VideoStreamTrack> create(ScriptExecutionContext*, MediaStreamTrackPrivate&);
+    static RefPtr<VideoStreamTrack> create(ScriptExecutionContext*, MediaStreamTrackPrivate*);
     static RefPtr<VideoStreamTrack> create(MediaStreamTrack*);
 
     virtual ~VideoStreamTrack() { }
@@ -48,7 +48,7 @@ public:
     virtual const AtomicString& kind() const OVERRIDE;
 
 private:
-    VideoStreamTrack(ScriptExecutionContext*, MediaStreamTrackPrivate&, const Dictionary*);
+    VideoStreamTrack(ScriptExecutionContext*, MediaStreamTrackPrivate*, const Dictionary*);
     explicit VideoStreamTrack(MediaStreamTrack*);
 };
 

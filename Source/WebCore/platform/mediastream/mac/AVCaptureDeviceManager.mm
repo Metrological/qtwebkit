@@ -320,10 +320,10 @@ bool AVCaptureDeviceManager::isValidConstraint(MediaStreamSource::Type type, con
     return true;
 }
 
-Vector<RefPtr<TrackSourceInfo>> AVCaptureDeviceManager::getSourcesInfo(const String& requestOrigin)
+Vector<RefPtr<TrackSourceInfo> > AVCaptureDeviceManager::getSourcesInfo(const String& requestOrigin)
 {
     UNUSED_PARAM(requestOrigin);
-    Vector<RefPtr<TrackSourceInfo>> sourcesInfo;
+    Vector<RefPtr<TrackSourceInfo> > sourcesInfo;
 
     if (!isAvailable())
         return sourcesInfo;

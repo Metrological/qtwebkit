@@ -43,12 +43,12 @@
 
 namespace WebCore {
 
-PassRefPtr<MediaStreamPrivate> MediaStreamPrivate::create(const Vector<RefPtr<MediaStreamSource>>& audioSources, const Vector<RefPtr<MediaStreamSource>>& videoSources)
+PassRefPtr<MediaStreamPrivate> MediaStreamPrivate::create(const Vector<RefPtr<MediaStreamSource> >& audioSources, const Vector<RefPtr<MediaStreamSource> >& videoSources)
 {
     return adoptRef(new MediaStreamPrivate(createCanonicalUUIDString(), audioSources, videoSources));
 }
 
-PassRefPtr<MediaStreamPrivate> MediaStreamPrivate::create(const Vector<RefPtr<MediaStreamTrackPrivate>>& audioPrivateTracks, const Vector<RefPtr<MediaStreamTrackPrivate>>& videoPrivateTracks)
+PassRefPtr<MediaStreamPrivate> MediaStreamPrivate::create(const Vector<RefPtr<MediaStreamTrackPrivate> >& audioPrivateTracks, const Vector<RefPtr<MediaStreamTrackPrivate> >& videoPrivateTracks)
 {
     return adoptRef(new MediaStreamPrivate(createCanonicalUUIDString(), audioPrivateTracks, videoPrivateTracks));
 }
@@ -125,7 +125,7 @@ void MediaStreamPrivate::removeRemoteTrack(MediaStreamTrackPrivate* track)
         removeTrack(track);
 }
 
-MediaStreamPrivate::MediaStreamPrivate(const String& id, const Vector<RefPtr<MediaStreamSource>>& audioSources, const Vector<RefPtr<MediaStreamSource>>& videoSources)
+MediaStreamPrivate::MediaStreamPrivate(const String& id, const Vector<RefPtr<MediaStreamSource> >& audioSources, const Vector<RefPtr<MediaStreamSource> >& videoSources)
     : m_client(0)
     , m_id(id)
     , m_isActive(false)
@@ -144,7 +144,7 @@ MediaStreamPrivate::MediaStreamPrivate(const String& id, const Vector<RefPtr<Med
         m_isActive = true;
 }
 
-MediaStreamPrivate::MediaStreamPrivate(const String& id, const Vector<RefPtr<MediaStreamTrackPrivate>>& audioPrivateTracks, const Vector<RefPtr<MediaStreamTrackPrivate>>& videoPrivateTracks)
+MediaStreamPrivate::MediaStreamPrivate(const String& id, const Vector<RefPtr<MediaStreamTrackPrivate> >& audioPrivateTracks, const Vector<RefPtr<MediaStreamTrackPrivate> >& videoPrivateTracks)
     : m_client(0)
     , m_id(id)
     , m_isActive(false)
@@ -178,7 +178,7 @@ void MediaStreamPrivate::addTrack(PassRefPtr<MediaStreamTrackPrivate> prpTrack)
 {
     RefPtr<MediaStreamTrackPrivate> track = prpTrack;
 
-    Vector<RefPtr<MediaStreamTrackPrivate>>& tracks = track->type() == MediaStreamSource::Audio ? m_audioPrivateTracks : m_videoPrivateTracks;
+    Vector<RefPtr<MediaStreamTrackPrivate> >& tracks = track->type() == MediaStreamSource::Audio ? m_audioPrivateTracks : m_videoPrivateTracks;
 
     size_t pos = tracks.find(track);
     if (pos != notFound)
@@ -191,7 +191,7 @@ void MediaStreamPrivate::addTrack(PassRefPtr<MediaStreamTrackPrivate> prpTrack)
 
 void MediaStreamPrivate::removeTrack(PassRefPtr<MediaStreamTrackPrivate> track)
 {
-    Vector<RefPtr<MediaStreamTrackPrivate>>& tracks = track->type() == MediaStreamSource::Audio ? m_audioPrivateTracks : m_videoPrivateTracks;
+    Vector<RefPtr<MediaStreamTrackPrivate> >& tracks = track->type() == MediaStreamSource::Audio ? m_audioPrivateTracks : m_videoPrivateTracks;
 
     size_t pos = tracks.find(track);
     if (pos == notFound)

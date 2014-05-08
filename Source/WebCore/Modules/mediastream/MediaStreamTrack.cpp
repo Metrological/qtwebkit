@@ -48,13 +48,11 @@
 #include "NotImplemented.h"
 #include "VideoStreamTrack.h"
 #include <wtf/Functional.h>
-#include <wtf/NeverDestroyed.h>
 
 namespace WebCore {
 
-MediaStreamTrack::MediaStreamTrack(ScriptExecutionContext* context, MediaStreamTrackPrivate& privateTrack, const Dictionary* constraints)
-    : RefCounted()
-    , ActiveDOMObject(context)
+MediaStreamTrack::MediaStreamTrack(ScriptExecutionContext* context, MediaStreamTrackPrivate* privateTrack, const Dictionary* constraints)
+    : ActiveDOMObject(context)
     , m_privateTrack(privateTrack)
     , m_eventDispatchScheduled(false)
     , m_stoppingTrack(false)
@@ -68,9 +66,8 @@ MediaStreamTrack::MediaStreamTrack(ScriptExecutionContext* context, MediaStreamT
 }
 
 MediaStreamTrack::MediaStreamTrack(MediaStreamTrack* other)
-    : RefCounted()
-    , ActiveDOMObject(other->scriptExecutionContext())
-    , m_privateTrack(*other->privateTrack().clone())
+    : ActiveDOMObject(other->scriptExecutionContext())
+    , m_privateTrack(other->privateTrack()->clone())
     , m_eventDispatchScheduled(false)
     , m_stoppingTrack(false)
 {
@@ -81,7 +78,7 @@ MediaStreamTrack::MediaStreamTrack(MediaStreamTrack* other)
 
 MediaStreamTrack::~MediaStreamTrack()
 {
-    m_privateTrack->setClient(nullptr);
+    m_privateTrack->setClient(0);
 }
 
 void MediaStreamTrack::setSource(PassRefPtr<MediaStreamSource> newSource)
@@ -131,9 +128,9 @@ bool MediaStreamTrack::remote() const
 
 const AtomicString& MediaStreamTrack::readyState() const
 {
-    static NeverDestroyed<AtomicString> ended("ended", AtomicString::ConstructFromLiteral);
-    static NeverDestroyed<AtomicString> live("live", AtomicString::ConstructFromLiteral);
-    static NeverDestroyed<AtomicString> newState("new", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, ended, ("ended", AtomicString::ConstructFromLiteral));
+    DEFINE_STATIC_LOCAL(AtomicString, live, ("live", AtomicString::ConstructFromLiteral));
+    DEFINE_STATIC_LOCAL(AtomicString, newState, ("new", AtomicString::ConstructFromLiteral));
 
     switch (m_privateTrack->readyState()) {
     case MediaStreamSource::Live:
@@ -303,7 +300,7 @@ void MediaStreamTrack::scheduleEventDispatch(PassRefPtr<Event> event)
 
 void MediaStreamTrack::dispatchQueuedEvents()
 {
-    Vector<RefPtr<Event>> events;
+    Vector<RefPtr<Event> > events;
     {
         MutexLocker locker(m_mutex);
         m_eventDispatchScheduled = false;
@@ -312,7 +309,8 @@ void MediaStreamTrack::dispatchQueuedEvents()
     if (!scriptExecutionContext())
         return;
 
-    for (auto it = events.begin(); it != events.end(); ++it)
+    Vector<RefPtr<Event> >::iterator it = events.begin();
+    for (; it != events.end(); ++it)
         dispatchEvent((*it).release());
 
     events.clear();
@@ -336,22 +334,6 @@ EventTargetData* MediaStreamTrack::eventTargetData()
 EventTargetData* MediaStreamTrack::ensureEventTargetData()
 {
     return &m_eventTargetData;
-}
-
-void MediaStreamTrack::trackReadyStateChanged()
-{
-    if (m_privateTrack->readyState() == MediaStreamSource::Live)
-        scheduleEventDispatch(Event::create(eventNames().startedEvent, false, false));
-    else if (m_privateTrack->readyState() == MediaStreamSource::Ended)
-        scheduleEventDispatch(Event::create(eventNames().endedEvent, false, false));
-}
-
-void MediaStreamTrack::trackMutedChanged()
-{
-    if (muted())
-        scheduleEventDispatch(Event::create(eventNames().muteEvent, false, false));
-    else
-        scheduleEventDispatch(Event::create(eventNames().unmuteEvent, false, false));
 }
 
 } // namespace WebCore

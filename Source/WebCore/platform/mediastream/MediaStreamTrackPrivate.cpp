@@ -33,7 +33,6 @@
 #include "MediaStreamCapabilities.h"
 #include "NotImplemented.h"
 #include "UUID.h"
-#include <wtf/NeverDestroyed.h>
 
 namespace WebCore {
 
@@ -44,7 +43,7 @@ PassRefPtr<MediaStreamTrackPrivate> MediaStreamTrackPrivate::create(PassRefPtr<M
 
 MediaStreamTrackPrivate::MediaStreamTrackPrivate(const MediaStreamTrackPrivate& other)
     : RefCounted()
-    , m_client(nullptr)
+    , m_client(0)
 {
     m_ignoreMutations = true;
     m_id = createCanonicalUUIDString();
@@ -57,8 +56,8 @@ MediaStreamTrackPrivate::MediaStreamTrackPrivate(const MediaStreamTrackPrivate& 
 }
 
 MediaStreamTrackPrivate::MediaStreamTrackPrivate(PassRefPtr<MediaStreamSource> source)
-    : m_source(nullptr)
-    , m_client(nullptr)
+    : m_source(0)
+    , m_client(0)
     , m_readyState(MediaStreamSource::New)
     , m_muted(false)
     , m_enabled(true)

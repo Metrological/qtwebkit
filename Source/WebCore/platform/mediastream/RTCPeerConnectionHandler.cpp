@@ -40,7 +40,7 @@
 namespace WebCore {
 class RTCPeerConnectionHandlerClient;
 
-PassOwnPtr<RTCPeerConnectionHandler> RTCPeerConnectionHandler::create(RTCPeerConnectionHandlerClient*)
+static PassOwnPtr<RTCPeerConnectionHandler> createHandler(RTCPeerConnectionHandlerClient*)
 {
     return nullptr;
 }
@@ -49,25 +49,25 @@ CreatePeerConnectionHandler RTCPeerConnectionHandler::create = createHandler;
 
 const AtomicString& RTCPeerConnectionHandler::incompatibleConstraintsErrorName()
 {
-    static NeverDestroyed<AtomicString> incompatibleConstraints("IncompatibleConstraintsError", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, incompatibleConstraints, ("IncompatibleConstraintsError", AtomicString::ConstructFromLiteral));
     return incompatibleConstraints;
 }
 
 const AtomicString& RTCPeerConnectionHandler::invalidSessionDescriptionErrorName()
 {
-    static NeverDestroyed<AtomicString> invalidSessionDescription("InvalidSessionDescriptionError", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, invalidSessionDescription, ("InvalidSessionDescriptionError", AtomicString::ConstructFromLiteral));
     return invalidSessionDescription;
 }
 
 const AtomicString& RTCPeerConnectionHandler::incompatibleSessionDescriptionErrorName()
 {
-    static NeverDestroyed<AtomicString> incompatibleSessionDescription("IncompatibleSessionDescriptionError", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, incompatibleSessionDescription, ("IncompatibleSessionDescriptionError", AtomicString::ConstructFromLiteral));
     return incompatibleSessionDescription;
 }
 
 const AtomicString& RTCPeerConnectionHandler::internalErrorName()
 {
-    static NeverDestroyed<AtomicString> internal("InternalError", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, internal, ("InternalError", AtomicString::ConstructFromLiteral));
     return internal;
 }
 

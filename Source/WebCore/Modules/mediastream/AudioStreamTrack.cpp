@@ -31,16 +31,15 @@
 
 #include "Dictionary.h"
 #include "ScriptExecutionContext.h"
-#include <wtf/NeverDestroyed.h>
 
 namespace WebCore {
 
 RefPtr<AudioStreamTrack> AudioStreamTrack::create(ScriptExecutionContext* context, const Dictionary& audioConstraints)
 {
-    return adoptRef(new AudioStreamTrack(context, *MediaStreamTrackPrivate::create(0), &audioConstraints));
+    return adoptRef(new AudioStreamTrack(context, MediaStreamTrackPrivate::create(0).get(), &audioConstraints));
 }
 
-RefPtr<AudioStreamTrack> AudioStreamTrack::create(ScriptExecutionContext* context, MediaStreamTrackPrivate& privateTrack)
+RefPtr<AudioStreamTrack> AudioStreamTrack::create(ScriptExecutionContext* context, MediaStreamTrackPrivate* privateTrack)
 {
     return adoptRef(new AudioStreamTrack(context, privateTrack, 0));
 }
@@ -50,7 +49,7 @@ RefPtr<AudioStreamTrack> AudioStreamTrack::create(MediaStreamTrack* track)
     return adoptRef(new AudioStreamTrack(track));
 }
 
-AudioStreamTrack::AudioStreamTrack(ScriptExecutionContext* context, MediaStreamTrackPrivate& privateTrack, const Dictionary* audioConstraints)
+AudioStreamTrack::AudioStreamTrack(ScriptExecutionContext* context, MediaStreamTrackPrivate* privateTrack, const Dictionary* audioConstraints)
     : MediaStreamTrack(context, privateTrack, audioConstraints)
 {
 }
@@ -62,7 +61,7 @@ AudioStreamTrack::AudioStreamTrack(MediaStreamTrack* track)
 
 const AtomicString& AudioStreamTrack::kind() const
 {
-    static NeverDestroyed<AtomicString> audioKind("audio", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, audioKind, ("audio", AtomicString::ConstructFromLiteral));
     return audioKind;
 }
 

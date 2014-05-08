@@ -48,7 +48,7 @@ public:
     static AVCaptureDeviceManager& shared();
     static bool isAvailable();
 
-    Vector<RefPtr<TrackSourceInfo>> getSourcesInfo(const String&);
+    Vector<RefPtr<TrackSourceInfo> > getSourcesInfo(const String&);
     bool verifyConstraintsForMediaType(MediaStreamSource::Type, MediaConstraints*, String&);
     RefPtr<MediaStreamSource> bestSourceForTypeAndConstraints(MediaStreamSource::Type, PassRefPtr<MediaConstraints>);
 

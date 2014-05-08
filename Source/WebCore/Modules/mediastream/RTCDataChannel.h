@@ -33,7 +33,7 @@
 #include "Timer.h"
 #include <wtf/RefCounted.h>
 
-namespace JSC {
+namespace WTF {
     class ArrayBuffer;
     class ArrayBufferView;
 }
@@ -65,8 +65,8 @@ public:
     void setBinaryType(const AtomicString&, ExceptionCode&);
 
     void send(const String&, ExceptionCode&);
-    void send(PassRefPtr<JSC::ArrayBuffer>, ExceptionCode&);
-    void send(PassRefPtr<JSC::ArrayBufferView>, ExceptionCode&);
+    void send(PassRefPtr<WTF::ArrayBuffer>, ExceptionCode&);
+    void send(PassRefPtr<WTF::ArrayBufferView>, ExceptionCode&);
     void send(PassRefPtr<Blob>, ExceptionCode&);
 
     void close();

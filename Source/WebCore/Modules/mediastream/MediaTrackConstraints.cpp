@@ -48,18 +48,18 @@ MediaTrackConstraints::MediaTrackConstraints(PassRefPtr<MediaConstraintsImpl> co
 {
 }
 
-Vector<PassRefPtr<MediaTrackConstraint>> MediaTrackConstraints::optional(bool) const
+Vector<PassRefPtr<MediaTrackConstraint> > MediaTrackConstraints::optional(bool) const
 {
     // https://bugs.webkit.org/show_bug.cgi?id=121954
     notImplemented();
-    return Vector<PassRefPtr<MediaTrackConstraint>>();
+    return Vector<PassRefPtr<MediaTrackConstraint> >();
 }
 
 RefPtr<MediaTrackConstraintSet> MediaTrackConstraints::mandatory(bool) const
 {
     // https://bugs.webkit.org/show_bug.cgi?id=121954
     notImplemented();
-    return nullptr;
+    return 0;
 }
 
 } // namespace WebCore

@@ -58,8 +58,8 @@ public:
 
 class MediaStreamPrivate : public RefCounted<MediaStreamPrivate> {
 public:
-    static PassRefPtr<MediaStreamPrivate> create(const Vector<RefPtr<MediaStreamSource>>& audioSources, const Vector<RefPtr<MediaStreamSource>>& videoSources);
-    static PassRefPtr<MediaStreamPrivate> create(const Vector<RefPtr<MediaStreamTrackPrivate>>& audioPrivateTracks, const Vector<RefPtr<MediaStreamTrackPrivate>>& videoPrivateTracks);
+    static PassRefPtr<MediaStreamPrivate> create(const Vector<RefPtr<MediaStreamSource> >& audioSources, const Vector<RefPtr<MediaStreamSource> >& videoSources);
+    static PassRefPtr<MediaStreamPrivate> create(const Vector<RefPtr<MediaStreamTrackPrivate> >& audioPrivateTracks, const Vector<RefPtr<MediaStreamTrackPrivate> >& videoPrivateTracks);
 
     virtual ~MediaStreamPrivate() { }
 
@@ -96,20 +96,20 @@ public:
     void removeRemoteTrack(MediaStreamTrackPrivate*);
 
 private:
-    MediaStreamPrivate(const String& id, const Vector<RefPtr<MediaStreamSource>>& audioSources, const Vector<RefPtr<MediaStreamSource>>& videoSources);
-    MediaStreamPrivate(const String& id, const Vector<RefPtr<MediaStreamTrackPrivate>>& audioPrivateTracks, const Vector<RefPtr<MediaStreamTrackPrivate>>& videoPrivateTracks);
+    MediaStreamPrivate(const String& id, const Vector<RefPtr<MediaStreamSource> >& audioSources, const Vector<RefPtr<MediaStreamSource> >& videoSources);
+    MediaStreamPrivate(const String& id, const Vector<RefPtr<MediaStreamTrackPrivate> >& audioPrivateTracks, const Vector<RefPtr<MediaStreamTrackPrivate> >& videoPrivateTracks);
 
     MediaStreamPrivateClient* m_client;
     String m_id;
-    Vector<RefPtr<MediaStreamSource>> m_audioStreamSources;
-    Vector<RefPtr<MediaStreamSource>> m_videoStreamSources;
+    Vector<RefPtr<MediaStreamSource> > m_audioStreamSources;
+    Vector<RefPtr<MediaStreamSource> > m_videoStreamSources;
 
-    Vector<RefPtr<MediaStreamTrackPrivate>> m_audioPrivateTracks;
-    Vector<RefPtr<MediaStreamTrackPrivate>> m_videoPrivateTracks;
+    Vector<RefPtr<MediaStreamTrackPrivate> > m_audioPrivateTracks;
+    Vector<RefPtr<MediaStreamTrackPrivate> > m_videoPrivateTracks;
     bool m_isActive;
 };
 
-typedef Vector<RefPtr<MediaStreamPrivate>> MediaStreamPrivateVector;
+typedef Vector<RefPtr<MediaStreamPrivate> > MediaStreamPrivateVector;
 
 } // namespace WebCore
 

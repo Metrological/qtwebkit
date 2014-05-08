@@ -327,7 +327,7 @@ HTMLMediaElement::HTMLMediaElement(const QualifiedName& tagName, Document* docum
 #endif
     , m_reportedExtraMemoryCost(0)
 #if ENABLE(MEDIA_STREAM)
-    , m_mediaStreamSrcObject(nullptr)
+    , m_mediaStreamSrcObject(0)
 #endif
 {
     LOG(Media, "HTMLMediaElement::HTMLMediaElement");

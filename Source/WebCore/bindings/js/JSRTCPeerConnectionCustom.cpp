@@ -54,7 +54,7 @@ EncodedJSValue JSC_HOST_CALL JSRTCPeerConnectionConstructor::constructJSRTCPeerC
     if (!scriptExecutionContext)
         return throwVMError(exec, createReferenceError(exec, "RTCPeerConnection constructor associated document is unavailable"));
 
-    RefPtr<RTCPeerConnection> peerConnection = RTCPeerConnection::create(*scriptExecutionContext, rtcConfiguration, ec);
+    RefPtr<RTCPeerConnection> peerConnection = RTCPeerConnection::create(scriptExecutionContext, rtcConfiguration, ec);
     if (ec == TYPE_MISMATCH_ERR) {
         setDOMException(exec, ec);
         return throwVMError(exec, createTypeError(exec, "Invalid RTCPeerConnection constructor arguments"));

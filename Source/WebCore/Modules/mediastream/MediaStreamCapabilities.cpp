@@ -79,7 +79,7 @@ Vector<String> MediaStreamCapabilities::sourceId() const
     capabilities.reserveCapacity(count);
     
     for (size_t i = 0; i < count; ++i)
-        capabilities.append(sourceIds[i]);
+        capabilities.append(sourceIds[i].string());
     
     return capabilities;
 }

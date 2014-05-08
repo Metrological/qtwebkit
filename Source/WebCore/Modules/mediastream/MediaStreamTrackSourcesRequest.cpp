@@ -49,7 +49,7 @@ MediaStreamTrackSourcesRequest::MediaStreamTrackSourcesRequest(ScriptExecutionCo
     m_origin = context->securityOrigin()->toString();
 }
 
-void MediaStreamTrackSourcesRequest::didCompleteRequest(const Vector<RefPtr<TrackSourceInfo>>& requestSourceInfos)
+void MediaStreamTrackSourcesRequest::didCompleteRequest(const Vector<RefPtr<TrackSourceInfo> >& requestSourceInfos)
 {
     ASSERT(m_callback);
 
@@ -64,7 +64,7 @@ void MediaStreamTrackSourcesRequest::callCompletionHandler()
     ASSERT(m_callback);
 
     m_callback->handleEvent(m_sourceInfos);
-    m_callback = nullptr;
+    m_callback = 0;
 }
 
 } // namespace WebCore

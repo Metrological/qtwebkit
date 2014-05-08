@@ -58,14 +58,14 @@ public:
 
     void addAudioConsumer(PassRefPtr<AudioDestinationConsumer>);
     bool removeAudioConsumer(AudioDestinationConsumer*);
-    const Vector<RefPtr<AudioDestinationConsumer>>& audioConsumers() const { return m_audioConsumers; }
+    const Vector<RefPtr<AudioDestinationConsumer> >& audioConsumers() const { return m_audioConsumers; }
 
 private:
     MediaStreamAudioSource();
 
     String m_deviceId;
     Mutex m_audioConsumersLock;
-    Vector<RefPtr<AudioDestinationConsumer>> m_audioConsumers;
+    Vector<RefPtr<AudioDestinationConsumer> > m_audioConsumers;
     MediaStreamSourceStates m_currentStates;
 };
 

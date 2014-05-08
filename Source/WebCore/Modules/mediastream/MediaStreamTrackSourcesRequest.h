@@ -49,13 +49,13 @@ private:
 
     // MediaStreamTrackSourcesRequestClient
     virtual const String& requestOrigin() const OVERRIDE { return m_origin; }
-    virtual void didCompleteRequest(const Vector<RefPtr<TrackSourceInfo>>&) OVERRIDE;
+    virtual void didCompleteRequest(const Vector<RefPtr<TrackSourceInfo> >&) OVERRIDE;
 
     void callCompletionHandler();
 
     String m_origin;
     RefPtr<MediaStreamTrackSourcesCallback> m_callback;
-    Vector<RefPtr<SourceInfo>> m_sourceInfos;
+    Vector<RefPtr<SourceInfo> > m_sourceInfos;
 };
 
 } // namespace WebCore

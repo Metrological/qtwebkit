@@ -52,14 +52,14 @@ PassRefPtr<RTCSessionDescription> RTCSessionDescription::create(const Dictionary
     bool ok = dictionary.get("type", type);
     if (ok && !verifyType(type)) {
         ec = TYPE_MISMATCH_ERR;
-        return nullptr;
+        return 0;
     }
 
     String sdp;
     ok = dictionary.get("sdp", sdp);
     if (ok && sdp.isEmpty()) {
         ec = TYPE_MISMATCH_ERR;
-        return nullptr;
+        return 0;
     }
 
     return adoptRef(new RTCSessionDescription(RTCSessionDescriptionDescriptor::create(type, sdp)));

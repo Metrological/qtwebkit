@@ -50,7 +50,7 @@ public:
     virtual URLRegistrable* lookup(const String&) const OVERRIDE;
 
 private:
-    HashMap<String, RefPtr<MediaStream>> m_mediaStreams;
+    HashMap<String, RefPtr<MediaStream> > m_mediaStreams;
 };
 
 } // namespace WebCore

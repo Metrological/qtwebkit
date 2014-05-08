@@ -75,8 +75,8 @@ void MediaStreamSource::setReadyState(ReadyState readyState)
         return;
 
     m_readyState = readyState;
-    for (auto observer = m_observers.begin(); observer != m_observers.end(); ++observer)
-        (*observer)->sourceReadyStateChanged();
+    for (Vector<Observer*>::iterator iter = m_observers.begin(); iter != m_observers.end(); ++iter)
+        (*iter)->sourceReadyStateChanged();
 
     if (m_readyState == Live) {
         startProducingData();
@@ -113,16 +113,16 @@ void MediaStreamSource::setMuted(bool muted)
     if (m_readyState == Ended)
         return;
 
-    for (auto observer = m_observers.begin(); observer != m_observers.end(); ++observer)
-        (*observer)->sourceMutedChanged();
+    for (Vector<Observer*>::iterator iter = m_observers.begin(); iter != m_observers.end(); ++iter)
+        (*iter)->sourceMutedChanged();
 }
 
 void MediaStreamSource::setEnabled(bool enabled)
 {
     if (!enabled) {
         // Don't disable the source unless all observers are disabled.
-        for (auto observer = m_observers.begin(); observer != m_observers.end(); ++observer) {
-            if ((*observer)->observerIsEnabled())
+        for (Vector<Observer*>::iterator iter = m_observers.begin(); iter != m_observers.end(); ++iter) {
+            if ((*iter)->observerIsEnabled())
                 return;
         }
     }
@@ -140,8 +140,8 @@ void MediaStreamSource::setEnabled(bool enabled)
     else
         startProducingData();
 
-    for (auto observer = m_observers.begin(); observer != m_observers.end(); ++observer)
-        (*observer)->sourceEnabledChanged();
+    for (Vector<Observer*>::iterator iter = m_observers.begin(); iter != m_observers.end(); ++iter)
+        (*iter)->sourceEnabledChanged();
 }
 
 bool MediaStreamSource::readonly() const

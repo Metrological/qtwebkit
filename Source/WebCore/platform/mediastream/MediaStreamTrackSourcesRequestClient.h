@@ -65,7 +65,7 @@ public:
     virtual ~MediaStreamTrackSourcesRequestClient() { }
 
     virtual const String& requestOrigin() const = 0;
-    virtual void didCompleteRequest(const Vector<RefPtr<TrackSourceInfo>>&) = 0;
+    virtual void didCompleteRequest(const Vector<RefPtr<TrackSourceInfo> >&) = 0;
 
 };
 

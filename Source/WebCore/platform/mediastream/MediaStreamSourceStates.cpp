@@ -34,16 +34,14 @@
 
 #include "MediaStreamSourceStates.h"
 
-#include <wtf/NeverDestroyed.h>
-
 namespace WebCore {
 
-const AtomicString& MediaStreamSourceStates::facingMode(MediaStreamSourceStates::VideoFacingMode mode)
+const String& MediaStreamSourceStates::facingMode(MediaStreamSourceStates::VideoFacingMode mode)
 {
-    static NeverDestroyed<AtomicString> userFacing("user", AtomicString::ConstructFromLiteral);
-    static NeverDestroyed<AtomicString> environmentFacing("environment", AtomicString::ConstructFromLiteral);
-    static NeverDestroyed<AtomicString> leftFacing("left", AtomicString::ConstructFromLiteral);
-    static NeverDestroyed<AtomicString> rightFacing("right", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(String, userFacing, ("user", AtomicString::ConstructFromLiteral));
+    DEFINE_STATIC_LOCAL(String, environmentFacing, ("environment", AtomicString::ConstructFromLiteral));
+    DEFINE_STATIC_LOCAL(String, leftFacing, ("left", AtomicString::ConstructFromLiteral));
+    DEFINE_STATIC_LOCAL(String, rightFacing, ("right", AtomicString::ConstructFromLiteral));
     
     switch (mode) {
     case MediaStreamSourceStates::User:
@@ -55,18 +53,18 @@ const AtomicString& MediaStreamSourceStates::facingMode(MediaStreamSourceStates:
     case MediaStreamSourceStates::Right:
         return rightFacing;
     case MediaStreamSourceStates::Unknown:
-        return emptyAtom;
+        return emptyString();
     }
     
     ASSERT_NOT_REACHED();
-    return emptyAtom;
+    return emptyString();
 }
 
-const AtomicString& MediaStreamSourceStates::sourceType(MediaStreamSourceStates::SourceType sourceType)
+const String& MediaStreamSourceStates::sourceType(MediaStreamSourceStates::SourceType sourceType)
 {
-    static NeverDestroyed<AtomicString> none("none", AtomicString::ConstructFromLiteral);
-    static NeverDestroyed<AtomicString> camera("camera", AtomicString::ConstructFromLiteral);
-    static NeverDestroyed<AtomicString> microphone("microphone", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(String, none, ("none", AtomicString::ConstructFromLiteral));
+    DEFINE_STATIC_LOCAL(String, camera, ("camera", AtomicString::ConstructFromLiteral));
+    DEFINE_STATIC_LOCAL(String, microphone, ("microphone", AtomicString::ConstructFromLiteral));
     
     switch (sourceType) {
     case MediaStreamSourceStates::None:
@@ -78,7 +76,7 @@ const AtomicString& MediaStreamSourceStates::sourceType(MediaStreamSourceStates:
     }
     
     ASSERT_NOT_REACHED();
-    return emptyAtom;
+    return emptyString();
 }
 
 } // namespace WebCore

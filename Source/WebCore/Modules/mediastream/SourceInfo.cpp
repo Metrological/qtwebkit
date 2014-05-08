@@ -29,8 +29,6 @@
 
 #if ENABLE(MEDIA_STREAM)
 
-#include <wtf/NeverDestroyed.h>
-
 namespace WebCore {
 
 PassRefPtr<SourceInfo> SourceInfo::create(PassRefPtr<TrackSourceInfo> trackSourceInfo)
@@ -45,8 +43,8 @@ SourceInfo::SourceInfo(PassRefPtr<TrackSourceInfo> trackSourceInfo)
 
 const AtomicString& SourceInfo::kind() const
 {
-    static NeverDestroyed<AtomicString> audioKind("audio", AtomicString::ConstructFromLiteral);
-    static NeverDestroyed<AtomicString> videoKind("video", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, audioKind, ("audio", AtomicString::ConstructFromLiteral));
+    DEFINE_STATIC_LOCAL(AtomicString, videoKind, ("video", AtomicString::ConstructFromLiteral));
 
     switch (m_trackSourceInfo->kind()) {
     case TrackSourceInfo::Audio:

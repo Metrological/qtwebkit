@@ -48,8 +48,9 @@ class MediaSourceStates;
 class MediaStreamTrackSourcesCallback;
 class MediaStreamCapabilities;
 class MediaTrackConstraints;
+class MediaStreamTrackPrivate;
 
-class MediaStreamTrack : public RefCounted<MediaStreamTrack>, public ScriptWrappable, public ActiveDOMObject, public EventTarget, public MediaStreamSource::Observer, public MediaStreamTrackPrivateClient {
+class MediaStreamTrack : public RefCounted<MediaStreamTrack>, public ScriptWrappable, public ActiveDOMObject, public EventTarget, public MediaStreamTrackPrivateClient {
 public:
     class Observer {
     public:
@@ -91,7 +92,7 @@ public:
     DEFINE_ATTRIBUTE_EVENT_LISTENER(overconstrained);
 
     MediaStreamSource* source() const { return m_privateTrack->source(); }
-    MediaStreamTrackPrivate& privateTrack() { return m_privateTrack.get(); }
+    MediaStreamTrackPrivate* privateTrack() { return m_privateTrack.get(); }
 
     bool ended() const;
 
@@ -107,7 +108,7 @@ public:
 
 protected:
     explicit MediaStreamTrack(MediaStreamTrack*);
-    MediaStreamTrack(ScriptExecutionContext*, MediaStreamTrackPrivate&, const Dictionary*);
+    MediaStreamTrack(ScriptExecutionContext*, MediaStreamTrackPrivate*, const Dictionary*);
 
     void setSource(PassRefPtr<MediaStreamSource>);
 
@@ -133,14 +134,14 @@ private:
     void trackMutedChanged();
     void trackEnabledChanged();
 
-    Vector<RefPtr<Event>> m_scheduledEvents;
+    Vector<RefPtr<Event> > m_scheduledEvents;
 
     RefPtr<MediaConstraintsImpl> m_constraints;
     Mutex m_mutex;
 
     Vector<Observer*> m_observers;
 
-    Ref<MediaStreamTrackPrivate> m_privateTrack;
+    RefPtr<MediaStreamTrackPrivate> m_privateTrack;
     bool m_eventDispatchScheduled;
 
     bool m_stoppingTrack;

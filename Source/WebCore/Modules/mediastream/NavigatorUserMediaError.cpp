@@ -29,19 +29,17 @@
 
 #include "NavigatorUserMediaError.h"
 
-#include <wtf/NeverDestroyed.h>
-
 namespace WebCore {
 
 const AtomicString& NavigatorUserMediaError::permissionDeniedErrorName()
 {
-    static NeverDestroyed<AtomicString> permissionDenied("PermissionDeniedError", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, permissionDenied, ("PermissionDeniedError", AtomicString::ConstructFromLiteral));
     return permissionDenied;
 }
 
 const AtomicString& NavigatorUserMediaError::constraintNotSatisfiedErrorName()
 {
-    static NeverDestroyed<AtomicString> constraintNotSatisfied("ConstraintNotSatisfiedError", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, constraintNotSatisfied, ("ConstraintNotSatisfiedError", AtomicString::ConstructFromLiteral));
     return constraintNotSatisfied;
 }
 

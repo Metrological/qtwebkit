@@ -90,8 +90,8 @@ void MediaStreamCenterMac::createMediaStream(PassRefPtr<MediaStreamCreationClien
     
     ASSERT(client);
     
-    Vector<RefPtr<MediaStreamSource>> audioSources;
-    Vector<RefPtr<MediaStreamSource>> videoSources;
+    Vector<RefPtr<MediaStreamSource> > audioSources;
+    Vector<RefPtr<MediaStreamSource> > videoSources;
     
     if (audioConstraints) {
         String invalidConstraint;
@@ -128,7 +128,7 @@ bool MediaStreamCenterMac::getMediaStreamTrackSources(PassRefPtr<MediaStreamTrac
 {
     RefPtr<MediaStreamTrackSourcesRequestClient> requestClient = prpClient;
 
-    Vector<RefPtr<TrackSourceInfo>> sources = AVCaptureDeviceManager::shared().getSourcesInfo(requestClient->requestOrigin());
+    Vector<RefPtr<TrackSourceInfo> > sources = AVCaptureDeviceManager::shared().getSourcesInfo(requestClient->requestOrigin());
 
     requestClient->didCompleteRequest(sources);
     return true;

@@ -46,7 +46,7 @@ namespace WebCore {
 class MediaStreamCenter;
 
 // FIXME: This class should be marked FINAL once <http://webkit.org/b/121747> is fixed.
-class MediaStream : public RefCounted<MediaStream>, public URLRegistrable, public ScriptWrappable, public MediaStreamDescriptorClient, public EventTarget, public ContextDestructionObserver {
+class MediaStream : public RefCounted<MediaStream>, public URLRegistrable, public ScriptWrappable, public EventTarget, public MediaStreamPrivateClient, public ContextDestructionObserver {
 public:
     class Observer {
     public:
@@ -55,7 +55,7 @@ public:
 
     static PassRefPtr<MediaStream> create(ScriptExecutionContext*);
     static PassRefPtr<MediaStream> create(ScriptExecutionContext*, PassRefPtr<MediaStream>);
-    static PassRefPtr<MediaStream> create(ScriptExecutionContext*, const Vector<RefPtr<MediaStreamTrack>>&);
+    static PassRefPtr<MediaStream> create(ScriptExecutionContext*, const Vector<RefPtr<MediaStreamTrack> >&);
     static PassRefPtr<MediaStream> create(ScriptExecutionContext*, PassRefPtr<MediaStreamPrivate>);
 
     virtual ~MediaStream();
@@ -127,17 +127,17 @@ private:
     void scheduleDispatchEvent(PassRefPtr<Event>);
     void scheduledEventTimerFired(Timer<MediaStream>*);
 
-    void cloneMediaStreamTrackVector(Vector<RefPtr<MediaStreamTrack>>&, const Vector<RefPtr<MediaStreamTrack>>&);
+    void cloneMediaStreamTrackVector(Vector<RefPtr<MediaStreamTrack> >&, const Vector<RefPtr<MediaStreamTrack> >&);
 
-    Vector<RefPtr<MediaStreamTrack>>* trackVectorForType(MediaStreamSource::Type);
+    Vector<RefPtr<MediaStreamTrack> >* trackVectorForType(MediaStreamSource::Type);
 
     EventTargetData m_eventTargetData;
     RefPtr<MediaStreamPrivate> m_private;
-    Vector<RefPtr<MediaStreamTrack>> m_audioTracks;
-    Vector<RefPtr<MediaStreamTrack>> m_videoTracks;
+    Vector<RefPtr<MediaStreamTrack> > m_audioTracks;
+    Vector<RefPtr<MediaStreamTrack> > m_videoTracks;
 
     Timer<MediaStream> m_scheduledEventTimer;
-    Vector<RefPtr<Event>> m_scheduledEvents;
+    Vector<RefPtr<Event> > m_scheduledEvents;
 
     Vector<Observer*> m_observers;
 };

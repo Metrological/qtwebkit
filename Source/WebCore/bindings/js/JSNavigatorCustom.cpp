@@ -62,17 +62,17 @@ JSValue JSNavigator::webkitGetUserMedia(ExecState* exec)
     JSNavigator* castedThis = jsDynamicCast<JSNavigator*>(exec->hostThisValue());
     RefPtr<NavigatorUserMediaErrorCallback> errorCallback;
     if (!exec->argument(2).isUndefinedOrNull()) {
-        if (!exec->uncheckedArgument(2).isFunction()) {
+        if (!exec->argument(2).isFunction()) {
             throwVMError(exec, createTypeError(exec, "Argument 3 ('errorCallback') to Navigator.webkitGetUserMedia must be a function"));
             return jsUndefined();
         }
-        errorCallback = JSNavigatorUserMediaErrorCallback::create(asObject(exec->uncheckedArgument(2)), castedThis->globalObject());
+        errorCallback = JSNavigatorUserMediaErrorCallback::create(asObject(exec->argument(2)), castedThis->globalObject());
     }
 
-    RefPtr<NavigatorUserMediaSuccessCallback> successCallback = JSNavigatorUserMediaSuccessCallback::create(asObject(exec->uncheckedArgument(1)), castedThis->globalObject());
-    Navigator& impl = castedThis->impl();
+    RefPtr<NavigatorUserMediaSuccessCallback> successCallback = JSNavigatorUserMediaSuccessCallback::create(asObject(exec->argument(1)), castedThis->globalObject());
+    Navigator* impl = castedThis->impl();
     ExceptionCode ec = 0;
-    NavigatorUserMedia::webkitGetUserMedia(&impl, options, successCallback, errorCallback, ec);
+    NavigatorUserMedia::webkitGetUserMedia(impl, options, successCallback, errorCallback, ec);
     setDOMException(exec, ec);
     return jsUndefined();
 }

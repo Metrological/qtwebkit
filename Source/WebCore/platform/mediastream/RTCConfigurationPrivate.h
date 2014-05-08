@@ -59,7 +59,7 @@ public:
             m_requestIdentity = requestIdentity;
     }
 
-    Vector<RefPtr<RTCIceServerPrivate>> iceServers() const { return m_privateServers; }
+    Vector<RefPtr<RTCIceServerPrivate> > iceServers() const { return m_privateServers; }
 
 private:
     RTCConfigurationPrivate()
@@ -68,7 +68,7 @@ private:
     {
     }
 
-    Vector<RefPtr<RTCIceServerPrivate>> m_privateServers;
+    Vector<RefPtr<RTCIceServerPrivate> > m_privateServers;
     String m_iceTransports;
     String m_requestIdentity;
 };

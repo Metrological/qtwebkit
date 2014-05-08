@@ -67,7 +67,7 @@ public:
     virtual ~RTCOfferOptions() { }
 
 private:
-    virtual bool initialize(const Dictionary&) override;
+    virtual bool initialize(const Dictionary&) OVERRIDE;
     RTCOfferOptions() { }
 };
 

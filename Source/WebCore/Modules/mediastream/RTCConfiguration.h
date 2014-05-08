@@ -53,7 +53,7 @@ public:
     {
         RTCIceServerPrivate* server = m_private->server(index);
         if (!server)
-            return nullptr;
+            return 0;
 
         return RTCIceServer::create(server);
     }
@@ -64,12 +64,13 @@ public:
     const String& requestIdentity() const { return m_private->requestIdentity(); }
     void setRequestIdentity(const String& requestIdentity) { m_private->setRequestIdentity(requestIdentity); }
 
-    Vector<RefPtr<RTCIceServer>> iceServers() const
+    Vector<RefPtr<RTCIceServer> > iceServers() const
     {
-        Vector<RefPtr<RTCIceServer>> servers;
-        Vector<RefPtr<RTCIceServerPrivate>> privateServers = m_private->iceServers();
+        Vector<RefPtr<RTCIceServer> > servers;
+        Vector<RefPtr<RTCIceServerPrivate> > privateServers = m_private->iceServers();
 
-        for (auto iter = privateServers.begin(); iter != privateServers.end(); ++iter)
+        Vector<RefPtr<RTCIceServerPrivate> >::iterator iter = privateServers.begin();
+        for (; iter != privateServers.end(); ++iter)
             servers.append(RTCIceServer::create(*iter));
 
         return servers;

@@ -31,16 +31,15 @@
 
 #include "Dictionary.h"
 #include "ScriptExecutionContext.h"
-#include <wtf/NeverDestroyed.h>
 
 namespace WebCore {
 
 RefPtr<VideoStreamTrack> VideoStreamTrack::create(ScriptExecutionContext* context, const Dictionary& videoConstraints)
 {
-    return adoptRef(new VideoStreamTrack(context, *MediaStreamTrackPrivate::create(0), &videoConstraints));
+    return adoptRef(new VideoStreamTrack(context, MediaStreamTrackPrivate::create(0).get(), &videoConstraints));
 }
 
-RefPtr<VideoStreamTrack> VideoStreamTrack::create(ScriptExecutionContext* context, MediaStreamTrackPrivate& privateTrack)
+RefPtr<VideoStreamTrack> VideoStreamTrack::create(ScriptExecutionContext* context, MediaStreamTrackPrivate* privateTrack)
 {
     return adoptRef(new VideoStreamTrack(context, privateTrack, 0));
 }
@@ -50,7 +49,7 @@ RefPtr<VideoStreamTrack> VideoStreamTrack::create(MediaStreamTrack* track)
     return adoptRef(new VideoStreamTrack(track));
 }
 
-VideoStreamTrack::VideoStreamTrack(ScriptExecutionContext* context, MediaStreamTrackPrivate& privateTrack, const Dictionary* videoConstraints)
+VideoStreamTrack::VideoStreamTrack(ScriptExecutionContext* context, MediaStreamTrackPrivate* privateTrack, const Dictionary* videoConstraints)
     : MediaStreamTrack(context, privateTrack, videoConstraints)
 {
 }
@@ -62,7 +61,7 @@ VideoStreamTrack::VideoStreamTrack(MediaStreamTrack* track)
 
 const AtomicString& VideoStreamTrack::kind() const
 {
-    static NeverDestroyed<AtomicString> videoKind("video", AtomicString::ConstructFromLiteral);
+    DEFINE_STATIC_LOCAL(AtomicString, videoKind, ("video", AtomicString::ConstructFromLiteral));
     return videoKind;
 }
 
