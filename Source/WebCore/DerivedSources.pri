@@ -167,6 +167,7 @@ IDL_BINDINGS += \
     $$PWD/Modules/webaudio/ScriptProcessorNode.idl \
     $$PWD/Modules/webaudio/MediaElementAudioSourceNode.idl \
     $$PWD/Modules/webaudio/MediaStreamAudioSourceNode.idl \
+    $$PWD/Modules/webaudio/MediaStreamAudioDestinationNode.idl \
     $$PWD/Modules/webaudio/OfflineAudioContext.idl \
     $$PWD/Modules/webaudio/OfflineAudioCompletionEvent.idl \
     $$PWD/Modules/webaudio/OscillatorNode.idl \
@@ -499,6 +500,47 @@ IDL_BINDINGS += \
     $$PWD/xml/XPathEvaluator.idl \
     $$PWD/xml/XSLTProcessor.idl
 
+enable?(MEDIA_STREAM) {
+  IDL_BINDINGS += \
+    $$PWD/Modules/mediastream/AllAudioCapabilities.idl \
+    $$PWD/Modules/mediastream/AllVideoCapabilities.idl \
+    $$PWD/Modules/mediastream/AudioStreamTrack.idl \
+    $$PWD/Modules/mediastream/CapabilityRange.idl \
+    $$PWD/Modules/mediastream/DOMURLMediaStream.idl \
+    $$PWD/Modules/mediastream/HTMLMediaElementMediaStream.idl \
+    $$PWD/Modules/mediastream/MediaSourceStates.idl \
+    $$PWD/Modules/mediastream/MediaStreamCapabilities.idl \
+    $$PWD/Modules/mediastream/MediaStreamEvent.idl \
+    $$PWD/Modules/mediastream/MediaStream.idl \
+    $$PWD/Modules/mediastream/MediaStreamTrackEvent.idl \
+    $$PWD/Modules/mediastream/MediaStreamTrack.idl \
+    $$PWD/Modules/mediastream/MediaStreamTrackSourcesCallback.idl \
+    $$PWD/Modules/mediastream/MediaTrackConstraint.idl \
+    $$PWD/Modules/mediastream/MediaTrackConstraintSet.idl \
+    $$PWD/Modules/mediastream/MediaTrackConstraints.idl \
+    $$PWD/Modules/mediastream/NavigatorUserMedia.idl \
+    $$PWD/Modules/mediastream/NavigatorUserMediaErrorCallback.idl \
+    $$PWD/Modules/mediastream/NavigatorUserMediaError.idl \
+    $$PWD/Modules/mediastream/NavigatorUserMediaSuccessCallback.idl \
+    $$PWD/Modules/mediastream/RTCConfiguration.idl \
+    $$PWD/Modules/mediastream/RTCDataChannelEvent.idl \
+    $$PWD/Modules/mediastream/RTCDataChannel.idl \
+    $$PWD/Modules/mediastream/RTCDTMFSender.idl \
+    $$PWD/Modules/mediastream/RTCDTMFToneChangeEvent.idl \
+    $$PWD/Modules/mediastream/RTCIceCandidateEvent.idl \
+    $$PWD/Modules/mediastream/RTCIceCandidate.idl \
+    $$PWD/Modules/mediastream/RTCIceServer.idl \
+    $$PWD/Modules/mediastream/RTCPeerConnectionErrorCallback.idl \
+    $$PWD/Modules/mediastream/RTCPeerConnection.idl \
+    $$PWD/Modules/mediastream/RTCSessionDescriptionCallback.idl \
+    $$PWD/Modules/mediastream/RTCSessionDescription.idl \
+    $$PWD/Modules/mediastream/RTCStatsCallback.idl \
+    $$PWD/Modules/mediastream/RTCStatsReport.idl \
+    $$PWD/Modules/mediastream/RTCStatsResponse.idl \
+    $$PWD/Modules/mediastream/SourceInfo.idl \
+    $$PWD/Modules/mediastream/VideoStreamTrack.idl
+}
+
 enable?(SVG) {
   IDL_BINDINGS += \
     $$PWD/svg/SVGAElement.idl \
@@ -805,6 +847,7 @@ generateBindings.commands = $$setEnvironmentVariable(SOURCE_ROOT, $$toSystemPath
                             --include Modules/geolocation \
                             --include Modules/indexeddb \
                             --include Modules/mediasource \
+                            --include Modules/mediastream \
                             --include Modules/notifications \
                             --include Modules/quota \
                             --include Modules/webaudio \

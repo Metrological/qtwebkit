@@ -16,6 +16,7 @@ INCLUDEPATH += \
     $$SOURCE_DIR/Modules/filesystem \
     $$SOURCE_DIR/Modules/geolocation \
     $$SOURCE_DIR/Modules/indexeddb \
+    $$SOURCE_DIR/Modules/mediastream \
     $$SOURCE_DIR/Modules/navigatorcontentutils \
     $$SOURCE_DIR/Modules/notifications \
     $$SOURCE_DIR/Modules/proximity \
@@ -75,6 +76,7 @@ INCLUDEPATH += \
     $$SOURCE_DIR/platform/image-decoders/png \
     $$SOURCE_DIR/platform/image-decoders/webp \
     $$SOURCE_DIR/platform/leveldb \
+    $$SOURCE_DIR/platform/mediastream \
     $$SOURCE_DIR/platform/mock \
     $$SOURCE_DIR/platform/network \
     $$SOURCE_DIR/platform/qt \
@@ -227,6 +229,16 @@ enable?(VIDEO) {
         INCLUDEPATH += $$SOURCE_DIR/platform/graphics/gstreamer
     } else:use?(QT_MULTIMEDIA) {
         QT *= multimedia
+    }
+}
+
+enable?(MEDIA_STREAM) {
+    use?(GSTREAMER) {
+        DEFINES += WTF_USE_NICE=1
+        INCLUDEPATH += \
+            $$SOURCE_DIR/platform/mediastream/gstreamer \
+            $$SOURCE_DIR/platform/mediastream/gstreamer/sdp
+        PKGCONFIG += nice
     }
 }
 

@@ -3622,6 +3622,221 @@ enable?(WEB_AUDIO) {
             platform/audio/gstreamer/FFTFrameGStreamer.cpp \
             platform/audio/gstreamer/WebKitWebAudioSourceGStreamer.cpp
     }
+
+    enable?(MEDIA_STREAM) {
+        HEADERS += \
+            Modules/webaudio/MediaStreamAudioSourceNode.h \
+            Modules/webaudio/MediaStreamAudioSourceNode.idl \
+            Modules/webaudio/MediaStreamAudioSource.h \
+            Modules/webaudio/MediaStreamAudioDestinationNode.h \
+            Modules/webaudio/MediaStreamAudioDestinationNode.idl
+        SOURCES += \
+            Modules/webaudio/MediaStreamAudioSource.cpp \
+            Modules/webaudio/MediaStreamAudioDestinationNode.cpp \
+            Modules/webaudio/MediaStreamAudioSourceNode.cpp
+    }
+}
+
+enable?(MEDIA_STREAM) {
+    HEADERS += \
+        Modules/mediastream/AllAudioCapabilities.h \
+        Modules/mediastream/AllAudioCapabilities.idl \
+        Modules/mediastream/AllVideoCapabilities.h \
+        Modules/mediastream/AllVideoCapabilities.idl \
+        Modules/mediastream/AudioStreamTrack.h \
+        Modules/mediastream/AudioStreamTrack.idl \
+        Modules/mediastream/CapabilityRange.h \
+        Modules/mediastream/CapabilityRange.idl \
+        Modules/mediastream/DOMURLMediaStream.h \
+        Modules/mediastream/DOMURLMediaStream.idl \
+        Modules/mediastream/HTMLMediaElementMediaStream.h \
+        Modules/mediastream/HTMLMediaElementMediaStream.idl \
+        Modules/mediastream/MediaConstraintsImpl.h \
+        Modules/mediastream/MediaSourceStates.h \
+        Modules/mediastream/MediaSourceStates.idl \
+        Modules/mediastream/MediaStreamCapabilities.h \
+        Modules/mediastream/MediaStreamCapabilities.idl \
+        Modules/mediastream/MediaStreamEvent.h \
+        Modules/mediastream/MediaStreamEvent.idl \
+        Modules/mediastream/MediaStream.h \
+        Modules/mediastream/MediaStream.idl \
+        Modules/mediastream/MediaStreamRegistry.h \
+        Modules/mediastream/MediaStreamTrackEvent.h \
+        Modules/mediastream/MediaStreamTrackEvent.idl \
+        Modules/mediastream/MediaStreamTrack.h \
+        Modules/mediastream/MediaStreamTrack.idl \
+        Modules/mediastream/MediaStreamTrackSourcesCallback.h \
+        Modules/mediastream/MediaStreamTrackSourcesCallback.idl \
+        Modules/mediastream/MediaStreamTrackSourcesRequest.h \
+        Modules/mediastream/MediaTrackConstraint.h \
+        Modules/mediastream/MediaTrackConstraint.idl \
+        Modules/mediastream/MediaTrackConstraintSet.h \
+        Modules/mediastream/MediaTrackConstraintSet.idl \
+        Modules/mediastream/MediaTrackConstraints.h \
+        Modules/mediastream/MediaTrackConstraints.idl \
+        Modules/mediastream/NavigatorUserMedia.h \
+        Modules/mediastream/NavigatorUserMedia.idl \
+        Modules/mediastream/NavigatorUserMediaErrorCallback.h \
+        Modules/mediastream/NavigatorUserMediaErrorCallback.idl \
+        Modules/mediastream/NavigatorUserMediaError.h \
+        Modules/mediastream/NavigatorUserMediaError.idl \
+        Modules/mediastream/NavigatorUserMediaSuccessCallback.h \
+        Modules/mediastream/NavigatorUserMediaSuccessCallback.idl \
+        Modules/mediastream/RTCConfiguration.h \
+        Modules/mediastream/RTCConfiguration.idl \
+        Modules/mediastream/RTCDataChannelEvent.h \
+        Modules/mediastream/RTCDataChannelEvent.idl \
+        Modules/mediastream/RTCDataChannel.h \
+        Modules/mediastream/RTCDataChannel.idl \
+        Modules/mediastream/RTCDTMFSender.h \
+        Modules/mediastream/RTCDTMFSender.idl \
+        Modules/mediastream/RTCDTMFToneChangeEvent.h \
+        Modules/mediastream/RTCDTMFToneChangeEvent.idl \
+        Modules/mediastream/RTCIceCandidateEvent.h \
+        Modules/mediastream/RTCIceCandidateEvent.idl \
+        Modules/mediastream/RTCIceCandidate.h \
+        Modules/mediastream/RTCIceCandidate.idl \
+        Modules/mediastream/RTCIceServer.h \
+        Modules/mediastream/RTCIceServer.idl \
+        Modules/mediastream/RTCOfferAnswerOptions.h \
+        Modules/mediastream/RTCPeerConnectionErrorCallback.h \
+        Modules/mediastream/RTCPeerConnectionErrorCallback.idl \
+        Modules/mediastream/RTCPeerConnection.h \
+        Modules/mediastream/RTCPeerConnection.idl \
+        Modules/mediastream/RTCSessionDescriptionCallback.h \
+        Modules/mediastream/RTCSessionDescriptionCallback.idl \
+        Modules/mediastream/RTCSessionDescription.h \
+        Modules/mediastream/RTCSessionDescription.idl \
+        Modules/mediastream/RTCSessionDescriptionRequestImpl.h \
+        Modules/mediastream/RTCStatsCallback.h \
+        Modules/mediastream/RTCStatsCallback.idl \
+        Modules/mediastream/RTCStatsReport.h \
+        Modules/mediastream/RTCStatsReport.idl \
+        Modules/mediastream/RTCStatsRequestImpl.h \
+        Modules/mediastream/RTCStatsResponse.h \
+        Modules/mediastream/RTCStatsResponse.idl \
+        Modules/mediastream/RTCVoidRequestImpl.h \
+        Modules/mediastream/SourceInfo.h \
+        Modules/mediastream/SourceInfo.idl \
+        Modules/mediastream/UserMediaClient.h \
+        Modules/mediastream/UserMediaController.h \
+        Modules/mediastream/UserMediaRequest.h \
+        Modules/mediastream/VideoStreamTrack.h \
+        Modules/mediastream/VideoStreamTrack.idl \
+        platform/mediastream/MediaConstraints.h \
+        platform/mediastream/MediaStreamCenter.h \
+        platform/mediastream/MediaStreamConstraintsValidationClient.h \
+        platform/mediastream/MediaStreamCreationClient.h \
+        platform/mediastream/MediaStreamPrivate.h \
+        platform/mediastream/MediaStreamSourceCapabilities.h \
+        platform/mediastream/MediaStreamSource.h \
+        platform/mediastream/MediaStreamSourceStates.h \
+        platform/mediastream/MediaStreamTrackPrivate.h \
+        platform/mediastream/MediaStreamTrackSourcesRequestClient.h \
+        platform/mediastream/RTCConfigurationPrivate.h \
+        platform/mediastream/RTCDataChannelHandlerClient.h \
+        platform/mediastream/RTCDataChannelHandler.h \
+        platform/mediastream/RTCDTMFSenderHandlerClient.h \
+        platform/mediastream/RTCDTMFSenderHandler.h \
+        platform/mediastream/RTCIceCandidateDescriptor.h \
+        platform/mediastream/RTCIceServerPrivate.h \
+        platform/mediastream/RTCOfferAnswerOptionsPrivate.h \
+        platform/mediastream/RTCPeerConnectionHandlerClient.h \
+        platform/mediastream/RTCPeerConnectionHandler.h \
+        platform/mediastream/RTCSessionDescriptionDescriptor.h \
+        platform/mediastream/RTCSessionDescriptionRequest.h \
+        platform/mediastream/RTCStatsRequest.h \
+        platform/mediastream/RTCStatsResponseBase.h \
+        platform/mediastream/RTCVoidRequest.h
+
+    SOURCES += \
+        Modules/mediastream/AudioStreamTrack.cpp \
+        Modules/mediastream/CapabilityRange.cpp \
+        Modules/mediastream/DOMURLMediaStream.cpp \
+        Modules/mediastream/HTMLMediaElementMediaStream.cpp \
+        Modules/mediastream/MediaConstraintsImpl.cpp \
+        Modules/mediastream/MediaSourceStates.cpp \
+        Modules/mediastream/MediaStreamCapabilities.cpp \
+        Modules/mediastream/MediaStream.cpp \
+        Modules/mediastream/MediaStreamEvent.cpp \
+        Modules/mediastream/MediaStreamRegistry.cpp \
+        Modules/mediastream/MediaStreamTrack.cpp \
+        Modules/mediastream/MediaStreamTrackEvent.cpp \
+        Modules/mediastream/MediaStreamTrackSourcesRequest.cpp \
+        Modules/mediastream/MediaTrackConstraint.cpp \
+        Modules/mediastream/MediaTrackConstraints.cpp \
+        Modules/mediastream/MediaTrackConstraintSet.cpp \
+        Modules/mediastream/NavigatorUserMedia.cpp \
+        Modules/mediastream/NavigatorUserMediaError.cpp \
+        Modules/mediastream/RTCDataChannel.cpp \
+        Modules/mediastream/RTCDataChannelEvent.cpp \
+        Modules/mediastream/RTCDTMFSender.cpp \
+        Modules/mediastream/RTCDTMFToneChangeEvent.cpp \
+        Modules/mediastream/RTCIceCandidate.cpp \
+        Modules/mediastream/RTCIceCandidateEvent.cpp \
+        Modules/mediastream/RTCOfferAnswerOptions.cpp \
+        Modules/mediastream/RTCPeerConnection.cpp \
+        Modules/mediastream/RTCSessionDescription.cpp \
+        Modules/mediastream/RTCSessionDescriptionRequestImpl.cpp \
+        Modules/mediastream/RTCStatsReport.cpp \
+        Modules/mediastream/RTCStatsRequestImpl.cpp \
+        Modules/mediastream/RTCStatsResponse.cpp \
+        Modules/mediastream/RTCVoidRequestImpl.cpp \
+        Modules/mediastream/SourceInfo.cpp \
+        Modules/mediastream/UserMediaController.cpp \
+        Modules/mediastream/UserMediaRequest.cpp \
+        Modules/mediastream/VideoStreamTrack.cpp \
+        platform/mediastream/MediaStreamCenter.cpp \
+        platform/mediastream/MediaStreamPrivate.cpp \
+        platform/mediastream/MediaStreamSource.cpp \
+        platform/mediastream/MediaStreamSourceStates.cpp \
+        platform/mediastream/MediaStreamTrackPrivate.cpp \
+        platform/mediastream/RTCIceCandidateDescriptor.cpp \
+        platform/mediastream/RTCPeerConnectionHandler.cpp \
+        platform/mediastream/RTCSessionDescriptionDescriptor.cpp \
+        bindings/js/JSMediaSourceStatesCustom.cpp \
+        bindings/js/JSMediaStreamCapabilitiesCustom.cpp \
+        bindings/js/JSNavigatorCustom.cpp \
+        bindings/js/JSRTCIceCandidateCustom.cpp \
+        bindings/js/JSRTCPeerConnectionCustom.cpp \
+        bindings/js/JSRTCSessionDescriptionCustom.cpp \
+        bindings/js/JSRTCStatsResponseCustom.cpp
+
+    use?(GSTREAMER) {
+        HEADERS += \
+            platform/graphics/gstreamer/StreamMediaPlayerPrivateGStreamer.h\
+            platform/mediastream/gstreamer/CallbackProxy.h \
+            platform/mediastream/gstreamer/CentralPipelineUnit.h \
+            platform/mediastream/gstreamer/Codec.h \
+            platform/mediastream/gstreamer/GstMediaStream.h \
+            platform/mediastream/gstreamer/IceAgent.h \
+            platform/mediastream/gstreamer/MediaStreamCenterGStreamer.h \
+            platform/mediastream/gstreamer/MediaStreamCenterPrivateGStreamer.h \
+            platform/mediastream/gstreamer/MediaStreamSourceGStreamer.h \
+            platform/mediastream/gstreamer/PeerConnectionHandlerConfiguration.h \
+            platform/mediastream/gstreamer/PeerConnectionHandlerPrivateGStreamer.h \
+            platform/mediastream/gstreamer/sdp/Candidate.h \
+            platform/mediastream/gstreamer/sdp/MediaDescription.h \
+            platform/mediastream/gstreamer/sdp/Payload.h \
+            platform/mediastream/gstreamer/sdp/SignalingMessage.h
+
+        SOURCES += \
+            platform/graphics/gstreamer/StreamMediaPlayerPrivateGStreamer.cpp \
+            platform/mediastream/gstreamer/CallbackProxy.cpp \
+            platform/mediastream/gstreamer/CentralPipelineUnit.cpp \
+            platform/mediastream/gstreamer/Codec.cpp \
+            platform/mediastream/gstreamer/GstMediaStream.cpp \
+            platform/mediastream/gstreamer/IceAgent.cpp \
+            platform/mediastream/gstreamer/MediaStreamCenterGStreamer.cpp \
+            platform/mediastream/gstreamer/MediaStreamCenterPrivateGStreamer.cpp \
+            platform/mediastream/gstreamer/MediaStreamSourceGStreamer.cpp \
+            platform/mediastream/gstreamer/PeerConnectionHandlerConfiguration.cpp \
+            platform/mediastream/gstreamer/PeerConnectionHandlerPrivateGStreamer.cpp \
+            platform/mediastream/gstreamer/sdp/Candidate.cpp \
+            platform/mediastream/gstreamer/sdp/MediaDescription.cpp \
+            platform/mediastream/gstreamer/sdp/Payload.cpp \
+            platform/mediastream/gstreamer/sdp/SignalingMessage.cpp
+    }
 }
 
 enable?(FULLSCREEN_API) {
