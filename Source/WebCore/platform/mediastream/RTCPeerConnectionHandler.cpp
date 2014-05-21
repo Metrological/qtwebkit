@@ -44,10 +44,10 @@
 namespace WebCore {
 class RTCPeerConnectionHandlerClient;
 
-static PassOwnPtr<RTCPeerConnectionHandler> createHandler(RTCPeerConnectionHandlerClient*)
+static PassOwnPtr<RTCPeerConnectionHandler> createHandler(RTCPeerConnectionHandlerClient* client)
 {
 #if USE(GSTREAMER)
-    return std::unique_ptr<RTCPeerConnectionHandler>(new PeerConnectionHandlerPrivateGStreamer(client));
+    return adoptPtr(new PeerConnectionHandlerPrivateGStreamer(client));
 #else
     return nullptr;
 #endif

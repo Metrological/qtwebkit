@@ -26,10 +26,10 @@
 #include "GStreamerUtilities.h"
 #include "MediaStreamSourceGStreamer.h"
 #include <wtf/MainThread.h>
-#include <wtf/gobject/GUniquePtr.h>
+#include <wtf/gobject/GOwnPtr.h>
 #include <wtf/text/CString.h>
-
 #include <signal.h>
+#include <stdio.h>
 
 #define RTC_LOG(fmt, args...) printf(fmt "\n", ##args)
 //#define RTC_LOG(fmt, args...) void(0)
@@ -96,8 +96,8 @@ bool CentralPipelineUnit::handleMessage(GstMessage* message)
 {
     switch (GST_MESSAGE_TYPE(message)) {
     case GST_MESSAGE_ERROR: {
-        GUniqueOutPtr<GError> error;
-        GUniqueOutPtr<gchar> debug;
+        GOwnPtr<GError> error;
+        GOwnPtr<gchar> debug;
 
         gst_message_parse_error(message, &error.outPtr(), &debug.outPtr());
         ERROR_MEDIA_MESSAGE("Media error: %d, %s", error->code, error->message);
@@ -415,7 +415,7 @@ bool CentralPipelineUnit::connectToSource(PassRefPtr<MediaStreamSourceGStreamer>
         }
     }
 
-    GUniquePtr<gchar> sourceName(gst_element_get_name(sourceElement.get()));
+    GOwnPtr<gchar> sourceName(gst_element_get_name(sourceElement.get()));
     String teeName = String::format("tee_for_source_%s", sourceName.get());
     GRefPtr<GstElement> tee;
     if (wasAddedInPipeline) {

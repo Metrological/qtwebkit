@@ -39,6 +39,7 @@
 #include <wtf/text/CString.h>
 #include <wtf/text/StringBuilder.h>
 #include <gst/audio/audio.h>
+#include <stdio.h>
 
 #define RTC_LOG(fmt, args...) printf(fmt "\n", ##args)
 #define RTC_LOG_FENTER() printf("%s:%d::%s\n", __FILE__, __LINE__, __func__)
@@ -310,7 +311,7 @@ void GstRtpStream::createVideoSinkBinWithEncoder()
 
     m_bin = gst_bin_new("PeerConnection_VideoSinkBin");
 
-    GstElement *colorspace = gst_element_factory_make("videoconvert", nullptr);
+    GstElement *colorspace = gst_element_factory_make("videoconvert", 0);
     GstElement *scale = gst_element_factory_make("videobox", "scale");
     g_object_set(scale, "autocrop", true, NULL);
     gst_bin_add_many(GST_BIN(m_bin), colorspace, scale, encoder, pay, NULL);
@@ -622,8 +623,8 @@ GstRtpStream* GstMediaStream::addRtpStream(GstRtpStream::MediaType type, guint s
 
 void GstMediaStream::createPrivateStream(PeerConnectionHandlerPrivateGStreamer* peerConnectionHandler)
 {
-    Vector<RefPtr<MediaStreamTrackPrivate>> audioPrivateTracks;
-    Vector<RefPtr<MediaStreamTrackPrivate>> videoPrivateTracks;
+    Vector<RefPtr<MediaStreamTrackPrivate> > audioPrivateTracks;
+    Vector<RefPtr<MediaStreamTrackPrivate> > videoPrivateTracks;
     streamPrivate = MediaStreamPrivate::create(audioPrivateTracks, videoPrivateTracks);
     g_printerr("GstMediaStream::createPrivateStream %s\n", streamPrivate->id().utf8().data());
 
@@ -634,10 +635,10 @@ void GstMediaStream::createPrivateStream(PeerConnectionHandlerPrivateGStreamer* 
         MediaStreamSource::Type sourceType;
 
         switch (gstRtpStream->type()) {
-        case GstRtpStream::MediaType::audio:
+        case GstRtpStream::audio:
             sourceType = MediaStreamSource::Audio;
             break;
-        case GstRtpStream::MediaType::video:
+        case GstRtpStream::video:
             sourceType = MediaStreamSource::Video;
             break;
         }

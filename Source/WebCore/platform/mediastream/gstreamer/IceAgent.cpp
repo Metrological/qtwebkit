@@ -39,6 +39,7 @@
 
 #include <nice/agent.h>
 #include <wtf/text/CString.h>
+#include <stdio.h>
 
 #define RTC_LOG(fmt, args...) printf(fmt "\n", ##args)
 #define RTC_LOG_FENTER() (void) 0

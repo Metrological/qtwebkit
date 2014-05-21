@@ -41,7 +41,7 @@
 #include "RTCPeerConnectionHandler.h"
 #include "SignalingMessage.h"
 #include "UUID.h"
-#include "URL.h"
+#include "KURL.h"
 #include <openssl/rand.h>
 #include "MediaStreamPrivate.h"
 #include "RTCConfiguration.h"
@@ -60,6 +60,7 @@
 #include <wtf/text/Base64.h>
 #include <wtf/text/CString.h>
 #include <wtf/text/StringBuilder.h>
+#include <stdio.h>
 
 #if USE(NICE)
 #include <nice.h>
@@ -159,7 +160,7 @@ bool PeerConnectionHandlerPrivateGStreamer::initialize(PassRefPtr<RTCConfigurati
     RefPtr<RTCConfigurationPrivate> configuration = prpConfiguration;
     if (configuration->numberOfServers()) {
         RTCIceServerPrivate* iceServer = configuration->server(0);
-        URL url(URL(), iceServer->urls().at(0));
+        KURL url(KURL(), iceServer->urls().at(0));
         m_iceAgent->setStunServer(url.host().ascii().data(), url.port());
     }
 
@@ -378,13 +379,13 @@ void PeerConnectionHandlerPrivateGStreamer::getStats(PassRefPtr<RTCStatsRequest>
 
 }
 
-std::unique_ptr<RTCDataChannelHandler> PeerConnectionHandlerPrivateGStreamer::createDataChannel(const String& label, const RTCDataChannelInit&)
+PassOwnPtr<RTCDataChannelHandler> PeerConnectionHandlerPrivateGStreamer::createDataChannel(const String& label, const RTCDataChannelInit&)
 {
     UNUSED_PARAM(label);
     return nullptr;
 }
 
-std::unique_ptr<RTCDTMFSenderHandler> PeerConnectionHandlerPrivateGStreamer::createDTMFSender(PassRefPtr<MediaStreamSource>)
+PassOwnPtr<RTCDTMFSenderHandler> PeerConnectionHandlerPrivateGStreamer::createDTMFSender(PassRefPtr<MediaStreamSource>)
 {
     return nullptr;
 }
@@ -392,7 +393,7 @@ std::unique_ptr<RTCDTMFSenderHandler> PeerConnectionHandlerPrivateGStreamer::cre
 void PeerConnectionHandlerPrivateGStreamer::removeRequestedStreams(SignalingMessage* signalingMessage)
 {
     ASSERT(isMainThread());
-    RTC_LOG("m_streamsToRemove.size = %lu", m_streamsToRemove.size());
+    RTC_LOG("m_streamsToRemove.size = %u", m_streamsToRemove.size());
     Vector<GstMediaStream*>::iterator rsIt = m_streamsToRemove.begin();
     while (rsIt != m_streamsToRemove.end()) {
         RTC_LOG("removing a media");
@@ -553,7 +554,7 @@ void PeerConnectionHandlerPrivateGStreamer::onIceGatheringDone(guint streamId)
     bool generateSdp = false;
     bool remoteOfferAvailable = false;
 
-    RTC_LOG("Currently cached: %lu requests", m_requests.size());
+    RTC_LOG("Currently cached: %u requests", m_requests.size());
     RefPtr<RTCSessionDescriptionRequest> request;
 
     m_gatheringsLeft--;
@@ -648,8 +649,10 @@ void PeerConnectionHandlerPrivateGStreamer::onIceGatheringDone(guint streamId)
                 m_client->didChangeIceGatheringState(RTCPeerConnectionHandlerClient::IceGatheringStateComplete);
                 m_client->didChangeIceConnectionState(RTCPeerConnectionHandlerClient::IceConnectionStateCompleted);
 
-                if (!m_requests.isEmpty())
-                    request = m_requests.takeLast();
+                if (!m_requests.isEmpty()) {
+                    request = m_requests.last();
+                    m_requests.removeLast();
+                }
 
                 // TODO
                 if (request) {
@@ -913,7 +916,7 @@ void PeerConnectionHandlerPrivateGStreamer::constructGStreamerSink(GstMediaStrea
     Vector<GstRtpStream*>& gstRtpStreams = gstMediaStream->rtpStreams();
     Vector<GstRtpStream*>::iterator gstRtpStreamsIt = gstRtpStreams.begin();
 
-    RTC_LOG("constructGStreamerSink for %lu rtp streams", gstRtpStreams.size());
+    RTC_LOG("constructGStreamerSink for %u rtp streams", gstRtpStreams.size());
 
     while (gstRtpStreamsIt != gstRtpStreams.end()) {
         GstRtpStream* gstRtpStream = *gstRtpStreamsIt;
@@ -964,9 +967,9 @@ void PeerConnectionHandlerPrivateGStreamer::constructGStreamerSink(GstMediaStrea
         }
 
         sinkPad = prepareTransportSink(gstRtpStream);
-        //cpu->connectToSource(nullptr, gstRtpStream->m_packetizerSourceId, m_transportBin, sinkPad);
-        cpu->connectToSource(nullptr, sourceId, gstRtpStream->m_bin, 0);
-        //cpu->connectToSource(nullptr, gstRtpStream->m_packetizerSourceId, m_transportBin, sinkPad);
+        //cpu->connectToSource(0, gstRtpStream->m_packetizerSourceId, m_transportBin, sinkPad);
+        cpu->connectToSource(0, sourceId, gstRtpStream->m_bin, 0);
+        //cpu->connectToSource(0, gstRtpStream->m_packetizerSourceId, m_transportBin, sinkPad);
         if (source) {
             gboolean linked = gst_element_link(source, m_transportBin);
             RTC_LOG("packitizer linked to transport bin: %d", linked);
@@ -1447,7 +1450,7 @@ void PeerConnectionHandlerPrivateGStreamer::addMediaDescriptionToSignalingMessag
     Vector<GstRtpStream*>& gstRtpStreams = gstMediaStream->rtpStreams();
     Vector<MediaDescription*>& mediaDescriptions = signalingMessage->mediaDescriptions();
 
-    RTC_LOG("addMediaDescriptionToSignalingMessage: %lu streams", gstRtpStreams.size());
+    RTC_LOG("addMediaDescriptionToSignalingMessage: %u streams", gstRtpStreams.size());
     Vector<GstRtpStream*>::iterator nsIt = gstRtpStreams.begin();
     while (nsIt != gstRtpStreams.end()) {
         GstRtpStream* ns = *nsIt;

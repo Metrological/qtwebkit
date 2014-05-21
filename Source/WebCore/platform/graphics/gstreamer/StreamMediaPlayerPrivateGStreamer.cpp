@@ -31,7 +31,7 @@
 #include "MediaStreamPrivate.h"
 #include "MediaStreamRegistry.h"
 #include "MediaStreamSourceGStreamer.h"
-#include "URL.h"
+#include "KURL.h"
 #include <gst/audio/streamvolume.h>
 #include <wtf/text/CString.h>
 
@@ -74,7 +74,7 @@ void StreamMediaPlayerPrivateGStreamer::play()
 {
     LOG_MEDIA_MESSAGE("Play");
 
-    if (!m_stream || m_stream->ended()) {
+    if (!m_stream || !m_stream->active()) {
         m_readyState = MediaPlayer::HaveNothing;
         loadingFailed(MediaPlayer::Empty);
         return;
@@ -114,7 +114,7 @@ void StreamMediaPlayerPrivateGStreamer::load(const String &url)
     LOG_MEDIA_MESSAGE("Loading %s", url.utf8().data());
 
     m_stream = static_cast<MediaStream*>(MediaStreamRegistry::registry().lookup(url));
-    if (!m_stream || m_stream->ended()) {
+    if (!m_stream || !m_stream->active()) {
         loadingFailed(MediaPlayer::NetworkError);
         return;
     }
@@ -157,7 +157,7 @@ bool StreamMediaPlayerPrivateGStreamer::internalLoad()
 {
     if (m_stopped) {
         m_stopped = false;
-        if (!m_stream || m_stream->ended()) {
+        if (!m_stream || !m_stream->active()) {
             loadingFailed(MediaPlayer::NetworkError);
             return false;
         }
@@ -179,8 +179,8 @@ void StreamMediaPlayerPrivateGStreamer::stop()
             LOG_MEDIA_MESSAGE("Stop: disconnecting video");
             cpu->disconnectFromSource(m_videoSource, m_videoSinkBin.get());
         }
-        m_audioSource = nullptr;
-        m_videoSource = nullptr;
+        m_audioSource = 0;
+        m_videoSource = 0;
     }
 }
 
@@ -193,7 +193,7 @@ PassOwnPtr<MediaPlayerPrivateInterface> StreamMediaPlayerPrivateGStreamer::creat
 void StreamMediaPlayerPrivateGStreamer::registerMediaEngine(MediaEngineRegistrar registrar)
 {
     if (isAvailable())
-        registrar(create, getSupportedTypes, supportsType, 0, 0, 0, 0);
+        registrar(create, getSupportedTypes, supportsType, 0, 0, 0);
 }
 
 void StreamMediaPlayerPrivateGStreamer::getSupportedTypes(HashSet<String>& types)
@@ -201,7 +201,7 @@ void StreamMediaPlayerPrivateGStreamer::getSupportedTypes(HashSet<String>& types
     // FIXME
 }
 
-MediaPlayer::SupportsType StreamMediaPlayerPrivateGStreamer::supportsType(const MediaEngineSupportParameters& parameters)
+MediaPlayer::SupportsType StreamMediaPlayerPrivateGStreamer::supportsType(const String& type, const String& codecs, const KURL&)
 {
     // FIXME
     return MediaPlayer::IsNotSupported;
@@ -233,21 +233,21 @@ void StreamMediaPlayerPrivateGStreamer::sourceReadyStateChanged()
 {
     LOG_MEDIA_MESSAGE("Source state changed");
 
-    if (!m_stream || m_stream->ended())
+    if (!m_stream || !m_stream->active())
         stop();
 
     CentralPipelineUnit* cpu = m_stream->privateStream()->centralPipelineUnit();
 
     // check if the source should be ended
     if (m_audioSource) {
-        Vector<RefPtr<MediaStreamTrack>> audioTracks = m_stream->getAudioTracks();
+        Vector<RefPtr<MediaStreamTrack> > audioTracks = m_stream->getAudioTracks();
         RefPtr<MediaStreamTrack> audioTrack;
         for (size_t i = 0; i < audioTracks.size(); ++i) {
             audioTrack = audioTracks[i];
             MediaStreamSourceGStreamer* source = reinterpret_cast<MediaStreamSourceGStreamer*>(audioTrack->source());
             if (!audioTrack->enabled() && source == m_audioSource) {
                 cpu->disconnectFromSource(m_audioSource, m_audioSinkBin.get());
-                m_audioSource = nullptr;
+                m_audioSource = 0;
                 break;
             }
         }
@@ -255,14 +255,14 @@ void StreamMediaPlayerPrivateGStreamer::sourceReadyStateChanged()
 
     // Same check for video
     if (m_videoSource) {
-        Vector<RefPtr<MediaStreamTrack>> videoTracks = m_stream->getVideoTracks();
+        Vector<RefPtr<MediaStreamTrack> > videoTracks = m_stream->getVideoTracks();
         RefPtr<MediaStreamTrack> videoTrack;
         for (size_t i = 0; i < videoTracks.size(); ++i) {
             videoTrack = videoTracks[i];
             MediaStreamSourceGStreamer* source = reinterpret_cast<MediaStreamSourceGStreamer*>(videoTrack->source());
             if (!videoTrack->enabled() && source == m_videoSource) {
                 cpu->disconnectFromSource(m_videoSource, m_videoSinkBin.get());
-                m_videoSource = nullptr;
+                m_videoSource = 0;
                 break;
             }
         }
@@ -300,16 +300,16 @@ bool StreamMediaPlayerPrivateGStreamer::connectToGSTLiveStream(MediaStream* stre
 
     if (m_audioSource) {
         cpu->disconnectFromSource(m_audioSource, m_audioSinkBin.get());
-        m_audioSource = nullptr;
+        m_audioSource = 0;
     }
 
     if (m_videoSource) {
         cpu->disconnectFromSource(m_videoSource, m_videoSinkBin.get());
-        m_videoSource = nullptr;
+        m_videoSource = 0;
     }
 
-    Vector<RefPtr<MediaStreamTrack>> audioTracks = stream->getAudioTracks();
-    Vector<RefPtr<MediaStreamTrack>> videoTracks = stream->getVideoTracks();
+    Vector<RefPtr<MediaStreamTrack> > audioTracks = stream->getAudioTracks();
+    Vector<RefPtr<MediaStreamTrack> > videoTracks = stream->getVideoTracks();
     RefPtr<MediaStreamTrack> audioTrack;
     RefPtr<MediaStreamTrack> videoTrack;
     LOG_MEDIA_MESSAGE("Stream descriptor has %zd audio streams and %zd video streams", audioTracks.size(), videoTracks.size());
@@ -372,7 +372,7 @@ GstElement* StreamMediaPlayerPrivateGStreamer::createVideoSink()
     GstElement* sink = MediaPlayerPrivateGStreamerBase::createVideoSink();
     m_videoSinkBin = gst_bin_new(0);
     GstElement* videoconvert = gst_element_factory_make("videoconvert", "streamplayervideoconvert");
-    gst_bin_add_many(GST_BIN(m_videoSinkBin.get()), videoconvert, sink, nullptr);
+    gst_bin_add_many(GST_BIN(m_videoSinkBin.get()), videoconvert, sink, NULL);
     gst_element_link(videoconvert, sink);
     GRefPtr<GstPad> pad = adoptGRef(gst_element_get_static_pad(videoconvert, "sink"));
     gst_element_add_pad(m_videoSinkBin.get(), gst_ghost_pad_new("sink", pad.get()));

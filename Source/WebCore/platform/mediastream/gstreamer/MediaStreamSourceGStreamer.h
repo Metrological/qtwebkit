@@ -31,7 +31,7 @@ namespace WebCore {
 
 class MediaStreamSourceCapabilities;
 
-class MediaStreamSourceGStreamer final : public MediaStreamSource {
+class MediaStreamSourceGStreamer FINAL : public MediaStreamSource {
 public:
 MediaStreamSourceGStreamer(GstMediaStream::StreamType streamType, const AtomicString& id, const AtomicString& name, MediaStreamSource::Type type, const String& device, const String& factoryKey, GstElement* element)
     : MediaStreamSource(id, type, name)
@@ -62,7 +62,7 @@ private:
     GstElement* m_element;
 };
 
-typedef HashMap<String, RefPtr<MediaStreamSourceGStreamer>> MediaStreamSourceGStreamerMap;
+typedef HashMap<String, RefPtr<MediaStreamSourceGStreamer> > MediaStreamSourceGStreamerMap;
 
 } // namespace WebCore
 

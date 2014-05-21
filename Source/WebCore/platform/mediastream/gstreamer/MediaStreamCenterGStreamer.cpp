@@ -81,8 +81,8 @@ void MediaStreamCenterGStreamer::createMediaStream(PassRefPtr<MediaStreamCreatio
     UNUSED_PARAM(audioConstraints);
     UNUSED_PARAM(videoConstraints);
 
-    Vector<RefPtr<MediaStreamSource>> audioSources;
-    Vector<RefPtr<MediaStreamSource>> videoSources;
+    Vector<RefPtr<MediaStreamSource> > audioSources;
+    Vector<RefPtr<MediaStreamSource> > videoSources;
 
     if (audioConstraints) {
         // TODO: verify constraints according to registered

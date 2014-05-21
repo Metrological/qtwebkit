@@ -24,6 +24,8 @@
 
 #include "MediaPlayerPrivateGStreamerBase.h"
 #include "MediaStream.h"
+#include "TimeRanges.h"
+
 #include <gst/gst.h>
 
 namespace WebCore {
@@ -66,7 +68,7 @@ public:
     virtual void setClosedCaptionsVisible(bool) { };
 
     virtual float maxTimeSeekable() const { return 0; }
-    virtual std::unique_ptr<PlatformTimeRanges> buffered() const { return PlatformTimeRanges::create(); }
+    PassRefPtr<TimeRanges> buffered() const { return TimeRanges::create(); }
     bool didLoadingProgress() const;
 
     virtual unsigned totalBytes() const { return 0; }
@@ -80,10 +82,10 @@ public:
     gboolean handleMessage(GstMessage*);
 
     // MediaStreamSource::Observer implementation
-    virtual void sourceReadyStateChanged() override final;
-    virtual void sourceMutedChanged() override final;
-    virtual void sourceEnabledChanged() override final;
-    virtual bool observerIsEnabled() override final;
+    virtual void sourceReadyStateChanged() OVERRIDE FINAL;
+    virtual void sourceMutedChanged() OVERRIDE FINAL;
+    virtual void sourceEnabledChanged() OVERRIDE FINAL;
+    virtual bool observerIsEnabled() OVERRIDE FINAL;
 
 protected:
     virtual GstElement* createVideoSink();
@@ -95,7 +97,7 @@ private:
     static PassOwnPtr<MediaPlayerPrivateInterface> create(MediaPlayer*);
 
     static void getSupportedTypes(HashSet<String>&);
-    static MediaPlayer::SupportsType supportsType(const MediaEngineSupportParameters&);
+    static MediaPlayer::SupportsType supportsType(const String& type, const String& codecs, const KURL&);
     static bool isAvailable();
     void createGSTAudioSinkBin();
     bool connectToGSTLiveStream(MediaStream*);

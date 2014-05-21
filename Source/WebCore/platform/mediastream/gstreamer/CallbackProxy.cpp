@@ -37,9 +37,7 @@
 
 #include "CentralPipelineUnit.h"
 #include "Logging.h"
-
-#include <condition_variable>
-#include <mutex>
+#include <stdio.h>
 
 #define RTC_LOG(fmt, args...) printf(fmt "\n", ##args)
 #define RTC_LOG_FENTER() (void) 0
@@ -114,30 +112,6 @@ static void callOnFirMT(void* pFirParameters);
 static void padBlockedHelper(GstPad *, gboolean blocked, gpointer user_data)
 {
 
-}
-
-static void callOnMainThreadAndWait(std::function<void ()> function)
-{
-    if (isMainThread()) {
-        function();
-        return;
-    }
-
-    std::mutex mutex;
-    std::condition_variable conditionVariable;
-
-    bool isFinished = false;
-
-    callOnMainThread([&] {
-            function();
-
-            std::lock_guard<std::mutex> lock(mutex);
-            isFinished = true;
-            conditionVariable.notify_one();
-        });
-
-    std::unique_lock<std::mutex> lock(mutex);
-    conditionVariable.wait(lock, [&] { return isFinished; });
 }
 
 CallbackProxy::CallbackProxyMap CallbackProxy::clientMap;
@@ -329,6 +303,16 @@ void CallbackProxy::onPadUnlinked(GstPad* pad, GstPad* peer)
     RTC_LOG_FLEAVE();
 }
 
+void onRequestPtMapHelperMT(void* data)
+{
+    OnRequestPtMapParameters* param = static_cast<OnRequestPtMapParameters*>(data);
+    CallbackProxy* pThis = CallbackProxy::load(param->handle);
+    if (pThis)
+        param->requestedPtMap = pThis->onRequestPtMap(param->element, param->session, param->pt);
+    else
+        param->requestedPtMap = 0;
+}
+
 static GstCaps* onRequestPtMapHelper(GstElement* element, guint session, guint pt, gpointer data)
 {
     RTC_LOG_FENTER();
@@ -338,13 +322,7 @@ static GstCaps* onRequestPtMapHelper(GstElement* element, guint session, guint p
     param->pt = pt;
     param->handle = (gulong)data;
     param->requestedPtMap = NULL;
-    callOnMainThreadAndWait([&] {
-        CallbackProxy* pThis = CallbackProxy::load(param->handle);
-        if (pThis)
-            param->requestedPtMap = pThis->onRequestPtMap(param->element, param->session, param->pt);
-        else
-            param->requestedPtMap = 0;
-    });
+    callOnMainThreadAndWait(onRequestPtMapHelperMT, param);
     GstCaps* requestedPtMap = param->requestedPtMap;
     delete param;
     RTC_LOG_FLEAVE();
@@ -361,6 +339,17 @@ GstCaps* CallbackProxy::onRequestPtMap(GstElement* element, guint session, guint
     return ptMap;
 }
 
+void onEnableOrderingHelperMT(void* data)
+{
+    OnEnableOrderingParameters* param = static_cast<OnEnableOrderingParameters*>(data);
+    CallbackProxy* pThis = CallbackProxy::load(param->handle);
+    if (pThis)
+        param->enableOrdering = pThis->onEnableOrdering(param->session, param->ssrc);
+    else {
+        RTC_LOG("Invalid handle");
+        param->enableOrdering = FALSE;
+    }
+}
 
 static gboolean onEnableOrderingHelper(GstElement* yarsrtpbin, guint session, guint ssrc, gpointer data)
 {
@@ -371,15 +360,7 @@ static gboolean onEnableOrderingHelper(GstElement* yarsrtpbin, guint session, gu
     param->ssrc = ssrc;
     param->handle = (gulong)data;
     param->enableOrdering = FALSE;
-    callOnMainThreadAndWait([&] {
-        CallbackProxy* pThis = CallbackProxy::load(param->handle);
-        if (pThis)
-            param->enableOrdering = pThis->onEnableOrdering(param->session, param->ssrc);
-        else {
-            RTC_LOG("Invalid handle");
-            param->enableOrdering = FALSE;
-        }
-    });
+    callOnMainThreadAndWait(onEnableOrderingHelperMT, param);
     enableOrdering = param->enableOrdering;
     delete param;
     RTC_LOG_FLEAVE();
@@ -396,6 +377,18 @@ gboolean CallbackProxy::onEnableOrdering(guint session, guint ssrc)
     return enableOrdering;
 }
 
+void onEnableRtxHelperMT(void* data)
+{
+    OnEnableRtxParameters* param = static_cast<OnEnableRtxParameters*>(data);
+    CallbackProxy* pThis = CallbackProxy::load(param->handle);
+    if (pThis) {
+        param->rtxpt = pThis->onEnableRtx(param->session, param->ssrc, param->pt);
+    } else {
+        RTC_LOG("Invalid handle");
+        param->rtxpt = 0;
+    }
+}
+
 static guint onEnableRtxHelper(GstElement* yarsrtpbin, guint session, guint ssrc, guint pt, gpointer data)
 {
     RTC_LOG_FENTER();
@@ -407,15 +400,7 @@ static guint onEnableRtxHelper(GstElement* yarsrtpbin, guint session, guint ssrc
     param->pt = pt;
     param->handle = (gulong)data;
     param->rtxpt = 0;
-    callOnMainThreadAndWait([&] {
-        CallbackProxy* pThis = CallbackProxy::load(param->handle);
-        if (pThis) {
-            param->rtxpt = pThis->onEnableRtx(param->session, param->ssrc, param->pt);
-        } else {
-            RTC_LOG("Invalid handle");
-            param->rtxpt = 0;
-        }
-    });
+    callOnMainThreadAndWait(onEnableRtxHelperMT, param);
     rtxpt = param->rtxpt;
     delete param;
     RTC_LOG_FLEAVE();

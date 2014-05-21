@@ -27,7 +27,7 @@
 #include "GStreamerUtilities.h"
 #include "GstMediaStream.h"
 #include <gst/gst.h>
-#include <wtf/gobject/GUniquePtr.h>
+#include <wtf/gobject/GOwnPtr.h>
 #include <wtf/text/CString.h>
 
 GST_DEBUG_CATEGORY(webkit_media_stream_debug);
@@ -37,16 +37,16 @@ namespace WebCore {
 
 static GRefPtr<GstElement> findDeviceSource(const char* elementName)
 {
-    GRefPtr<GstElement> element = gst_element_factory_make(elementName, nullptr);
+    GRefPtr<GstElement> element = gst_element_factory_make(elementName, 0);
     if (!element)
-        return nullptr;
+        return 0;
 
     if (!GST_IS_CHILD_PROXY(element.get()))
         return element;
 
     GstStateChangeReturn stateChangeResult = gst_element_set_state(element.get(), GST_STATE_READY);
     if (stateChangeResult != GST_STATE_CHANGE_SUCCESS)
-        return nullptr;
+        return 0;
 
     GRefPtr<GstElement> deviceSource;
     GstChildProxy* childProxy = GST_CHILD_PROXY(element.get());
@@ -64,15 +64,15 @@ static RefPtr<MediaStreamSourceGStreamer> probeSource(GstElement* source, MediaS
     // see https://bugzilla.gnome.org/show_bug.cgi?id=678402
 
     GstElementFactory* elementFactory = gst_element_get_factory(source);
-    GUniquePtr<gchar> factoryName(gst_element_get_name(elementFactory));
+    GOwnPtr<gchar> factoryName(gst_element_get_name(elementFactory));
     String strFactoryName(factoryName.get());
 
     String deviceId = strFactoryName;
     deviceId.append(";default");
 
-    GUniqueOutPtr<gchar> deviceName;
+    GOwnPtr<gchar> deviceName;
     if (!g_getenv("VIDEOTEST"))
-        g_object_get(source, "device-name", &deviceName.outPtr(), nullptr);
+        g_object_get(source, "device-name", &deviceName.outPtr(), 0);
     else
         deviceName.outPtr() = g_strdup("test");
 
@@ -101,7 +101,7 @@ MediaStreamCenterPrivateGStreamer::MediaStreamCenterPrivateGStreamer()
 
 void MediaStreamCenterPrivateGStreamer::discoverDevices(MediaStreamSource::Type type)
 {
-    const char* elementName = nullptr;
+    const char* elementName = 0;
     switch (type) {
     case MediaStreamSource::Audio:
         //elementName = g_getenv("VIDEOTEST") ? "videotestsrc" : "autoaudiosrc";
@@ -136,13 +136,13 @@ void MediaStreamCenterPrivateGStreamer::discoverDevices(MediaStreamSource::Type 
 
 PassRefPtr<MediaStreamSource> MediaStreamCenterPrivateGStreamer::firstSource(MediaStreamSource::Type type)
 {
-    for (auto iter = m_sourceMap.begin(); iter != m_sourceMap.end(); ++iter) {
+    for (MediaStreamSourceGStreamerMap::iterator iter = m_sourceMap.begin(); iter != m_sourceMap.end(); ++iter) {
         RefPtr<MediaStreamSource> source = iter->value;
         if (source->type() == type)
             return source;
     }
 
-    return nullptr;
+    return 0;
 }
 
 } // namespace WebCore

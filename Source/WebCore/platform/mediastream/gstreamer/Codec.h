@@ -60,7 +60,7 @@ public:
     Vector<Codec*> getVideoCodecList();
 
 private:
-    typedef HashMap<String, std::pair<Codec*, unsigned int>> CodecMap;
+    typedef HashMap<String, std::pair<Codec*, unsigned int> > CodecMap;
     class CodecPrioritySorter {
     public:
         void insertCodec(Codec*, unsigned int prio);

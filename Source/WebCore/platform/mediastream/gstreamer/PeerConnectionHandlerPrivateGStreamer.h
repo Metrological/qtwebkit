@@ -42,7 +42,6 @@
 #include <gst/gst.h>
 #include <wtf/PassOwnPtr.h>
 #include <wtf/text/WTFString.h>
-#include <wtf/gobject/GUniquePtr.h>
 #include <wtf/HashMap.h>
 #include <wtf/Vector.h>
 
@@ -75,8 +74,8 @@ public:
     bool addStream(PassRefPtr<MediaStreamPrivate>);
     void removeStream(PassRefPtr<MediaStreamPrivate>);
     void getStats(PassRefPtr<RTCStatsRequest>);
-    std::unique_ptr<RTCDataChannelHandler> createDataChannel(const String& label, const RTCDataChannelInit&);
-    std::unique_ptr<RTCDTMFSenderHandler> createDTMFSender(PassRefPtr<MediaStreamSource>);
+    PassOwnPtr<RTCDataChannelHandler> createDataChannel(const String& label, const RTCDataChannelInit&);
+    PassOwnPtr<RTCDTMFSenderHandler> createDTMFSender(PassRefPtr<MediaStreamSource>);
 
     void removeRequestedStreams(SignalingMessage*);
     void stop();
@@ -122,8 +121,8 @@ private:
 
 private:
     typedef HashMap<String, GstMediaStream*> GstMediaStreamMap;
-    typedef HashMap<unsigned, GstRtpStream*, WTF::IntHash<unsigned int>, WTF::UnsignedWithZeroKeyHashTraits<unsigned int>> StreamIdGstRtpStreamMap;
-    typedef HashMap<unsigned, GstRtpStream*, WTF::IntHash<unsigned int>, WTF::UnsignedWithZeroKeyHashTraits<unsigned int>> RtpSessionGstRtpStreamMap;
+    typedef HashMap<unsigned, GstRtpStream*, WTF::IntHash<unsigned int>, WTF::UnsignedWithZeroKeyHashTraits<unsigned int> > StreamIdGstRtpStreamMap;
+    typedef HashMap<unsigned, GstRtpStream*, WTF::IntHash<unsigned int>, WTF::UnsignedWithZeroKeyHashTraits<unsigned int> > RtpSessionGstRtpStreamMap;
 
 private:
     RTCPeerConnectionHandlerClient* m_client;
@@ -161,7 +160,7 @@ private:
 
     gulong m_onFirSignalHandler;
 
-    Vector<RefPtr<RTCSessionDescriptionRequest>> m_requests;
+    Vector<RefPtr<RTCSessionDescriptionRequest> > m_requests;
     bool m_answerPending;
     bool m_creatingOffer;
 };

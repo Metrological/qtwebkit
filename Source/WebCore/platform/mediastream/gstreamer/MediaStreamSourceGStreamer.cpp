@@ -32,10 +32,10 @@ namespace WebCore {
 
 static GRefPtr<GstElement> createAudioSourceBin(GRefPtr<GstElement> source)
 {
-    GRefPtr<GstElement> audioconvert = gst_element_factory_make("audioconvert", nullptr);
+    GRefPtr<GstElement> audioconvert = gst_element_factory_make("audioconvert", 0);
     if (!audioconvert) {
         LOG_MEDIA_MESSAGE("ERROR, Got no audioconvert element for audio source pipeline");
-        return nullptr;
+        return 0;
     }
 
     // FIXME: The caps should be coherent with device capabilities, see bug #123345.
@@ -43,16 +43,16 @@ static GRefPtr<GstElement> createAudioSourceBin(GRefPtr<GstElement> source)
     audiocaps = adoptGRef(gst_caps_new_simple("audio/x-raw", "channels", G_TYPE_INT, 1, NULL));
     if (!audiocaps) {
         LOG_MEDIA_MESSAGE("ERROR, Unable to create filter caps for audio source pipeline");
-        return nullptr;
+        return 0;
     }
 
-    GRefPtr<GstElement> audioSourceBin = gst_bin_new(nullptr);
+    GRefPtr<GstElement> audioSourceBin = gst_bin_new(0);
 
     gst_bin_add_many(GST_BIN(audioSourceBin.get()), source.get(), audioconvert.get(), NULL);
 
     if (!gst_element_link_filtered(source.get(), audioconvert.get(), audiocaps.get())) {
         LOG_MEDIA_MESSAGE("ERROR, Cannot link audio source elements");
-        return nullptr;
+        return 0;
     }
 
     GstPad* srcPad = gst_element_get_static_pad(audioconvert.get(), "src");
@@ -63,25 +63,25 @@ static GRefPtr<GstElement> createAudioSourceBin(GRefPtr<GstElement> source)
 
 static GRefPtr<GstElement> createVideoSourceBin(GRefPtr<GstElement> source)
 {
-    GRefPtr<GstElement> colorspace = gst_element_factory_make("videoconvert", nullptr);
+    GRefPtr<GstElement> colorspace = gst_element_factory_make("videoconvert", 0);
     if (!colorspace) {
         LOG_MEDIA_MESSAGE("ERROR, Got no videoconvert element for video source pipeline");
-        return nullptr;
+        return 0;
     }
-    GRefPtr<GstElement> videoscale = gst_element_factory_make("videoscale", nullptr);
+    GRefPtr<GstElement> videoscale = gst_element_factory_make("videoscale", 0);
     if (!videoscale) {
         LOG_MEDIA_MESSAGE("ERROR, Got no videoscale element for video source pipeline");
-        return nullptr;
+        return 0;
     }
 
     // FIXME: The caps should be coherent with device capabilities, see bug #123345.
     GRefPtr<GstCaps> videocaps = gst_caps_new_simple("video/x-raw", "width", G_TYPE_INT, 320, "height", G_TYPE_INT, 240, NULL);
     if (!videocaps) {
         LOG_MEDIA_MESSAGE("ERROR, Unable to create filter caps for video source pipeline");
-        return nullptr;
+        return 0;
     }
 
-    GstElement* videoSourceBin = gst_bin_new(nullptr);
+    GstElement* videoSourceBin = gst_bin_new(0);
 
     gst_bin_add_many(GST_BIN(videoSourceBin), source.get(), videoscale.get(), colorspace.get(), NULL);
 
@@ -89,7 +89,7 @@ static GRefPtr<GstElement> createVideoSourceBin(GRefPtr<GstElement> source)
         || !gst_element_link_filtered(videoscale.get(), colorspace.get(), videocaps.get())) {
         LOG_MEDIA_MESSAGE("ERROR, Cannot link video source elements");
         gst_object_unref(videoSourceBin);
-        return nullptr;
+        return 0;
     }
 
     GRefPtr<GstPad> srcPad = gst_element_get_static_pad(colorspace.get(), "src");
@@ -108,11 +108,11 @@ GRefPtr<GstElement> MediaStreamSourceGStreamer::createGStreamerElement(GRefPtr<G
 
     GRefPtr<GstElementFactory> factory = gst_element_factory_find(factoryKey().utf8().data());
     if (!factory)
-        return nullptr;
+        return 0;
 
     GRefPtr<GstElement> source(gst_element_factory_create(factory.get(), "device_source"));
     if (!source)
-        return nullptr;
+        return 0;
 
     LOG_MEDIA_MESSAGE("sourceInfo.m_device=%s", device().utf8().data());
     // TODO: Device choosing is not implemented for gstreamer 1.0 yet.

@@ -43,7 +43,7 @@ namespace WebCore {
 
 class MediaStreamCenterPrivateGStreamer;
 
-class MediaStreamCenterGStreamer final : public MediaStreamCenter {
+class MediaStreamCenterGStreamer FINAL : public MediaStreamCenter {
 public:
     MediaStreamCenterGStreamer();
     ~MediaStreamCenterGStreamer();
