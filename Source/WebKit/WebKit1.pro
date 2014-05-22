@@ -30,6 +30,7 @@ SOURCES += \
     $$PWD/qt/Api/qwebsecurityorigin.cpp \
     $$PWD/qt/Api/qwebsettings.cpp \
     $$PWD/qt/Api/qwebscriptworld.cpp \
+    $$PWD/qt/Api/qwebcookiejar.cpp \
     $$PWD/qt/WebCoreSupport/ChromeClientQt.cpp \
     $$PWD/qt/WebCoreSupport/ContextMenuClientQt.cpp \
     $$PWD/qt/WebCoreSupport/DragClientQt.cpp \
@@ -68,6 +69,7 @@ HEADERS += \
     $$PWD/qt/Api/qwebsecurityorigin.h \
     $$PWD/qt/Api/qwebsettings.h \
     $$PWD/qt/Api/qwebscriptworld_p.h \
+    $$PWD/qt/qwebcookiejar.h \
     $$PWD/qt/Api/qwebkitplatformplugin.h \
     $$PWD/qt/WebCoreSupport/ChromeClientQt.h \
     $$PWD/qt/WebCoreSupport/ContextMenuClientQt.h \

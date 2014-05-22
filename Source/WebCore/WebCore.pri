@@ -331,7 +331,7 @@ mac {
     unix:!mac:*-g++*:QMAKE_CXXFLAGS += -ffunction-sections
 }
 unix:!mac:*-g++*:QMAKE_CXXFLAGS += -fdata-sections
-unix:!mac:*-g++*:QMAKE_LFLAGS += -Wl,--gc-sections
+#unix:!mac:*-g++*:QMAKE_LFLAGS += -Wl,--gc-sections
 linux*-g++*:QMAKE_LFLAGS += $$QMAKE_LFLAGS_NOUNDEF
 
 enable_fast_mobile_scrolling: DEFINES += ENABLE_FAST_MOBILE_SCROLLING=1
