@@ -124,6 +124,7 @@
 #endif
 
 #if ENABLE(MEDIA_STREAM)
+#include "DOMURL.h"
 #include "MediaStream.h"
 #include "MediaStreamRegistry.h"
 #endif
@@ -752,6 +753,7 @@ void HTMLMediaElement::setSrcObject(MediaStream* mediaStream)
     // https://bugs.webkit.org/show_bug.cgi?id=124896
 
     m_mediaStreamSrcObject = mediaStream;
+    setSrc(DOMURL::createPublicURL(ActiveDOMObject::scriptExecutionContext(), mediaStream));
 }
 #endif
 
