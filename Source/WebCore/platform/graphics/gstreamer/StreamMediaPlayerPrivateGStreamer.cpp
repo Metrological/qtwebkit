@@ -371,12 +371,25 @@ GstElement* StreamMediaPlayerPrivateGStreamer::createVideoSink()
 {
     GstElement* sink = MediaPlayerPrivateGStreamerBase::createVideoSink();
     m_videoSinkBin = gst_bin_new(0);
-    GstElement* videoconvert = gst_element_factory_make("videoconvert", "streamplayervideoconvert");
-    gst_bin_add_many(GST_BIN(m_videoSinkBin.get()), videoconvert, sink, NULL);
-    gst_element_link(videoconvert, sink);
-    GRefPtr<GstPad> pad = adoptGRef(gst_element_get_static_pad(videoconvert, "sink"));
-    gst_element_add_pad(m_videoSinkBin.get(), gst_ghost_pad_new("sink", pad.get()));
 
+    GRefPtr<GstPad> pad;
+    if (g_getenv("RPI")) {
+        GstElement* parser = gst_element_factory_make("h264parse", 0);
+        GstElement* dec = gst_element_factory_make("omxh264dec", 0);
+
+        gst_bin_add_many(GST_BIN(m_videoSinkBin.get()), parser, dec, sink, NULL);
+        gst_element_link_many(parser, dec, sink, NULL);
+
+        pad = adoptGRef(gst_element_get_static_pad(parser, "sink"));
+
+        g_object_set(sink, "sync", FALSE, NULL);
+    } else {
+        GstElement* videoconvert = gst_element_factory_make("videoconvert", "streamplayervideoconvert");
+        gst_bin_add_many(GST_BIN(m_videoSinkBin.get()), videoconvert, sink, NULL);
+        gst_element_link(videoconvert, sink);
+        pad = adoptGRef(gst_element_get_static_pad(videoconvert, "sink"));
+    }
+    gst_element_add_pad(m_videoSinkBin.get(), gst_ghost_pad_new("sink", pad.get()));
     return m_videoSinkBin.get();
 }
 

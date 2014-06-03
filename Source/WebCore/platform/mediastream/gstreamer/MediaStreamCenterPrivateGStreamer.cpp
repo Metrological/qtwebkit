@@ -71,10 +71,12 @@ static RefPtr<MediaStreamSourceGStreamer> probeSource(GstElement* source, MediaS
     deviceId.append(";default");
 
     GOwnPtr<gchar> deviceName;
-    if (!g_getenv("VIDEOTEST"))
-        g_object_get(source, "device-name", &deviceName.outPtr(), 0);
-    else
+    if (g_getenv("RPI"))
+        deviceName.outPtr() = g_strdup("rpicam");
+    else if (g_getenv("VIDEOTEST"))
         deviceName.outPtr() = g_strdup("test");
+    else
+        g_object_get(source, "device-name", &deviceName.outPtr(), 0);
 
     RefPtr<MediaStreamSourceGStreamer> mediaStreamSource = adoptRef(new MediaStreamSourceGStreamer(GstMediaStream::Local, deviceId, deviceName.get(), type, "default", strFactoryName, 0));
 
@@ -104,11 +106,15 @@ void MediaStreamCenterPrivateGStreamer::discoverDevices(MediaStreamSource::Type 
     const char* elementName = 0;
     switch (type) {
     case MediaStreamSource::Audio:
-        //elementName = g_getenv("VIDEOTEST") ? "videotestsrc" : "autoaudiosrc";
-        elementName = "autoaudiosrc";
+        elementName = g_getenv("AUDIOTEST") ? "audiotestsrc" : "autoaudiosrc";
         break;
     case MediaStreamSource::Video:
-        elementName = g_getenv("VIDEOTEST") ? "videotestsrc" : "autovideosrc";
+        if (g_getenv("VIDEOTEST"))
+            elementName = "videotestsrc";
+        else if (g_getenv("RPI"))
+            elementName = "rpicamsrc";
+        else
+            elementName = "autovideosrc";
         break;
     case MediaStreamSource::None:
         ASSERT_NOT_REACHED();
@@ -118,13 +124,6 @@ void MediaStreamCenterPrivateGStreamer::discoverDevices(MediaStreamSource::Type 
     GRefPtr<GstElement> deviceSource = findDeviceSource(elementName);
     if (!deviceSource)
         return;
-
-    if (type == MediaStreamSource::Video) {
-        static int patternNumber = 0;
-        if (!strcmp(elementName, "videotestsrc"))
-            g_object_set(deviceSource.get(), "pattern", patternNumber, NULL);
-        patternNumber++;
-    }
 
     RefPtr<MediaStreamSourceGStreamer> source = probeSource(deviceSource.get(), type);
     String id = source->id();
