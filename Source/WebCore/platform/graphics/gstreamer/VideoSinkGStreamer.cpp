@@ -220,9 +220,9 @@ static gboolean webkitVideoSinkTimeoutCallback(gpointer data)
     return FALSE;
 }
 
-static GstFlowReturn webkitVideoSinkRender(GstBaseSink* baseSink, GstBuffer* buffer)
+static GstFlowReturn webkitVideoSinkShowFrame(GstVideoSink* videoSink, GstBuffer* buffer)
 {
-    WebKitVideoSink* sink = WEBKIT_VIDEO_SINK(baseSink);
+    WebKitVideoSink* sink = WEBKIT_VIDEO_SINK(videoSink);
     WebKitVideoSinkPrivate* priv = sink->priv;
 
     g_mutex_lock(priv->bufferMutex);
@@ -248,7 +248,7 @@ static GstFlowReturn webkitVideoSinkRender(GstBaseSink* baseSink, GstBuffer* buf
     // are implicitely the caps of the pad. This shouldn't happen.
     if (UNLIKELY(!GST_BUFFER_CAPS(buffer))) {
         buffer = priv->buffer = gst_buffer_make_metadata_writable(priv->buffer);
-        gst_buffer_set_caps(priv->buffer, GST_PAD_CAPS(GST_BASE_SINK_PAD(baseSink)));
+        gst_buffer_set_caps(priv->buffer, GST_PAD_CAPS(GST_VIDEO_SINK_PAD(videoSink)));
     }
 
     GRefPtr<GstCaps> caps = GST_BUFFER_CAPS(buffer);
@@ -632,6 +632,7 @@ static void webkit_video_sink_class_init(WebKitVideoSinkClass* klass)
     GObjectClass* gobjectClass = G_OBJECT_CLASS(klass);
     GstBaseSinkClass* baseSinkClass = GST_BASE_SINK_CLASS(klass);
     GstElementClass* elementClass = GST_ELEMENT_CLASS(klass);
+    GstVideoSinkClass* videoSinkClass = GST_VIDEO_SINK_CLASS(klass);
 
     gst_element_class_add_pad_template(elementClass, gst_static_pad_template_get(&s_sinkTemplate));
     setGstElementClassMetadata(elementClass, "WebKit video sink", "Sink/Video", "Sends video data from a GStreamer pipeline to a Cairo surface", "Alp Toker <alp@atoker.com>");
@@ -643,8 +644,6 @@ static void webkit_video_sink_class_init(WebKitVideoSinkClass* klass)
 
     baseSinkClass->unlock = webkitVideoSinkUnlock;
     baseSinkClass->unlock_stop = webkitVideoSinkUnlockStop;
-    baseSinkClass->render = webkitVideoSinkRender;
-    baseSinkClass->preroll = webkitVideoSinkRender;
     baseSinkClass->stop = webkitVideoSinkStop;
     baseSinkClass->start = webkitVideoSinkStart;
     baseSinkClass->set_caps = webkitVideoSinkSetCaps;
@@ -656,6 +655,8 @@ static void webkit_video_sink_class_init(WebKitVideoSinkClass* klass)
 #if GST_CHECK_VERSION(1, 3, 0)
     elementClass->set_context = webkitVideoSinkSetContext;
 #endif
+
+    videoSinkClass->show_frame = webkitVideoSinkShowFrame;
 
     g_object_class_install_property(gobjectClass, PROP_CAPS,
         g_param_spec_boxed("current-caps", "Current-Caps", "Current caps", GST_TYPE_CAPS, G_PARAM_READABLE));
