@@ -24,6 +24,9 @@
 
 #include <QtCore/QObject>
 
+#include <QPixmap>
+#include <QList>
+
 class QWebPreferencesPrivate;
 
 class QWEBKIT_EXPORT QWebPreferences : public QObject {
@@ -49,6 +52,11 @@ public:
     Q_PROPERTY(bool notificationsEnabled READ notificationsEnabled WRITE setNotificationsEnabled NOTIFY notificationsEnabledChanged FINAL)
     Q_PROPERTY(bool universalAccessFromFileURLsAllowed READ universalAccessFromFileURLsAllowed WRITE setUniversalAccessFromFileURLsAllowed NOTIFY universalAccessFromFileURLsAllowedChanged FINAL)
     Q_PROPERTY(bool fileAccessFromFileURLsAllowed READ fileAccessFromFileURLsAllowed WRITE setFileAccessFromFileURLsAllowed NOTIFY fileAccessFromFileURLsAllowedChanged FINAL)
+    Q_PROPERTY(bool offlineStorageEnabled /*READ offlineStorageEnabled */ WRITE setOfflineStorageEnabled NOTIFY offlineStorageChangedEnabled FINAL)
+//    Q_PROPERTY(bool javascriptCanAccessClipboard /*READ javascriptCanAccessClipboardEnabled */ WRITE setJavascriptCanAccessClipboardEnabled NOTIFY javascriptCanAccessClipboardEnabled FINAL)
+//    Q_PROPERTY(bool javascriptCanOpenWindowEnabled /*READ javascriptCanOpenWindowEnabled */ WRITE setJavascriptCanOpenWindowEnabled NOTIFY javascriptCanOpenWindowChangedEnabled FINAL)
+//    Q_PROPERTY(bool spatialNavigationEnabled /*READ spatialNavigationEnabled */ WRITE setSpatialNavigationEnabled NOTIFY spatialNavigationEnabledChanged FINAL)
+    Q_PROPERTY(bool webSecurityEnabled READ webSecurityEnabled WRITE setWebSecurityEnabled NOTIFY webSecurityEnabledChanged FINAL)
 
     Q_PROPERTY(QString standardFontFamily READ standardFontFamily WRITE setStandardFontFamily NOTIFY standardFontFamilyChanged FINAL)
     Q_PROPERTY(QString fixedFontFamily READ fixedFontFamily WRITE setFixedFontFamily NOTIFY fixedFontFamilyChanged FINAL)
@@ -56,10 +64,55 @@ public:
     Q_PROPERTY(QString sansSerifFontFamily READ sansSerifFontFamily WRITE setSansSerifFontFamily NOTIFY sansSerifFontFamilyChanged FINAL)
     Q_PROPERTY(QString cursiveFontFamily READ cursiveFontFamily WRITE setCursiveFontFamily NOTIFY cursiveFontFamilyChanged FINAL)
     Q_PROPERTY(QString fantasyFontFamily READ fantasyFontFamily WRITE setFantasyFontFamily NOTIFY fantasyFontFamilyChanged FINAL)
+    Q_PROPERTY(QString persistentStorage /*READ persistentStorage*/ WRITE setPersistentStorage NOTIFY persistentStorageChanged FINAL)
+    Q_PROPERTY(QString persistentCookieStorage /*READ persistentCookieStorage*/ WRITE setPersistentCookieStorage NOTIFY persistentCookieStorageChanged FINAL)
+//    Q_PROPERTY(QString localStoragePath READ localStoragePath WRITE setLocalStoragePath NOTIFY localStoragePathChanged)
+//    Q_PROPERTY(QString offlineWebApplicationCachePath READ offlineWebApplicationCachePath WRITE setOfflineWebApplicationCachePath NOTIFY offlineWebApplicationCachePathChanged FINAL)
 
     Q_PROPERTY(unsigned minimumFontSize READ minimumFontSize WRITE setMinimumFontSize NOTIFY minimumFontSizeChanged FINAL)
     Q_PROPERTY(unsigned defaultFontSize READ defaultFontSize WRITE setDefaultFontSize NOTIFY defaultFontSizeChanged FINAL)
     Q_PROPERTY(unsigned defaultFixedFontSize READ defaultFixedFontSize WRITE setDefaultFixedFontSize NOTIFY defaultFixedFontSizeChanged FINAL)
+    Q_PROPERTY(unsigned int webApplicationCacheQuota /*READ webApplicationCacheQuota*/ WRITE setWebApplicationCacheQuota NOTIFY webApplicationQuotaChanged FINAL)
+    Q_PROPERTY(unsigned int offlineStorageQuota /*READ offlineStorageQuota*/ WRITE setOfflineStorageQuota NOTIFY offlineStorageQuotaChanged FINAL)
+    Q_PROPERTY(unsigned int maxCachedPages /*READ maxCachedPages*/ WRITE setMaxCachedPages NOTIFY maxCachedPagesChanged FINAL)
+
+    Q_PROPERTY(QPixmap missingImage /*READ missingImage*/ WRITE setMissingImage NOTIFY missingImageChanged FINAL)
+    Q_PROPERTY(QPixmap missingPlugin /*READ missingPlugin*/ WRITE setMissingPlugin NOTIFY missingPluginChanged FINAL)
+
+    Q_PROPERTY(QList<QVariant> cacheCapacities /*READ cacheCapacities*/ WRITE setCacheCapacities NOTIFY cacheCapacitiesChanged FINAL)
+
+    QPixmap missingImage(void);
+    void setMissingImage(const QPixmap& graphic);
+
+//    QPixmap missingPlugin(void);
+    void setMissingPlugin(const QPixmap& graphic);
+
+//    QList<QVariant> cacheCapacities(void);
+    void setCacheCapacities(const QList<QVariant>& capacities);
+
+//    unsigned int webApplicationCacheQuota(void);
+    void setWebApplicationCacheQuota(unsigned int size);
+
+//    unsigned int offlineStorageQuota(void);
+    void setOfflineStorageQuota(unsigned int size);
+
+//    unsigned int maxCachedPages(void);
+      void setMaxCachedPages(unsigned int number);
+
+//    bool offlineStorageEnabled(void);
+    void setOfflineStorageEnabled(bool enable);
+
+//    QString persistentStorage(void);
+    void setPersistentStorage(const QString& path);
+
+//    QString persistentCookieStorage(void);
+    void setPersistentCookieStorage(const QString& path);
+
+//    QString offlineWebApplicationCachePath(void);
+//    void setOfflineWebApplicationCachePath(QString& path);
+
+//    QString localStoragePath(void);
+//    void setLocalStoragePath(QString& path);
 
     bool autoLoadImages() const;
     void setAutoLoadImages(bool enable);
@@ -115,6 +168,9 @@ public:
     bool fileAccessFromFileURLsAllowed() const;
     void setFileAccessFromFileURLsAllowed(bool enable);
 
+    bool webSecurityEnabled() const;
+    void setWebSecurityEnabled(bool enable);
+
     QString standardFontFamily() const;
     void setStandardFontFamily(const QString& family);
 
@@ -143,6 +199,21 @@ public:
     void setDefaultFixedFontSize(unsigned size);
 
 Q_SIGNALS:
+    void missingImageChanged();
+    void missingPluginChanged();
+
+    void cacheCapacitiesChanged();
+    void webApplicationCacheQuota();
+    void offlineStorageQuotaChanged();
+    void maxCachedPagesChanged();
+
+    void offlineStorageEnabledChanged();
+
+    void persistentStorageChanged();
+    void persistentCookieStorageChanged();
+    void offlineWebApplicationCachePathChanged();
+    void localStoragePathChanged();
+
     void autoLoadImagesChanged();
     void pluginsEnabledChanged();
     void fullScreenEnabledChanged();
@@ -161,6 +232,7 @@ Q_SIGNALS:
     void notificationsEnabledChanged();
     void universalAccessFromFileURLsAllowedChanged();
     void fileAccessFromFileURLsAllowedChanged();
+    void webSecurityEnabledChanged();
 
     void standardFontFamilyChanged();
     void fixedFontFamilyChanged();

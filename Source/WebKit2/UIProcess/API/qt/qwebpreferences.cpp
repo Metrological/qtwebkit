@@ -27,12 +27,178 @@
 #include <WKRetainPtr.h>
 #include <WKStringQt.h>
 
+#include <qwebcookiejar.h>
+
+#include <QDebug>
+
 QWebPreferences* QWebPreferencesPrivate::createPreferences(QQuickWebViewPrivate* webViewPrivate)
 {
     QWebPreferences* prefs = new QWebPreferences;
     prefs->d->webViewPrivate = webViewPrivate;
     prefs->d->initializeDefaultFontSettings();
     return prefs;
+}
+
+/*
+QPixmap QWebPreferences::missingImage(void)
+{
+    RefPtr<WebCore::Image> img = WebCore::Image::loadPlatformResource("missingImage");
+    if (!img)
+       return QPixmap();
+
+    QPixmap* pixmap = img->nativeImageForCurrentFrame();
+    if (!pixmap)
+        return QPixmap();
+
+    return *pixmap;
+}
+*/
+
+void QWebPreferences::setMissingImage(const QPixmap& graphic)
+{
+    Q_UNUSED(graphic);
+    qDebug()<<__PRETTY_FUNCTION__<<" Currently not implemented";
+/*
+    WebCore::Image::setPlatformResource("missingImage", graphic);
+*/
+}
+
+/*
+QPixmap QWebPreferences::missingPlugin(void)
+{
+    RefPtr<WebCore::Image> img = WebCore::Image::loadPlatformResource("missingPlugin");
+    if (!img)
+       return QPixmap();
+
+    QPixmap* pixmap = img->nativeImageForCurrentFrame();
+    if (!pixmap)
+        return QPixmap();
+
+    return *pixmap;
+}
+*/
+
+void QWebPreferences::setMissingPlugin(const QPixmap& graphic)
+{
+    Q_UNUSED(graphic);
+    qDebug()<<__PRETTY_FUNCTION__<<" Currently not implemented";
+/*
+    WebCore::Image::setPlatformResource("missingPlugin", graphic);
+*/
+}
+
+/*
+QList<QVariant> QWebPreferences::cacheCapacities(void)
+{
+}
+*/
+
+void QWebPreferences::setCacheCapacities(const QList<QVariant>& capacities)
+{
+    if (capacities.size() == 3 )
+    {
+        QVariant variant[3];
+        variant[0] = capacities.at(0);
+        variant[1] = capacities.at(1);
+        variant[2] = capacities.at(2);
+
+        if((true == variant[0].canConvert(QMetaType::Int)) &&
+           (true == variant[1].canConvert(QMetaType::Int)) &&
+           (true == variant[2].canConvert(QMetaType::Int)))
+        {
+            unsigned int minDead = variant[0].value<unsigned int>();
+            unsigned int maxDead = variant[1].value<unsigned int>();
+            unsigned int total = variant[2].value<unsigned int>();
+
+            Q_UNUSED(minDead)
+            Q_UNUSED(maxDead)
+            Q_UNUSED(total)
+
+            qDebug()<<__PRETTY_FUNCTION__<<" Currently not implemented";
+/*
+            WebCore::memoryCache()->setDisabled(true);
+            WebCore::memoryCache()->setCapacities(minDead, maxDead, total);
+*/
+        }
+    }
+}
+
+/*
+unsigned int QWebPreferences::webApplicationCacheQuota(void)
+{
+}
+*/
+
+void QWebPreferences::setWebApplicationCacheQuota(unsigned int size)
+{
+    Q_UNUSED(size)
+    qDebug()<<__PRETTY_FUNCTION__<<" Currently not implemented";
+/*
+    WebCore::cacheStorage().empty();
+    WebCore::cacheStorage().vacuumDatabaseFile();
+    WebCore::cacheStorage().setMaximumSize(size);
+*/
+}
+
+/*
+unsigned int QWebPreferences::offlineStorageQuota(void)
+{
+}
+*/
+
+void QWebPreferences::setOfflineStorageQuota(unsigned int size)
+{
+    Q_UNUSED(size)
+    qDebug()<<__PRETTY_FUNCTION__<<" Currently not implemented";
+}
+
+/*
+unsigned int QWebPreferences::maxCachedPages(void)
+{
+}
+*/
+
+void QWebPreferences::setMaxCachedPages(unsigned int number)
+{
+    Q_UNUSED(number);
+    qDebug()<<__PRETTY_FUNCTION__<<" Currently not implemented";
+}
+
+/*
+bool QWebPreferences::offlineStorageEnabled(void)
+{
+}
+*/
+
+void QWebPreferences::setOfflineStorageEnabled(bool enable)
+{
+    Q_UNUSED(enable)
+    qDebug()<<__PRETTY_FUNCTION__<<" Currently not implemented";
+}
+
+/*
+QString QWebPreferences::peristentStorage(void)
+{
+}
+*/
+
+void QWebPreferences::setPersistentStorage(const QString& path)
+{
+// REMARK: see ./Source/WebKit2/UIProcess/API/C/WKContextPrivate.h and ./Source/WebKit2/UIProcess/qt/QtWebContext.cpp
+// REMARK: a workaround is QtWebCustomPaths
+
+    if(true == path.isEmpty())
+        qFatal("A valid path name is required.");
+
+    qDebug()<<__PRETTY_FUNCTION__<<" Currently not implemented";
+}
+
+void QWebPreferences::setPersistentCookieStorage(const QString& path)
+{
+// REMARK: see setPersistentStorage(const QString& path)
+
+    if ( true == path.isEmpty() )
+        qFatal("A valid path name is required.");
 }
 
 bool QWebPreferencesPrivate::testAttribute(QWebPreferencesPrivate::WebAttribute attr) const
@@ -83,6 +249,8 @@ bool QWebPreferencesPrivate::testAttribute(QWebPreferencesPrivate::WebAttribute 
         return WKPreferencesGetUniversalAccessFromFileURLsAllowed(preferencesRef);
     case FileAccessFromFileURLsAllowed:
         return WKPreferencesGetFileAccessFromFileURLsAllowed(preferencesRef);
+    case WebSecurityEnabled:
+        return WKPreferencesGetWebSecurityEnabled(preferencesRef);
     default:
         ASSERT_NOT_REACHED();
         return false;
@@ -154,6 +322,9 @@ void QWebPreferencesPrivate::setAttribute(QWebPreferencesPrivate::WebAttribute a
         break;
     case FileAccessFromFileURLsAllowed:
         WKPreferencesSetFileAccessFromFileURLsAllowed(preferencesRef, enable);
+        break;
+    case WebSecurityEnabled: 
+        WKPreferencesSetWebSecurityEnabled(preferencesRef, enable);
         break;
     default:
         ASSERT_NOT_REACHED();
@@ -602,6 +773,23 @@ void QWebPreferences::setFileAccessFromFileURLsAllowed(bool enable)
         return;
     d->setAttribute(QWebPreferencesPrivate::FileAccessFromFileURLsAllowed, enable);
     Q_EMIT fileAccessFromFileURLsAllowedChanged();
+}
+
+bool QWebPreferences::webSecurityEnabled() const
+{
+    return d->testAttribute(QWebPreferencesPrivate::WebSecurityEnabled);
+}
+
+void QWebPreferences::setWebSecurityEnabled(bool enable)
+{
+qDebug()<<__PRETTY_FUNCTION__;
+
+    if (webSecurityEnabled() == enable)
+        return;
+
+qDebug()<<__PRETTY_FUNCTION__<<" set websecurty";
+    d->setAttribute(QWebPreferencesPrivate::WebSecurityEnabled, enable);
+    Q_EMIT webSecurityEnabledChanged();
 }
 
 QWebPreferencesPrivate* QWebPreferencesPrivate::get(QWebPreferences* preferences)
