@@ -7,7 +7,7 @@ class __attribute__((visibility("default"))) QtWebCustomPaths
 {
     public:
 
-    enum QtWebPathType {CookieStorage = 0, DatabaseStorage = 1, DiskCacheStorage = 2, IconDatabaseStorage = 3, LocalStorage = 4, PersistentStorage = 5 /* wrapper */, MaxPath = 6 /* should be last */};
+    enum QtWebPathType {CookieStorage = 0, DatabaseStorage = 1, DiskCacheStorage = 2, IconDatabaseStorage = 3, LocalStorage = 4, MaxPath = 5 /* should be last */};
 
     ~QtWebCustomPaths();
 
