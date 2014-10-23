@@ -203,7 +203,10 @@ use?(GLIB) {
 
 use?(GSTREAMER) {
     use?(GSTREAMER010) {
-        PKGCONFIG += gstreamer-0.10 gstreamer-app-0.10 gstreamer-base-0.10 gstreamer-interfaces-0.10 gstreamer-pbutils-0.10 gstreamer-plugins-base-0.10 gstreamer-video-0.10 gstreamer-egl-0.10
+        PKGCONFIG += gstreamer-0.10 gstreamer-app-0.10 gstreamer-base-0.10 gstreamer-interfaces-0.10 gstreamer-pbutils-0.10 gstreamer-plugins-base-0.10 gstreamer-video-0.10
+        use?(GSTREAMERGL) {
+            PKGCONFIG += gstreamer-egl-0.10
+        }
     } else {
         DEFINES += GST_API_VERSION=1.0
         DEFINES += GST_API_VERSION_1

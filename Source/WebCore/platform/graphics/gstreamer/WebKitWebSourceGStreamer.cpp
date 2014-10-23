@@ -1103,8 +1103,14 @@ void StreamingClient::handleDataReceived(const char* data, int length)
             guint64 offset = priv->requestedOffset - priv->offset;
             data += offset;
             length -= offset;
-            if (priv->buffer)
+            if (priv->buffer) {
+#ifdef GST_API_VERSION_1
                 gst_buffer_resize(priv->buffer.get(), offset, -1);
+#else
+                GST_BUFFER_SIZE(priv->buffer.get()) = -1;
+                GST_BUFFER_OFFSET(priv->buffer.get()) = offset;
+#endif
+            }
             priv->offset = priv->requestedOffset;
         }
 

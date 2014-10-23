@@ -145,7 +145,7 @@ MediaPlayerPrivateGStreamerBase::MediaPlayerPrivateGStreamerBase(MediaPlayer* pl
     , m_repaintHandler(0)
     , m_volumeSignalHandler(0)
     , m_muteSignalHandler(0)
-#if USE(GRAPHICS_SURFACE)
+#if USE(GRAPHICS_SURFACE) && defined(GST_API_VERSION_1)
     , m_surface(0)
     , m_lastRenderedBuffer(0)
     , m_bufferToUnref(0)
@@ -162,7 +162,7 @@ MediaPlayerPrivateGStreamerBase::MediaPlayerPrivateGStreamerBase(MediaPlayer* pl
     m_bufferMutex = g_mutex_new();
 #endif
 
-#if USE(GRAPHICS_SURFACE) && PLATFORM(QT)
+#if USE(GRAPHICS_SURFACE) && PLATFORM(QT) && defined(GST_API_VERSION_1)
     m_offscreenSurface = new QOffscreenSurface;
     m_offscreenSurface->create();
     m_context = new QOpenGLContext;
@@ -205,6 +205,7 @@ MediaPlayerPrivateGStreamerBase::~MediaPlayerPrivateGStreamerBase()
         gst_buffer_unref(m_buffer);
     m_buffer = 0;
 
+#if USE(GRAPHICS_SURFACE) && defined(GST_API_VERSION_1)
     if (m_lastRenderedBuffer)
         gst_buffer_unref(m_lastRenderedBuffer);
     m_lastRenderedBuffer = 0;
@@ -216,6 +217,7 @@ MediaPlayerPrivateGStreamerBase::~MediaPlayerPrivateGStreamerBase()
     if (m_bufferToUnref)
         gst_buffer_unref(m_bufferToUnref);
     m_bufferToUnref = 0;
+#endif
 
     m_player = 0;
 
@@ -242,7 +244,7 @@ MediaPlayerPrivateGStreamerBase::~MediaPlayerPrivateGStreamerBase()
         exitFullscreen();
 #endif
 
-#if USE(GRAPHICS_SURFACE) && PLATFORM(QT)
+#if USE(GRAPHICS_SURFACE) && PLATFORM(QT) && defined(GST_API_VERSION_1)
     QOpenGLContext* previousContext = QOpenGLContext::currentContext();
     m_context->makeCurrent(m_offscreenSurface);
     glDeleteTextures(1, &m_texture);
@@ -422,7 +424,7 @@ PassRefPtr<BitmapTexture> MediaPlayerPrivateGStreamerBase::updateTexture(Texture
         return 0;
     }
 
-#if USE(GRAPHICS_SURFACE)
+#if USE(GRAPHICS_SURFACE) && defined(GST_API_VERSION_1)
     if (!textureMapper) {
         if (m_lastRenderedBuffer == m_buffer) {
             g_mutex_unlock(m_bufferMutex);
@@ -476,7 +478,7 @@ PassRefPtr<BitmapTexture> MediaPlayerPrivateGStreamerBase::updateTexture(Texture
                 glBindTexture (GL_TEXTURE_2D, textureID); // FIXME
                 glEGLImageTargetTexture2DOES (GL_TEXTURE_2D, gst_egl_image_memory_get_image (mem));
             }
-#if USE(GRAPHICS_SURFACE)
+#if USE(GRAPHICS_SURFACE) && defined(GST_API_VERSION_1)
             else {
                 EGLImageKHR image = gst_egl_image_memory_get_image(mem);
                 m_surface->copyFromTexture(*((uint32_t*)&image), IntRect(0, 0, size.width(), size.height()));
@@ -555,6 +557,8 @@ void MediaPlayerPrivateGStreamerBase::triggerDrain()
     if (m_buffer)
         gst_buffer_unref(m_buffer);
     m_buffer = 0;
+
+#if USE(GRAPHICS_SURFACE) && defined(GST_API_VERSION_1)
     if (m_lastRenderedBuffer)
         gst_buffer_unref(m_lastRenderedBuffer);
     m_lastRenderedBuffer = 0;
@@ -564,6 +568,8 @@ void MediaPlayerPrivateGStreamerBase::triggerDrain()
     if (m_bufferToUnref)
         gst_buffer_unref(m_bufferToUnref);
     m_bufferToUnref = 0;
+#endif
+
     g_mutex_unlock(m_bufferMutex);
 }
 
@@ -574,7 +580,7 @@ void MediaPlayerPrivateGStreamerBase::setSize(const IntSize& size)
 
     m_size = size;
 
-#if USE(GRAPHICS_SURFACE)
+#if USE(GRAPHICS_SURFACE) && defined(GST_API_VERSION_1)
     if (m_surface && m_surface->size() != m_size) {
         m_surface.clear();
         m_surface = GraphicsSurface::create(m_size, graphicsSurfaceFlags(), m_context);
@@ -647,7 +653,7 @@ void MediaPlayerPrivateGStreamerBase::paintToTextureMapper(TextureMapper* textur
 #endif
 }
 
-#if USE(GRAPHICS_SURFACE)
+#if USE(GRAPHICS_SURFACE) && defined(GST_API_VERSION_1)
 IntSize MediaPlayerPrivateGStreamerBase::platformLayerSize() const
 {
     return m_size;

@@ -151,6 +151,7 @@ struct _WebKitVideoSinkPrivate {
 #define webkit_video_sink_parent_class parent_class
 G_DEFINE_TYPE_WITH_CODE(WebKitVideoSink, webkit_video_sink, GST_TYPE_VIDEO_SINK, GST_DEBUG_CATEGORY_INIT(webkitVideoSinkDebug, "webkitsink", 0, "webkit video sink"));
 
+#ifdef GST_API_VERSION_1
 static gboolean _ensure_gl_setup(WebKitVideoSink* gl_sink)
 {
     GError* error = NULL;
@@ -171,6 +172,7 @@ static gboolean _ensure_gl_setup(WebKitVideoSink* gl_sink)
 
     return TRUE;
 }
+#endif
 
 static void webkit_video_sink_init(WebKitVideoSink* sink)
 {

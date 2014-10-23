@@ -114,7 +114,7 @@ public:
     virtual PlatformLayer* platformLayer() const { return const_cast<MediaPlayerPrivateGStreamerBase*>(this); }
     virtual bool supportsAcceleratedRendering() const { return true; }
     virtual void paintToTextureMapper(TextureMapper*, const FloatRect&, const TransformationMatrix&, float);
-#if USE(GRAPHICS_SURFACE)
+#if USE(GRAPHICS_SURFACE)  && defined(GST_API_VERSION_1)
     virtual IntSize platformLayerSize() const;
     virtual uint32_t copyToGraphicsSurface();
     virtual GraphicsSurfaceToken graphicsSurfaceToken() const;
@@ -162,7 +162,7 @@ protected:
     guint m_orientation;
 #endif
 
-#if USE(GRAPHICS_SURFACE)
+#if USE(GRAPHICS_SURFACE) && defined(GST_API_VERSION_1)
     mutable RefPtr<GraphicsSurface> m_surface;
     GstBuffer* m_lastRenderedBuffer;
     GstBuffer* m_bufferToUnref;
