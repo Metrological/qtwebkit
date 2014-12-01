@@ -175,6 +175,7 @@ private:
 
     void appendBufferInternal(unsigned char*, unsigned, ExceptionCode&);
     void appendBufferTimerFired(Timer<SourceBuffer>*);
+    void resetParserState();
 
     void setActive(bool);
 
