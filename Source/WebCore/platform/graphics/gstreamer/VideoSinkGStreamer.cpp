@@ -141,10 +141,6 @@ struct _WebKitVideoSinkPrivate {
     GstGLDisplay *display;
     GstGLContext *context;
     GstGLContext *other_context;
-
-    GCond* allocateCondition;
-    GMutex* allocateMutex;
-    GstBuffer* allocateBuffer;
 #endif
 };
 
@@ -193,12 +189,6 @@ static void webkit_video_sink_init(WebKitVideoSink* sink)
     g_object_set(GST_BASE_SINK(sink), "enable-last-sample", FALSE, NULL);
     sink->priv->pool = NULL;
     sink->priv->last_buffer = NULL;
-
-    sink->priv->allocateCondition = WTF::fastNew<GCond>();
-    g_cond_init(sink->priv->allocateCondition);
-    sink->priv->allocateMutex = WTF::fastNew<GMutex>();
-    g_mutex_init(sink->priv->allocateMutex);
-    sink->priv->allocateBuffer = NULL;
 #endif
 }
 
@@ -374,18 +364,6 @@ static void webkitVideoSinkDispose(GObject* object)
 #endif
         priv->bufferMutex = 0;
     }
-
-#if USE(OPENGL_ES_2) && GST_CHECK_VERSION(1, 3, 0)
-    if (sink->priv->allocateCondition) {
-        g_cond_clear(priv->allocateCondition);
-        WTF::fastDelete(priv->allocateCondition);
-    }
-
-    if (sink->priv->allocateMutex) {
-        g_mutex_clear(priv->allocateMutex);
-        WTF::fastDelete(priv->allocateMutex);
-    }
-#endif
 
     G_OBJECT_CLASS(parent_class)->dispose(object);
 }
