@@ -64,6 +64,84 @@ def WTFHashTable_SummaryProvider(valobj, dict):
     provider = WTFHashTableProvider(valobj, dict)
     return "{ tableSize = %d, keyCount = %d }" % (provider.tableSize(), provider.keyCount())
 
+
+def WTFMediaTime_SummaryProvider(valobj, dict):
+    provider = WTFMediaTimeProvider(valobj, dict)
+    if provider.isInvalid():
+        return "{ Invalid }"
+    if provider.isPositiveInfinity():
+        return "{ +Infinity }"
+    if provider.isNegativeInfinity():
+        return "{ -Infinity }"
+    if provider.isIndefinite():
+        return "{ Indefinite }"
+    if provider.hasDoubleValue():
+        return "{ %f }" % (provider.timeValueAsDouble())
+    return "{ %d/%d, %f }" % (provider.timeValue(), provider.timeScale(), float(provider.timeValue()) / provider.timeScale())
+
+
+def WebCoreLayoutUnit_SummaryProvider(valobj, dict):
+    provider = WebCoreLayoutUnitProvider(valobj, dict)
+    return "{ %s }" % provider.to_string()
+
+
+def WebCoreLayoutSize_SummaryProvider(valobj, dict):
+    provider = WebCoreLayoutSizeProvider(valobj, dict)
+    return "{ width = %s, height = %s }" % (provider.get_width(), provider.get_height())
+
+
+def WebCoreLayoutPoint_SummaryProvider(valobj, dict):
+    provider = WebCoreLayoutPointProvider(valobj, dict)
+    return "{ x = %s, y = %s }" % (provider.get_x(), provider.get_y())
+
+
+def btjs(debugger, command, result, internal_dict):
+    '''Prints a stack trace of current thread with JavaScript frames decoded.  Takes optional frame count argument'''
+
+    target = debugger.GetSelectedTarget()
+    addressFormat = '#0{width}x'.format(width=target.GetAddressByteSize() * 2 + 2)
+    process = target.GetProcess()
+    thread = process.GetSelectedThread()
+
+    if target.FindFunctions("JSC::ExecState::describeFrame").GetSize() or target.FindFunctions("_ZN3JSC9ExecState13describeFrameEv").GetSize():
+        annotateJSFrames = True
+    else:
+        annotateJSFrames = False
+
+    if not annotateJSFrames:
+        print "Warning: Can't find JSC::ExecState::describeFrame() in executable to annotate JavaScript frames"
+
+    backtraceDepth = thread.GetNumFrames()
+
+    if len(command) == 1:
+        try:
+            backtraceDepth = int(command)
+        except ValueError:
+            return
+
+    threadFormat = '* thread #{num}: tid = {tid:#x}, {pcAddr:' + addressFormat + '}, queue = \'{queueName}, stop reason = {stopReason}'
+    print threadFormat.format(num=thread.GetIndexID(), tid=thread.GetThreadID(), pcAddr=thread.GetFrameAtIndex(0).GetPC(), queueName=thread.GetQueueName(), stopReason=thread.GetStopDescription(30))
+
+    for frame in thread:
+        if backtraceDepth < 1:
+            break
+
+        backtraceDepth = backtraceDepth - 1
+
+        function = frame.GetFunction()
+
+        if annotateJSFrames and not frame or not frame.GetSymbol() or frame.GetSymbol().GetName() == "llint_entry":
+            callFrame = frame.GetSP()
+            JSFrameDescription = frame.EvaluateExpression("((JSC::ExecState*)0x%x)->describeFrame()" % frame.GetFP()).GetSummary()
+            if not JSFrameDescription:
+                JSFrameDescription = frame.EvaluateExpression("(char*)_ZN3JSC9ExecState13describeFrameEv(0x%x)" % frame.GetFP()).GetSummary()
+            if JSFrameDescription:
+                JSFrameDescription = string.strip(JSFrameDescription, '"')
+                frameFormat = '    frame #{num}: {addr:' + addressFormat + '} {desc}'
+                print frameFormat.format(num=frame.GetFrameID(), addr=frame.GetPC(), desc=JSFrameDescription)
+                continue
+        print '    %s' % frame
+
 # FIXME: Provide support for the following types:
 # def WTFVector_SummaryProvider(valobj, dict):
 # def WTFCString_SummaryProvider(valobj, dict):
@@ -263,3 +341,33 @@ class WTFHashTableProvider:
 
     def has_children(self):
         return True
+
+class WTFMediaTimeProvider:
+    def __init__(self, valobj, internal_dict):
+        self.valobj = valobj
+
+    def timeValue(self):
+        return self.valobj.GetChildMemberWithName('m_timeValue').GetValueAsSigned(0)
+
+    def timeValueAsDouble(self):
+        error = lldb.SBError()
+        return self.valobj.GetChildMemberWithName('m_timeValueAsDouble').GetData().GetDouble(error, 0)
+
+    def timeScale(self):
+        return self.valobj.GetChildMemberWithName('m_timeScale').GetValueAsSigned(0)
+
+    def isInvalid(self):
+        return not self.valobj.GetChildMemberWithName('m_timeFlags').GetValueAsSigned(0) & (1 << 0)
+
+    def isPositiveInfinity(self):
+        return self.valobj.GetChildMemberWithName('m_timeFlags').GetValueAsSigned(0) & (1 << 2)
+
+    def isNegativeInfinity(self):
+        return self.valobj.GetChildMemberWithName('m_timeFlags').GetValueAsSigned(0) & (1 << 3)
+
+    def isIndefinite(self):
+        return self.valobj.GetChildMemberWithName('m_timeFlags').GetValueAsSigned(0) & (1 << 4)
+
+    def hasDoubleValue(self):
+        return self.valobj.GetChildMemberWithName('m_timeFlags').GetValueAsSigned(0) & (1 << 5)
+
