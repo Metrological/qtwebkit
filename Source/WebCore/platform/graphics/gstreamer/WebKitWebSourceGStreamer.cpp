@@ -138,6 +138,7 @@ struct _WebKitWebSrcPrivate {
 
     guint64 requestedOffset;
 
+    gboolean pendingStart;
     guint startID;
     guint stopID;
     guint needDataID;
@@ -417,9 +418,10 @@ static void removeTimeoutSources(WebKitWebSrc* src)
 {
     WebKitWebSrcPrivate* priv = src->priv;
 
-    if (priv->startID)
+    if (!priv->pendingStart && priv->startID) {
         g_source_remove(priv->startID);
-    priv->startID = 0;
+        priv->startID = 0;
+    }
 
     if (priv->needDataID)
         g_source_remove(priv->needDataID);
@@ -508,6 +510,7 @@ static gboolean webKitWebSrcStart(WebKitWebSrc* src)
 
     priv->startID = 0;
     priv->corsAccessCheck = CORSNoCheck;
+    priv->pendingStart = FALSE;
 
     if (!priv->uri) {
         GST_ERROR_OBJECT(src, "No URI provided");
@@ -603,11 +606,13 @@ static GstStateChangeReturn webKitWebSrcChangeState(GstElement* element, GstStat
     switch (transition) {
     case GST_STATE_CHANGE_READY_TO_PAUSED:
         GST_DEBUG_OBJECT(src, "READY->PAUSED");
+        priv->pendingStart = TRUE;
         priv->startID = g_idle_add_full(G_PRIORITY_DEFAULT, (GSourceFunc) webKitWebSrcStart, gst_object_ref(src), (GDestroyNotify) gst_object_unref);
         g_source_set_name_by_id(priv->startID, "[WebKit] webKitWebSrcStart");
         break;
     case GST_STATE_CHANGE_PAUSED_TO_READY:
         GST_DEBUG_OBJECT(src, "PAUSED->READY");
+        priv->pendingStart = FALSE;
         // cancel pending sources
         removeTimeoutSources(src);
         priv->stopID = g_idle_add_full(G_PRIORITY_DEFAULT, (GSourceFunc) webKitWebSrcStop, gst_object_ref(src), (GDestroyNotify) gst_object_unref);
