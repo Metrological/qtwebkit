@@ -4022,8 +4022,9 @@ enable?(VIDEO_TRACK) {
         loader/TextTrackLoader.h \
         platform/graphics/AudioTrackPrivate.h \
         platform/graphics/InbandTextTrackPrivate.h \
-        platform/graphics/InbandTextTrackPrivateClient.h
-        platform/graphics/VideoTrackPrivate.h \
+        platform/graphics/InbandTextTrackPrivateClient.h \
+        platform/graphics/TrackPrivateBase.h \
+        platform/graphics/VideoTrackPrivate.h
 
     SOURCES += \
         bindings/js/JSAudioTrackCustom.cpp \
@@ -4057,6 +4058,17 @@ enable?(VIDEO_TRACK) {
         loader/TextTrackLoader.cpp \
         platform/graphics/TextTrackRepresentation.cpp \
         rendering/RenderTextTrackCue.cpp
+
+    use?(GSTREAMER) {
+        HEADERS += \
+            platform/graphics/gstreamer/TrackPrivateBaseGStreamer.h \
+            platform/graphics/gstreamer/VideoTrackPrivateGStreamer.h \
+            platform/graphics/gstreamer/AudioTrackPrivateGStreamer.h
+        SOURCES += \
+            platform/graphics/gstreamer/TrackPrivateBaseGStreamer.cpp \
+            platform/graphics/gstreamer/VideoTrackPrivateGStreamer.cpp \
+            platform/graphics/gstreamer/AudioTrackPrivateGStreamer.cpp
+    }
 }
 
 enable?(WEB_SOCKETS) {
