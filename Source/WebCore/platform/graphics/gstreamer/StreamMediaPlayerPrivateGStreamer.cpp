@@ -148,6 +148,12 @@ void StreamMediaPlayerPrivateGStreamer::loadingFailed(MediaPlayer::NetworkState 
     }
 }
 
+PassOwnPtr<PlatformTimeRanges> StreamMediaPlayerPrivateGStreamer::buffered() const
+{
+    OwnPtr<PlatformTimeRanges> timeRanges = PlatformTimeRanges::create();
+    return timeRanges.release();
+}
+
 bool StreamMediaPlayerPrivateGStreamer::didLoadingProgress() const
 {
     return true;
@@ -193,12 +199,22 @@ PassOwnPtr<MediaPlayerPrivateInterface> StreamMediaPlayerPrivateGStreamer::creat
 void StreamMediaPlayerPrivateGStreamer::registerMediaEngine(MediaEngineRegistrar registrar)
 {
     if (isAvailable())
-        registrar(create, getSupportedTypes, supportsType, 0, 0, 0);
+#if ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)
+        registrar(create, getSupportedTypes, extendedSupportsType, 0, 0, 0, 0);
+#else
+        registrar(create, getSupportedTypes, supportsType, 0, 0, 0, 0);
+#endif
 }
 
 void StreamMediaPlayerPrivateGStreamer::getSupportedTypes(HashSet<String>& types)
 {
     // FIXME
+}
+
+MediaPlayer::SupportsType StreamMediaPlayerPrivateGStreamer::extendedSupportsType(const String& type, const String& codecs, const String& keySystem, const KURL& url)
+{
+    UNUSED_PARAM(keySystem);
+    return supportsType(type, codecs, url);
 }
 
 MediaPlayer::SupportsType StreamMediaPlayerPrivateGStreamer::supportsType(const String& type, const String& codecs, const KURL&)

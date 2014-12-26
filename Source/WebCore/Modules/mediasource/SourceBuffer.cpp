@@ -146,7 +146,7 @@ PassRefPtr<TimeRanges> SourceBuffer::buffered(ExceptionCode& ec) const
     //    INVALID_STATE_ERR exception and abort these steps.
     if (isRemoved()) {
         ec = INVALID_STATE_ERR;
-        return nullptr;
+        return 0;
     }
 
     // 2. Return a new static normalized TimeRanges object for the media segments buffered.

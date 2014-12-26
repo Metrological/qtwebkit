@@ -1806,7 +1806,7 @@ GstElement* MediaPlayerPrivateGStreamer::createAudioSink()
 GstElement* MediaPlayerPrivateGStreamer::audioSink() const
 {
     GstElement* sink;
-    g_object_get(m_playBin.get(), "audio-sink", &sink, nullptr);
+    g_object_get(m_playBin.get(), "audio-sink", &sink, NULL);
     return sink;
 }
 

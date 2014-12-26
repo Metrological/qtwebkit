@@ -27,6 +27,7 @@
 #include "TimeRanges.h"
 
 #include <gst/gst.h>
+#include <wtf/PassOwnPtr.h>
 
 namespace WebCore {
 
@@ -68,10 +69,10 @@ public:
     virtual void setClosedCaptionsVisible(bool) { };
 
     virtual float maxTimeSeekable() const { return 0; }
-    PassRefPtr<TimeRanges> buffered() const { return TimeRanges::create(); }
+    virtual PassOwnPtr<PlatformTimeRanges> buffered() const;
     bool didLoadingProgress() const;
 
-    virtual unsigned totalBytes() const { return 0; }
+    virtual unsigned long long totalBytes() const { return 0; }
     virtual unsigned bytesLoaded() const { return 0; }
 
     virtual bool canLoadPoster() const { return false; }
@@ -97,6 +98,7 @@ private:
     static PassOwnPtr<MediaPlayerPrivateInterface> create(MediaPlayer*);
 
     static void getSupportedTypes(HashSet<String>&);
+    static MediaPlayer::SupportsType extendedSupportsType(const String& type, const String& codecs, const String& keySystem, const KURL& url);
     static MediaPlayer::SupportsType supportsType(const String& type, const String& codecs, const KURL&);
     static bool isAvailable();
     void createGSTAudioSinkBin();

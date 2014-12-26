@@ -535,21 +535,21 @@ SourceBuffer* MediaSource::addSourceBuffer(const String& type, ExceptionCode& ec
     // abort these steps.
     if (type.isNull() || type.isEmpty()) {
         ec = INVALID_ACCESS_ERR;
-        return nullptr;
+        return 0;
     }
 
     // 2. If type contains a MIME type that is not supported ..., then throw a
     // NOT_SUPPORTED_ERR exception and abort these steps.
     if (!isTypeSupported(type)) {
         ec = NOT_SUPPORTED_ERR;
-        return nullptr;
+        return 0;
     }
 
     // 4. If the readyState attribute is not in the "open" state then throw an
     // INVALID_STATE_ERR exception and abort these steps.
     if (!isOpen()) {
         ec = INVALID_STATE_ERR;
-        return nullptr;
+        return 0;
     }
 
     // 5. Create a new SourceBuffer object and associated resources.

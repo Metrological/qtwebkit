@@ -45,23 +45,6 @@ class PublicURLManager {
     WTF_MAKE_FAST_ALLOCATED;
 public:
     static PassOwnPtr<PublicURLManager> create() { return adoptPtr(new PublicURLManager); }
-    void contextDestroyed()
-    {
-        HashSet<String>::iterator blobURLsEnd = m_blobURLs.end();
-        for (HashSet<String>::iterator iter = m_blobURLs.begin(); iter != blobURLsEnd; ++iter)
-            ThreadableBlobRegistry::unregisterBlobURL(KURL(ParsedURLString, *iter));
-
-#if ENABLE(MEDIA_STREAM)
-        HashSet<String>::iterator streamURLsEnd = m_streamURLs.end();
-        for (HashSet<String>::iterator iter = m_streamURLs.begin(); iter != streamURLsEnd; ++iter)
-            MediaStreamRegistry::registry().unregisterURL(KURL(ParsedURLString, *iter));
-#endif
-#if ENABLE(MEDIA_SOURCE)
-        HashSet<String>::iterator sourceURLsEnd = m_sourceURLs.end();
-        for (HashSet<String>::iterator iter = m_sourceURLs.begin(); iter != sourceURLsEnd; ++iter)
-            MediaSourceRegistry::registry().unregisterURL(KURL(ParsedURLString, *iter));
-#endif
-    }
 
     void registerURL(SecurityOrigin*, const KURL&, URLRegistrable*);
     void revoke(const KURL&);
