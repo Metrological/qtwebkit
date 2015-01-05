@@ -748,6 +748,15 @@ void MediaPlayerPrivateGStreamer::notifyPlayerOfVideo()
 
         RefPtr<VideoTrackPrivateGStreamer> track = VideoTrackPrivateGStreamer::create(m_playBin, i, pad);
         m_videoTracks.append(track);
+#if ENABLE(MEDIA_SOURCE)
+        if (isMediaSource()) {
+            // TODO: This will leak if the event gets freed without arriving in
+            // the source, e.g. when we go flushing here
+            RefPtr<VideoTrackPrivateGStreamer>* trackCopy = new RefPtr<VideoTrackPrivateGStreamer>(track);
+            GstStructure* videoEventStructure = gst_structure_new("webKitVideoTrack", "track", G_TYPE_POINTER, trackCopy, nullptr);
+            gst_pad_push_event(pad.get(), gst_event_new_custom(GST_EVENT_CUSTOM_UPSTREAM, videoEventStructure));
+        }
+#endif
         m_player->addVideoTrack(track.release());
     }
 
@@ -806,6 +815,15 @@ void MediaPlayerPrivateGStreamer::notifyPlayerOfAudio()
 
         RefPtr<AudioTrackPrivateGStreamer> track = AudioTrackPrivateGStreamer::create(m_playBin, i, pad);
         m_audioTracks.insert(i, track);
+ #if ENABLE(MEDIA_SOURCE)
+         if (isMediaSource()) {
+             // TODO: This will leak if the event gets freed without arriving in
+             // the source, e.g. when we go flushing here
+             RefPtr<AudioTrackPrivateGStreamer>* trackCopy = new RefPtr<AudioTrackPrivateGStreamer>(track);
+             GstStructure* audioEventStructure = gst_structure_new("webKitAudioTrack", "track", G_TYPE_POINTER, trackCopy, nullptr);
+             gst_pad_push_event(pad.get(), gst_event_new_custom(GST_EVENT_CUSTOM_UPSTREAM, audioEventStructure));
+         }
+ #endif
         m_player->addAudioTrack(track.release());
     }
 

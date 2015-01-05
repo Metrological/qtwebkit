@@ -35,19 +35,24 @@
 
 #if ENABLE(MEDIA_SOURCE) && USE(GSTREAMER)
 
+#include "ContentType.h"
+#include "MediaSample.h"
 #include "MediaSourceGStreamer.h"
 #include "NotImplemented.h"
 #include "WebKitMediaSourceGStreamer.h"
 
 namespace WebCore {
 
-PassRefPtr<SourceBufferPrivateGStreamer> SourceBufferPrivateGStreamer::create(MediaSourceGStreamer* mediaSource)
+PassRefPtr<SourceBufferPrivateGStreamer> SourceBufferPrivateGStreamer::create(MediaSourceGStreamer* mediaSource, PassRefPtr<MediaSourceClientGStreamer> client, const ContentType& contentType)
 {
-    return adoptRef(new SourceBufferPrivateGStreamer(mediaSource));
+    return adoptRef(new SourceBufferPrivateGStreamer(mediaSource, client, contentType));
 }
 
-SourceBufferPrivateGStreamer::SourceBufferPrivateGStreamer(MediaSourceGStreamer* mediaSource)
-    : m_mediaSource(mediaSource)
+SourceBufferPrivateGStreamer::SourceBufferPrivateGStreamer(MediaSourceGStreamer* mediaSource, PassRefPtr<MediaSourceClientGStreamer> client, const ContentType& contentType)
+    : SourceBufferPrivate()
+    , m_mediaSource(mediaSource)
+    , m_type(contentType)
+    , m_client(client)
     , m_readyState(MediaPlayer::HaveNothing)
 {
 }
@@ -66,10 +71,13 @@ void SourceBufferPrivateGStreamer::append(const unsigned char* data, unsigned le
     ASSERT(m_mediaSource);
     ASSERT(m_sourceBufferPrivateClient);
 
-    SourceBufferPrivateClient::AppendResult result = m_mediaSource->client().append(this, data, length);
-
-    if (m_sourceBufferPrivateClient)
-        m_sourceBufferPrivateClient->sourceBufferPrivateAppendComplete(this, result);
+    if (!m_client->append(this, data, length)) {
+        if (m_sourceBufferPrivateClient)
+            m_sourceBufferPrivateClient->sourceBufferPrivateAppendComplete(this, SourceBufferPrivateClient::ReadStreamFailed);
+    } else {
+        if (m_sourceBufferPrivateClient)
+            m_sourceBufferPrivateClient->sourceBufferPrivateAppendComplete(this, SourceBufferPrivateClient::AppendSucceeded);
+    }
 }
 
 void SourceBufferPrivateGStreamer::abort()
@@ -137,6 +145,18 @@ void SourceBufferPrivateGStreamer::stopAskingForMoreSamples(AtomicString)
 void SourceBufferPrivateGStreamer::notifyClientWhenReadyForMoreSamples(AtomicString)
 {
     notImplemented();
+}
+
+void SourceBufferPrivateGStreamer::didReceiveInitializationSegment(const SourceBufferPrivateClient::InitializationSegment& initializationSegment)
+{
+    if (m_sourceBufferPrivateClient)
+        m_sourceBufferPrivateClient->sourceBufferPrivateDidReceiveInitializationSegment(this, initializationSegment);
+}
+
+void SourceBufferPrivateGStreamer::didReceiveSample(PassRefPtr<MediaSample> sample)
+{
+    if (m_sourceBufferPrivateClient)
+        m_sourceBufferPrivateClient->sourceBufferPrivateDidReceiveSample(this, sample);
 }
 
 }

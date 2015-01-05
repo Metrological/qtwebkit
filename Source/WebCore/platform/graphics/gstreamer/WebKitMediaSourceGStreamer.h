@@ -67,22 +67,29 @@ template<> void derefGPtr<WebKitMediaSrc>(WebKitMediaSrc* ptr);
 namespace WebCore {
 
 class ContentType;
+class SourceBufferPrivateGStreamer;
+class MediaSourceGStreamer;
 
 class MediaSourceClientGStreamer: public RefCounted<MediaSourceClientGStreamer> {
     public:
-        MediaSourceClientGStreamer(WebKitMediaSrc*);
+        static PassRefPtr<MediaSourceClientGStreamer> create(WebKitMediaSrc*);
         virtual ~MediaSourceClientGStreamer();
 
         // From MediaSourceGStreamer
-        MediaSourcePrivate::AddStatus addSourceBuffer(PassRefPtr<SourceBufferPrivate>, const ContentType&);
+        MediaSourcePrivate::AddStatus addSourceBuffer(PassRefPtr<SourceBufferPrivateGStreamer>, const ContentType&);
         void durationChanged(const MediaTime&);
         void markEndOfStream(MediaSourcePrivate::EndOfStreamStatus);
 
         // From SourceBufferPrivateGStreamer
-        SourceBufferPrivateClient::AppendResult append(PassRefPtr<SourceBufferPrivate>, const unsigned char*, unsigned);
-        void removedFromMediaSource(PassRefPtr<SourceBufferPrivate>);
+        bool append(PassRefPtr<SourceBufferPrivateGStreamer>, const unsigned char*, unsigned);
+        void removedFromMediaSource(PassRefPtr<SourceBufferPrivateGStreamer>);
+
+        // From our WebKitMediaSrc
+        void didReceiveInitializationSegment(SourceBufferPrivateGStreamer*, const SourceBufferPrivateClient::InitializationSegment&);
+        void didReceiveSample(SourceBufferPrivateGStreamer* sourceBuffer, PassRefPtr<MediaSample> sample);
 
     private:
+        MediaSourceClientGStreamer(WebKitMediaSrc*);
         GRefPtr<WebKitMediaSrc> m_src;
 };
 

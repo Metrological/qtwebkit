@@ -35,7 +35,10 @@
 
 #if ENABLE(MEDIA_SOURCE) && USE(GSTREAMER)
 
+#include "ContentType.h"
 #include "SourceBufferPrivate.h"
+#include "SourceBufferPrivateClient.h"
+#include "WebKitMediaSourceGStreamer.h"
 
 namespace WebCore {
 
@@ -44,7 +47,7 @@ class MediaSourceGStreamer;
 class SourceBufferPrivateGStreamer FINAL : public SourceBufferPrivate {
 
 public:
-    static PassRefPtr<SourceBufferPrivateGStreamer> create(MediaSourceGStreamer*);
+    static PassRefPtr<SourceBufferPrivateGStreamer> create(MediaSourceGStreamer*, PassRefPtr<MediaSourceClientGStreamer>, const ContentType&);
     virtual ~SourceBufferPrivateGStreamer();
 
     void clearMediaSource() { m_mediaSource = 0; }
@@ -67,10 +70,15 @@ public:
     virtual void notifyClientWhenReadyForMoreSamples(AtomicString) OVERRIDE;
 
 private:
-    SourceBufferPrivateGStreamer(MediaSourceGStreamer*);
+    SourceBufferPrivateGStreamer(MediaSourceGStreamer*, PassRefPtr<MediaSourceClientGStreamer>, const ContentType&);
     friend class MediaSourceClientGStreamer;
 
+    void didReceiveInitializationSegment(const SourceBufferPrivateClient::InitializationSegment&);
+    void didReceiveSample(PassRefPtr<MediaSample>);
+
     MediaSourceGStreamer* m_mediaSource;
+    ContentType m_type;
+    RefPtr<MediaSourceClientGStreamer> m_client;
     SourceBufferPrivateClient* m_sourceBufferPrivateClient;
     MediaPlayer::ReadyState m_readyState;
 };

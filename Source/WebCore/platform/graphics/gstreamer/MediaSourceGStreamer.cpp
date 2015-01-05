@@ -55,11 +55,11 @@ void MediaSourceGStreamer::open(MediaSourcePrivateClient* mediaSource, WebKitMed
 }
 
 MediaSourceGStreamer::MediaSourceGStreamer(MediaSourcePrivateClient* mediaSource, WebKitMediaSrc* src)
-    : m_client(adoptRef(new MediaSourceClientGStreamer(src)))
+    : MediaSourcePrivate()
     , m_mediaSource(mediaSource)
     , m_readyState(MediaPlayer::HaveNothing)
 {
-    ASSERT(m_client);
+    m_client = MediaSourceClientGStreamer::create(src);
 }
 
 MediaSourceGStreamer::~MediaSourceGStreamer()
@@ -77,7 +77,7 @@ MediaSourceGStreamer::AddStatus MediaSourceGStreamer::addSourceBuffer(const Cont
     // if (MediaPlayerPrivateGStreamer::supportsType(parameters) == MediaPlayer::IsNotSupported)
     //     return NotSupported;
 
-    RefPtr<SourceBufferPrivateGStreamer> buffer = SourceBufferPrivateGStreamer::create(this);
+    RefPtr<SourceBufferPrivateGStreamer> buffer = SourceBufferPrivateGStreamer::create(this, m_client, contentType);
     m_sourceBuffers.add(buffer.get());
     sourceBufferPrivate = buffer;
     return m_client->addSourceBuffer(buffer, contentType);
