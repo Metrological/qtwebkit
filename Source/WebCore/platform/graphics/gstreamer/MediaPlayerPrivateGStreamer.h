@@ -37,10 +37,6 @@
 #include <wtf/threads/BinarySemaphore.h>
 #endif
 
-#if ENABLE(MEDIA_SOURCE)
-#include "MediaSourceGStreamer.h"
-#endif
-
 typedef struct _GstBuffer GstBuffer;
 typedef struct _GstMessage GstMessage;
 typedef struct _GstElement GstElement;
@@ -123,6 +119,7 @@ private:
     static PassOwnPtr<MediaPlayerPrivateInterface> create(MediaPlayer*);
 
     static void getSupportedTypes(HashSet<String>&);
+
 #if ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)
     static MediaPlayer::SupportsType extendedSupportsType(const String& type, const String& codecs, const String& keySystem, const KURL&);
     static void needKeyEventFromMain(void *invocation);

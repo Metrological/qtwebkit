@@ -63,7 +63,7 @@ static const gint64 gPercentMax = 100;
 #endif
 
 #if ENABLE(MEDIA_SOURCE)
-#include "MediaSource.h"
+#include "MediaSourceGStreamer.h"
 #include "WebKitMediaSourceGStreamer.h"
 #endif
 

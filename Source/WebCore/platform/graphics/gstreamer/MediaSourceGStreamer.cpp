@@ -35,6 +35,9 @@
 
 #if ENABLE(MEDIA_SOURCE) && USE(GSTREAMER)
 
+#include "ContentType.h"
+#include "MediaPlayerPrivateGStreamer.h"
+#include "NotImplemented.h"
 #include "SourceBufferPrivateGStreamer.h"
 #include "WebKitMediaSourceGStreamer.h"
 #include <wtf/gobject/GRefPtr.h>
@@ -59,14 +62,33 @@ MediaSourceGStreamer::MediaSourceGStreamer(MediaSourcePrivateClient* mediaSource
 
 MediaSourceGStreamer::~MediaSourceGStreamer()
 {
+    for (HashSet<SourceBufferPrivateGStreamer*>::iterator it = m_sourceBuffers.begin(), end = m_sourceBuffers.end(); it != end; ++it)
+        (*it)->clearMediaSource();
 }
 
 MediaSourceGStreamer::AddStatus MediaSourceGStreamer::addSourceBuffer(const ContentType& contentType, RefPtr<SourceBufferPrivate>& sourceBufferPrivate)
 {
-    RefPtr<SourceBufferPrivateGStreamer> sourceBufferPrivateGStreamer = new SourceBufferPrivateGStreamer(m_client.get(), contentType);
+    // MediaEngineSupportParameters parameters;
+    // parameters.isMediaSource = true;
+    // parameters.type = contentType.type();
+    // parameters.codecs = contentType.parameter(ASCIILiteral("codecs"));
+    // if (MediaPlayerPrivateGStreamer::supportsType(parameters) == MediaPlayer::IsNotSupported)
+    //     return NotSupported;
 
-    sourceBufferPrivate = adoptRef(sourceBufferPrivateGStreamer.get());
-    return m_client->addSourceBuffer(sourceBufferPrivateGStreamer, contentType);
+    RefPtr<SourceBufferPrivateGStreamer> buffer = SourceBufferPrivateGStreamer::create(this);
+    m_sourceBuffers.add(buffer.get());
+    sourceBufferPrivate = buffer;
+    return m_client->addSourceBuffer(buffer, contentType);
+}
+
+void MediaSourceGStreamer::removeSourceBuffer(SourceBufferPrivate* buffer)
+{
+    SourceBufferPrivateGStreamer* sourceBufferPrivateGStreamer = reinterpret_cast<SourceBufferPrivateGStreamer*>(buffer);
+    ASSERT(m_sourceBuffers.contains(sourceBufferPrivateGStreamer));
+
+    sourceBufferPrivateGStreamer->clearMediaSource();
+    m_sourceBuffers.remove(sourceBufferPrivateGStreamer);
+    m_activeSourceBuffers.remove(sourceBufferPrivateGStreamer);
 }
 
 void MediaSourceGStreamer::durationChanged()
@@ -102,6 +124,15 @@ void MediaSourceGStreamer::waitForSeekCompleted()
 void MediaSourceGStreamer::seekCompleted()
 {
     notImplemented();
+}
+
+void MediaSourceGStreamer::sourceBufferPrivateDidChangeActiveState(SourceBufferPrivateGStreamer* buffer, bool isActive)
+{
+    if (isActive && !m_activeSourceBuffers.contains(buffer))
+        m_activeSourceBuffers.add(buffer);
+
+    if (!isActive)
+        m_activeSourceBuffers.remove(buffer);
 }
 
 }

@@ -35,14 +35,19 @@
 
 #if ENABLE(MEDIA_SOURCE) && USE(GSTREAMER)
 
-#include "ContentType.h"
+#include "MediaSourceGStreamer.h"
 #include "NotImplemented.h"
+#include "WebKitMediaSourceGStreamer.h"
 
 namespace WebCore {
 
-SourceBufferPrivateGStreamer::SourceBufferPrivateGStreamer(PassRefPtr<MediaSourceClientGStreamer> client, const ContentType& contentType)
-    : m_type(contentType)
-    , m_client(client)
+PassRefPtr<SourceBufferPrivateGStreamer> SourceBufferPrivateGStreamer::create(MediaSourceGStreamer* mediaSource)
+{
+    return adoptRef(new SourceBufferPrivateGStreamer(mediaSource));
+}
+
+SourceBufferPrivateGStreamer::SourceBufferPrivateGStreamer(MediaSourceGStreamer* mediaSource)
+    : m_mediaSource(mediaSource)
     , m_readyState(MediaPlayer::HaveNothing)
 {
 }
@@ -58,14 +63,13 @@ void SourceBufferPrivateGStreamer::setClient(SourceBufferPrivateClient* client)
 
 void SourceBufferPrivateGStreamer::append(const unsigned char* data, unsigned length)
 {
-    SourceBufferPrivateClient::AppendResult result;
-
-    ASSERT(m_client);
+    ASSERT(m_mediaSource);
     ASSERT(m_sourceBufferPrivateClient);
 
-    result = m_client->append(this, data, length);
+    SourceBufferPrivateClient::AppendResult result = m_mediaSource->client().append(this, data, length);
 
-    m_sourceBufferPrivateClient->sourceBufferPrivateAppendComplete(this, result);
+    if (m_sourceBufferPrivateClient)
+        m_sourceBufferPrivateClient->sourceBufferPrivateAppendComplete(this, result);
 }
 
 void SourceBufferPrivateGStreamer::abort()
@@ -75,7 +79,11 @@ void SourceBufferPrivateGStreamer::abort()
 
 void SourceBufferPrivateGStreamer::removedFromMediaSource()
 {
-    m_client->removedFromMediaSource(this);
+    if (!m_mediaSource)
+        return;
+
+    m_mediaSource->removeSourceBuffer(this);
+    m_mediaSource->client().removedFromMediaSource(this);
 }
 
 MediaPlayer::ReadyState SourceBufferPrivateGStreamer::readyState() const
@@ -106,9 +114,10 @@ bool SourceBufferPrivateGStreamer::isReadyForMoreSamples(AtomicString)
     return false;
 }
 
-void SourceBufferPrivateGStreamer::setActive(bool active)
+void SourceBufferPrivateGStreamer::setActive(bool isActive)
 {
-    notImplemented();
+    if (m_mediaSource)
+        m_mediaSource->sourceBufferPrivateDidChangeActiveState(this, isActive);
 }
 
 void SourceBufferPrivateGStreamer::stopAskingForMoreSamples(AtomicString)
