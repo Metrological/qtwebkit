@@ -352,8 +352,15 @@ MediaSourcePrivate::AddStatus MediaSourceClientGStreamer::addSourceBuffer(PassRe
 
 void MediaSourceClientGStreamer::durationChanged(const MediaTime& duration)
 {
+    if (!duration.isValid() || duration.isPositiveInfinite() || duration.isNegativeInfinite())
+        return;
+
     WebKitMediaSrcPrivate* priv = m_src->priv;
-    GstClockTime gstDuration = gst_util_uint64_scale (duration.timeValue(), GST_SECOND, duration.timeScale());
+    GstClockTime gstDuration;
+    if (duration.hasDoubleValue())
+        gstDuration = duration.toFloat() * GST_SECOND;
+    else
+        gstDuration = gst_util_uint64_scale(duration.timeValue(), GST_SECOND, duration.timeScale());
 
     GST_DEBUG_OBJECT(m_src.get(), "Received duration: %" GST_TIME_FORMAT, GST_TIME_ARGS(gstDuration));
 
