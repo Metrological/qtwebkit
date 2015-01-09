@@ -53,6 +53,9 @@ public:
     static void registerMediaEngine(MediaEngineRegistrar);
     void handleMessage(GstMessage*);
     void handleSyncMessage(GstMessage*);
+
+    static MediaPlayer::SupportsType supportsType(const String& type, const String& codecs, const KURL&);
+
     void handlePluginInstallerResult(GstInstallPluginsReturn);
 
     bool hasVideo() const { return m_hasVideo; }
@@ -120,7 +123,6 @@ private:
     static PassOwnPtr<MediaPlayerPrivateInterface> create(MediaPlayer*);
 
     static void getSupportedTypes(HashSet<String>&);
-    static MediaPlayer::SupportsType supportsType(const String& type, const String& codecs, const KURL&);
 #if ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)
     static MediaPlayer::SupportsType extendedSupportsType(const String& type, const String& codecs, const String& keySystem, const KURL&);
     static void needKeyEventFromMain(void *invocation);
