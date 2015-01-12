@@ -595,6 +595,7 @@ void MediaSource::removeSourceBuffer(SourceBuffer* buffer, ExceptionCode& ec)
     // 3. If the sourceBuffer.updating attribute equals true, then run the following steps: ...
     buffer->abortIfUpdating();
 
+#if ENABLE(VIDEO_TRACK)
     // 4. Let SourceBuffer audioTracks list equal the AudioTrackList object returned by sourceBuffer.audioTracks.
     RefPtr<AudioTrackList> audioTracks = buffer->audioTracks();
 
@@ -714,7 +715,7 @@ void MediaSource::removeSourceBuffer(SourceBuffer* buffer, ExceptionCode& ec)
         if (removedEnabledTextTrack)
             mediaElement()->textTracks()->scheduleChangeEvent();
     }
-    
+#endif
     
     // 10. If sourceBuffer is in activeSourceBuffers, then remove sourceBuffer from activeSourceBuffers ...
     m_activeSourceBuffers->remove(buffer);

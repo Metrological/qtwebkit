@@ -16,6 +16,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <gst/gst.h>
+
 #define LOG_MEDIA_MESSAGE(...) do { \
     GST_DEBUG(__VA_ARGS__); \
     LOG_VERBOSE(Media, __VA_ARGS__); } while (0)
@@ -28,7 +30,33 @@
     GST_INFO(__VA_ARGS__); \
     LOG_VERBOSE(Media, __VA_ARGS__); } while (0)
 
+#define WARN_MEDIA_MESSAGE(...) do { \
+    GST_WARNING(__VA_ARGS__); \
+    LOG_VERBOSE(Media, __VA_ARGS__); } while (0)
+
 namespace WebCore {
+
+inline bool webkitGstCheckVersion(guint major, guint minor, guint micro)
+{
+    guint currentMajor, currentMinor, currentMicro, currentNano;
+    gst_version(&currentMajor, &currentMinor, &currentMicro, &currentNano);
+
+    if (currentMajor < major)
+        return false;
+    if (currentMajor > major)
+        return true;
+
+    if (currentMinor < minor)
+        return false;
+    if (currentMinor > minor)
+        return true;
+
+    if (currentMicro < micro)
+        return false;
+
+    return true;
+}
+
 bool initializeGStreamer();
 unsigned getGstPlaysFlag(const char* nick);
 }

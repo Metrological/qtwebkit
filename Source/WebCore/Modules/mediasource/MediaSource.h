@@ -47,6 +47,7 @@
 namespace WebCore {
 
 class GenericEventQueue;
+class HTMLMediaElement;
 
 class MediaSource : public MediaSourcePrivateClient, public ActiveDOMObject, public EventTarget, public ScriptWrappable, public URLRegistrable {
 public:

@@ -111,7 +111,9 @@ SourceBuffer::SourceBuffer(PassRefPtr<SourceBufferPrivate> sourceBufferPrivate, 
     , m_source(source)
     , m_asyncEventQueue(GenericEventQueue::create(this))
     , m_appendBufferTimer(this, &SourceBuffer::appendBufferTimerFired)
+#if ENABLE(VIDEO_TRACK)
     , m_highestPresentationEndTimestamp(MediaTime::invalidTime())
+#endif
     , m_buffered(TimeRanges::create())
     , m_appendState(WaitingForSegment)
     , m_timeOfBufferingMonitor(monotonicallyIncreasingTime())
@@ -160,7 +162,11 @@ const RefPtr<TimeRanges>& SourceBuffer::buffered() const
 
 double SourceBuffer::timestampOffset() const
 {
+#if ENABLE(VIDEO_TRACK)
     return m_timestampOffset.toDouble();
+#else
+    return m_timestampOffset;
+#endif
 }
 
 void SourceBuffer::setTimestampOffset(double offset, ExceptionCode& ec)
@@ -181,6 +187,7 @@ void SourceBuffer::setTimestampOffset(double offset, ExceptionCode& ec)
     // 4.2 Queue a task to fire a simple event named sourceopen at the parent media source.
     m_source->openIfInEndedState();
 
+#if ENABLE(VIDEO_TRACK)
     // 5. If the append state equals PARSING_MEDIA_SEGMENT, then throw an INVALID_STATE_ERR and abort these steps.
     if (m_appendState == ParsingMediaSegment) {
         ec = INVALID_STATE_ERR;
@@ -190,6 +197,11 @@ void SourceBuffer::setTimestampOffset(double offset, ExceptionCode& ec)
     // FIXME: Add step 6 text when mode attribute is implemented.
     // 7. Update the attribute to the new value.
     m_timestampOffset = MediaTime::createWithDouble(offset);
+#else
+    // 7. Update the attribute to the new value.
+    m_timestampOffset = offset;
+#endif
+
 }
 
 void SourceBuffer::appendBuffer(PassRefPtr<ArrayBuffer> data, ExceptionCode& ec)
@@ -814,6 +826,7 @@ const AtomicString& SourceBuffer::networkError()
     return network;
 }
 
+#if ENABLE(VIDEO_TRACK)
 VideoTrackList* SourceBuffer::videoTracks()
 {
     if (!m_source || !m_source->mediaElement())
@@ -846,6 +859,7 @@ TextTrackList* SourceBuffer::textTracks()
 
     return m_textTracks.get();
 }
+#endif
 
 void SourceBuffer::setActive(bool active)
 {
@@ -898,6 +912,7 @@ void SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegment(SourceBuff
             return;
         }
         // 3.2 Add the appropriate track descriptions from this initialization segment to each of the track buffers.
+#if ENABLE(VIDEO_TRACK)
         ASSERT(segment.audioTracks.size() == audioTracks()->length());
         for (Vector<InitializationSegment::AudioTrackInformation>::const_iterator it = segment.audioTracks.begin(); it != segment.audioTracks.end(); ++it) {
             const InitializationSegment::AudioTrackInformation& audioTrackInfo = *it;
@@ -944,6 +959,7 @@ void SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegment(SourceBuff
                 inbandTextTrack->setPrivate(textTrackInfo.track);
             }
         }
+#endif
 
         for (HashMap<AtomicString, TrackBuffer>::iterator it = m_trackBufferMap.begin(); it != m_trackBufferMap.end(); ++it) {
             TrackBuffer& trackBuffer = it->value;
@@ -954,6 +970,7 @@ void SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegment(SourceBuff
     // 4. Let active track flag equal false.
     bool activeTrackFlag = false;
 
+#if ENABLE(VIDEO_TRACK)
     // 5. If the first initialization segment flag is false, then run the following steps:
     if (!m_receivedFirstInitializationSegment) {
         // 5.1 If the initialization segment contains tracks with codecs the user agent does not support,
@@ -1087,6 +1104,7 @@ void SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegment(SourceBuff
         // 5.6 Set first initialization segment flag to true.
         m_receivedFirstInitializationSegment = true;
     }
+#endif
 
     // 6. If the HTMLMediaElement.readyState attribute is HAVE_NOTHING, then run the following steps:
     if (m_private->readyState() == MediaPlayer::HaveNothing) {
@@ -1111,6 +1129,9 @@ void SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegment(SourceBuff
 
 bool SourceBuffer::validateInitializationSegment(const InitializationSegment& segment)
 {
+#if !ENABLE(VIDEO_TRACK)
+    return false;
+#else
     // 3.5.7 Initialization Segment Received (ctd)
     // https://dvcs.w3.org/hg/html-media/raw-file/default/media-source/media-source.html#sourcebuffer-init-segment-received
 
@@ -1169,6 +1190,7 @@ bool SourceBuffer::validateInitializationSegment(const InitializationSegment& se
     }
 
     return true;
+#endif
 }
 
 class SampleLessThanComparator {
@@ -1191,6 +1213,7 @@ public:
 
 void SourceBuffer::sourceBufferPrivateDidReceiveSample(SourceBufferPrivate*, PassRefPtr<MediaSample> prpSample)
 {
+#if ENABLE(VIDEO_TRACK)
     if (isRemoved())
         return;
 
@@ -1455,16 +1478,25 @@ void SourceBuffer::sourceBufferPrivateDidReceiveSample(SourceBufferPrivate*, Pas
     // duration set to the maximum of the current duration and the highest end timestamp reported by HTMLMediaElement.buffered.
     if (highestPresentationEndTimestamp() > m_source->duration())
         m_source->setDurationInternal(highestPresentationEndTimestamp());
+#endif
 }
 
 bool SourceBuffer::hasAudio() const
 {
+#if !ENABLE(VIDEO_TRACK)
+    return false;
+#else
     return m_audioTracks && m_audioTracks->length();
+#endif
 }
 
 bool SourceBuffer::hasVideo() const
 {
+#if !ENABLE(VIDEO_TRACK)
+    return false;
+#else
     return m_videoTracks && m_videoTracks->length();
+#endif
 }
 
 bool SourceBuffer::sourceBufferPrivateHasAudio(const SourceBufferPrivate*) const
@@ -1477,6 +1509,7 @@ bool SourceBuffer::sourceBufferPrivateHasVideo(const SourceBufferPrivate*) const
     return hasVideo();
 }
 
+#if ENABLE(VIDEO_TRACK)
 void SourceBuffer::videoTrackSelectedChanged(VideoTrack* track)
 {
     // 2.4.5 Changes to selected/enabled track state
@@ -1579,6 +1612,7 @@ void SourceBuffer::textTrackKindChanged(TextTrack* track)
     if (!isRemoved())
         m_source->mediaElement()->textTrackKindChanged(track);
 }
+#endif
 
 void SourceBuffer::sourceBufferPrivateDidBecomeReadyForMoreSamples(SourceBufferPrivate*, AtomicString trackID)
 {
