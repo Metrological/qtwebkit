@@ -749,7 +749,10 @@ bool MediaSource::isTypeSupported(const String& type)
     // 4. If type contains at a codec that the MediaSource does not support, then return false.
     // 5. If the MediaSource does not support the specified combination of media type, media subtype, and codecs then return false.
     // 6. Return true.
-    return MIMETypeRegistry::isSupportedMediaSourceMIMEType(contentType.type(), codecs);
+
+    String keySystem;
+    KURL url;
+    return MediaPlayer::supportsType(contentType, keySystem, url, 0) != MediaPlayer::IsNotSupported;
 }
 
 bool MediaSource::isOpen() const
