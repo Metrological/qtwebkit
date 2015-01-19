@@ -72,7 +72,7 @@ public:
 
     // MediaSourcePrivateClient
     virtual void setPrivateAndOpen(PassRefPtr<MediaSourcePrivate>) OVERRIDE;
-    virtual MediaTime duration() const;
+    virtual double duration() const;
     virtual PassOwnPtr<PlatformTimeRanges> buffered() const;
     virtual void seekToTime(const MediaTime&);
 

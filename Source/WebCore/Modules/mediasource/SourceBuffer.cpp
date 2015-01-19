@@ -264,7 +264,7 @@ void SourceBuffer::remove(const MediaTime& start, const MediaTime& end, Exceptio
     // Section 3.2 remove() method steps.
     // 1. If start is negative or greater than duration, then throw an InvalidAccessError exception and abort these steps.
     // 2. If end is less than or equal to start, then throw an InvalidAccessError exception and abort these steps.
-    if (start < MediaTime::zeroTime() || (m_source && (!m_source->duration().isValid() || start > m_source->duration())) || end <= start) {
+    if (start < MediaTime::zeroTime() || (m_source && (std::isnan(m_source->duration()) || start.toDouble() > m_source->duration())) || end <= start) {
         ec = INVALID_ACCESS_ERR;
         return;
     }
@@ -890,7 +890,7 @@ void SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegment(SourceBuff
     // 3.5.7 Initialization Segment Received
     // https://dvcs.w3.org/hg/html-media/raw-file/default/media-source/media-source.html#sourcebuffer-init-segment-received
     // 1. Update the duration attribute if it currently equals NaN:
-    if (m_source->duration().isInvalid()) {
+    if (std::isnan(m_source->duration())) {
         // ↳ If the initialization segment contains a duration:
         //   Run the duration change algorithm with new duration set to the duration in the initialization segment.
         // ↳ Otherwise:
@@ -1476,7 +1476,7 @@ void SourceBuffer::sourceBufferPrivateDidReceiveSample(SourceBufferPrivate*, Pas
 
     // 5. If the media segment contains data beyond the current duration, then run the duration change algorithm with new
     // duration set to the maximum of the current duration and the highest end timestamp reported by HTMLMediaElement.buffered.
-    if (highestPresentationEndTimestamp() > m_source->duration())
+    if (highestPresentationEndTimestamp().toDouble() > m_source->duration())
         m_source->setDurationInternal(highestPresentationEndTimestamp());
 #endif
 }

@@ -128,14 +128,14 @@ void MediaSource::removedFromRegistry()
     unsetPendingActivity(this);
 }
 
-MediaTime MediaSource::duration() const
+double MediaSource::duration() const
 {
-    return m_duration;
+    return isClosed() ? std::numeric_limits<double>::quiet_NaN() : m_duration.toDouble();
 }
 
 MediaTime MediaSource::currentTime() const
 {
-    return /*FIXME m_mediaElement ? m_mediaElement->currentMediaTime() : */MediaTime::zeroTime();
+    return MediaTime::createWithDouble(m_mediaElement ? m_mediaElement->currentTime() : 0);
 }
 
 PassOwnPtr<PlatformTimeRanges> MediaSource::buffered() const
