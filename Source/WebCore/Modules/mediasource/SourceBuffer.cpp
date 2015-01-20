@@ -152,12 +152,22 @@ PassRefPtr<TimeRanges> SourceBuffer::buffered(ExceptionCode& ec) const
     }
 
     // 2. Return a new static normalized TimeRanges object for the media segments buffered.
+#if ENABLE(VIDEO_TRACK)
     return m_buffered->copy();
+#else
+    const_cast<SourceBuffer*>(this)->m_buffered = m_private->buffered();
+    return m_buffered;
+#endif
 }
 
 const RefPtr<TimeRanges>& SourceBuffer::buffered() const
 {
+#if ENABLE(VIDEO_TRACK)
     return m_buffered;
+#else
+    const_cast<SourceBuffer*>(this)->m_buffered = m_private->buffered();
+    return m_buffered;
+#endif
 }
 
 double SourceBuffer::timestampOffset() const
