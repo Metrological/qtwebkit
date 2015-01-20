@@ -136,7 +136,7 @@ public:
 private:
     MediaPlayerPrivateGStreamer(MediaPlayer*);
 
-    static PassOwnPtr<MediaPlayerPrivateInterface> create(MediaPlayer*);
+    static PassRefPtr<MediaPlayerPrivateInterface> create(MediaPlayer*);
 
     static void getSupportedTypes(HashSet<String>&);
 

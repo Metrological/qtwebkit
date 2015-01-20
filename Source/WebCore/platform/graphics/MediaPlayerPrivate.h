@@ -31,6 +31,7 @@
 #include "MediaPlayer.h"
 #include "PlatformTimeRanges.h"
 #include <wtf/Forward.h>
+#include <wtf/RefCounted.h>
 
 namespace WebCore {
 
@@ -38,7 +39,7 @@ class IntRect;
 class IntSize;
 class PlatformTextTrack;
 
-class MediaPlayerPrivateInterface {
+class MediaPlayerPrivateInterface : public RefCounted<MediaPlayerPrivateInterface>{
     WTF_MAKE_NONCOPYABLE(MediaPlayerPrivateInterface); WTF_MAKE_FAST_ALLOCATED;
 public:
     MediaPlayerPrivateInterface() { }
