@@ -1477,7 +1477,7 @@ void MediaPlayerPrivateGStreamer::sourceChanged()
         webKitWebSrcSetMediaPlayer(WEBKIT_WEB_SRC(m_source.get()), m_player);
 #if ENABLE(MEDIA_SOURCE)
     if (m_mediaSource && WEBKIT_IS_MEDIA_SRC(m_source.get())) {
-        MediaSourceGStreamer::open(m_mediaSource.get(), WEBKIT_MEDIA_SRC(m_source.get()));
+        MediaSourceGStreamer::open(m_mediaSource.get(), WEBKIT_MEDIA_SRC(m_source.get()), this);
     }
 #endif
 }

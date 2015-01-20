@@ -41,14 +41,16 @@
 #include "SourceBufferPrivateGStreamer.h"
 #include "WebKitMediaSourceGStreamer.h"
 #include <wtf/gobject/GRefPtr.h>
+#include <wtf/PassRefPtr.h>
 #include "NotImplemented.h"
 
 namespace WebCore {
 
-void MediaSourceGStreamer::open(MediaSourcePrivateClient* mediaSource, WebKitMediaSrc* src)
+void MediaSourceGStreamer::open(MediaSourcePrivateClient* mediaSource, WebKitMediaSrc* src, PassRefPtr<MediaPlayerPrivateGStreamer> playerPrivate)
 {
     ASSERT(mediaSource);
     RefPtr<MediaSourceGStreamer> mediaSourcePrivate = adoptRef(new MediaSourceGStreamer(mediaSource, src));
+    mediaSourcePrivate->m_playerPrivate = playerPrivate;
     mediaSource->setPrivateAndOpen(mediaSourcePrivate.release());
 }
 

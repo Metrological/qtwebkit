@@ -45,11 +45,12 @@ namespace WebCore {
 
 class SourceBufferPrivateGStreamer;
 class MediaSourceClientGStreamer;
+class MediaPlayerPrivateGStreamer;
 
 // FIXME: Should this be called MediaSourcePrivateGStreamer?
 class MediaSourceGStreamer : public MediaSourcePrivate {
 public:
-    static void open(MediaSourcePrivateClient*, WebKitMediaSrc*);
+    static void open(MediaSourcePrivateClient*, WebKitMediaSrc*, PassRefPtr<MediaPlayerPrivateGStreamer>);
     virtual ~MediaSourceGStreamer();
 
     MediaSourceClientGStreamer& client() const { return *m_client; }
@@ -76,6 +77,7 @@ private:
     RefPtr<MediaSourceClientGStreamer> m_client;
     MediaSourcePrivateClient* m_mediaSource;
     MediaPlayer::ReadyState m_readyState;
+    RefPtr<MediaPlayerPrivateGStreamer> m_playerPrivate;
 };
 
 }
