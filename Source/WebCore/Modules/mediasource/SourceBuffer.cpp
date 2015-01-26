@@ -510,6 +510,9 @@ void SourceBuffer::sourceBufferPrivateAppendComplete(SourceBufferPrivate*, Appen
     if (isRemoved())
         return;
 
+    // Update buffered cached value
+    buffered();
+
     // Section 3.5.5 Buffer Append Algorithm, ctd.
     // https://dvcs.w3.org/hg/html-media/raw-file/default/media-source/media-source.html#sourcebuffer-buffer-append
 
@@ -558,6 +561,9 @@ void SourceBuffer::sourceBufferPrivateAppendComplete(SourceBufferPrivate*, Appen
     reportExtraMemoryCost();
     if (extraMemoryCost() > this->maximumBufferSize())
         m_bufferFull = true;
+
+    // Update buffered cached value
+    buffered();
 
     LOG(Media, "SourceBuffer::sourceBufferPrivateAppendComplete(%p) - buffered = %f", this, m_buffered->ranges().totalDuration().toDouble());
 }
@@ -631,6 +637,9 @@ void SourceBuffer::removeCodedFrames(const MediaTime& start, const MediaTime& en
 {
     LOG(MediaSource, "SourceBuffer::removeCodedFrames(%p) - start(%f), end(%f)", this, start.toDouble(), end.toDouble());
 
+    // Update buffered cached value
+    buffered();
+
     // 3.5.9 Coded Frame Removal Algorithm
     // https://dvcs.w3.org/hg/html-media/raw-file/tip/media-source/media-source.html#sourcebuffer-coded-frame-removal
 
@@ -692,6 +701,9 @@ void SourceBuffer::removeCodedFrames(const MediaTime& start, const MediaTime& en
 
     // 4. If buffer full flag equals true and this object is ready to accept more bytes, then set the buffer full flag to false.
     // No-op
+
+    // Update buffered cached value
+    buffered();
 
     LOG(Media, "SourceBuffer::removeCodedFrames(%p) - buffered = %f", this, m_buffered->ranges().totalDuration().toDouble());
 }
