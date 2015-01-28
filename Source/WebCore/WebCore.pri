@@ -230,6 +230,12 @@ enable?(VIDEO) {
     }
 }
 
+enable?(VIDEO_TRACK) {
+    use?(GSTREAMER) {
+        PKGCONFIG += gstreamer-tag-1.0
+    }
+}
+
 enable?(WEB_AUDIO) {
     use?(GSTREAMER) {
         DEFINES += WTF_USE_WEBAUDIO_GSTREAMER=1

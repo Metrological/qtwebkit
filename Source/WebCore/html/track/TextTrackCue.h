@@ -73,9 +73,9 @@ protected:
 
 class TextTrackCue : public RefCounted<TextTrackCue>, public EventTarget {
 public:
-    static PassRefPtr<TextTrackCue> create(ScriptExecutionContext* context, double start, double end, const String& content)
+    static PassRefPtr<TextTrackCue> create(ScriptExecutionContext* context, double start, double end)
     {
-        return adoptRef(new TextTrackCue(context, start, end, content));
+        return adoptRef(new TextTrackCue(context, start, end));
     }
 
     static const AtomicString& cueShadowPseudoId()
@@ -188,6 +188,7 @@ public:
     virtual bool isOrderedBefore(const TextTrackCue*) const;
 
     enum CueType {
+        Data,
         Generic,
         WebVTT
     };
@@ -206,7 +207,7 @@ protected:
     virtual EventTargetData* eventTargetData();
     virtual EventTargetData* ensureEventTargetData();
 
-    TextTrackCue(ScriptExecutionContext*, double start, double end, const String& content);
+    TextTrackCue(ScriptExecutionContext*, double start, double end);
 
     Document* ownerDocument() { return toDocument(m_scriptExecutionContext); }
 

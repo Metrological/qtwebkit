@@ -215,7 +215,8 @@ void TextTrackLoader::getNewCues(Vector<RefPtr<TextTrackCue> >& outputCues)
         m_cueParser->getNewCues(newCues);
         for (size_t i = 0; i < newCues.size(); ++i) {
             RefPtr<WebVTTCueData> data = newCues[i];
-            RefPtr<TextTrackCue> cue = TextTrackCue::create(m_scriptExecutionContext, data->startTime(), data->endTime(), data->content());
+            // METRO VIDEOTRACK FIXME: Extra content parameter
+            RefPtr<TextTrackCue> cue = TextTrackCue::create(m_scriptExecutionContext, data->startTime(), data->endTime() /*, data->content()*/);
             cue->setId(data->id());
             cue->setCueSettings(data->settings());
             outputCues.append(cue);

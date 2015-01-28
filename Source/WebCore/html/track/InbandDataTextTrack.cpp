@@ -55,7 +55,7 @@ InbandDataTextTrack::~InbandDataTextTrack()
 void InbandDataTextTrack::addDataCue(InbandTextTrackPrivate*, const MediaTime& start, const MediaTime& end, const void* data, unsigned length)
 {
     RefPtr<DataCue> cue = DataCue::create(*scriptExecutionContext(), start, end, data, length);
-    addCue(cue.release(), ASSERT_NO_EXCEPTION);
+    addCue(cue.release());
 }
 
 #if ENABLE(DATACUE_VALUE)

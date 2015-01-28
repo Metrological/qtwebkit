@@ -54,31 +54,36 @@ InbandWebVTTTextTrack::~InbandWebVTTTextTrack()
 {
 }
 
-WebVTTParser& InbandWebVTTTextTrack::parser()
+WebVTTParser* InbandWebVTTTextTrack::parser()
 {
     if (!m_webVTTParser)
-        m_webVTTParser = std::make_unique<WebVTTParser>(static_cast<WebVTTParserClient*>(this), scriptExecutionContext());
-    return *m_webVTTParser;
+        m_webVTTParser = WebVTTParser::create(static_cast<WebVTTParserClient*>(this), scriptExecutionContext());
+    return m_webVTTParser.get();
 }
 
 void InbandWebVTTTextTrack::parseWebVTTCueData(InbandTextTrackPrivate* trackPrivate, const char* data, unsigned length)
 {
     ASSERT_UNUSED(trackPrivate, trackPrivate == m_private);
-    parser().parseBytes(data, length);
+    parser()->parseBytes(data, length);
 }
 
 void InbandWebVTTTextTrack::parseWebVTTCueData(InbandTextTrackPrivate* trackPrivate, const ISOWebVTTCue& cueData)
 {
     ASSERT_UNUSED(trackPrivate, trackPrivate == m_private);
-    parser().parseCueData(cueData);
+    // METRO VIDEOTRACK FIXME:
+    //parser()->parseCueData(cueData);
 }
 
 void InbandWebVTTTextTrack::newCuesParsed()
 {
     Vector<RefPtr<WebVTTCueData> > cues;
-    parser().getNewCues(cues);
+    parser()->getNewCues(cues);
 
-    for (auto& cueData : cues) {
+    // METRO VIDEOTRACK FIXME:
+    for (size_t i = 0; i < cues.size(); ++i) {
+        RefPtr<WebVTTCueData> cueData = cues[i];
+        // METRO VIDEOTRACK FIXME: Backport VTTCue
+        /*
         RefPtr<VTTCue> vttCue = VTTCue::create(*scriptExecutionContext(), *cueData);
 
         if (hasCue(vttCue.get(), TextTrackCue::IgnoreDuration)) {
@@ -86,6 +91,7 @@ void InbandWebVTTTextTrack::newCuesParsed()
             return;
         }
         addCue(vttCue.release(), ASSERT_NO_EXCEPTION);
+        */
     }
 }
     
@@ -93,7 +99,7 @@ void InbandWebVTTTextTrack::newCuesParsed()
 void InbandWebVTTTextTrack::newRegionsParsed()
 {
     Vector<RefPtr<VTTRegion>> newRegions;
-    parser().getNewRegions(newRegions);
+    parser()->getNewRegions(newRegions);
 
     for (auto& region : newRegions) {
         region->setTrack(this);

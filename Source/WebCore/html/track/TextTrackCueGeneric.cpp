@@ -110,7 +110,8 @@ void TextTrackCueGenericBoxElement::applyCSSProperties(const IntSize& videoSize)
 }
 
 TextTrackCueGeneric::TextTrackCueGeneric(ScriptExecutionContext* context, double start, double end, const String& content)
-    : TextTrackCue(context, start, end, content)
+    // METRO VIDEOTRACK FIXME: Backport VTTCue
+    : /* VTTCue(context, start, end, content) */ TextTrackCue(context, start, end)
     , m_baseFontSizeRelativeToVideoHeight(0)
     , m_fontSizeMultiplier(0)
     , m_defaultPosition(true)

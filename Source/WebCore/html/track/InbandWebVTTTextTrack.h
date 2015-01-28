@@ -44,7 +44,7 @@ public:
 private:
     InbandWebVTTTextTrack(ScriptExecutionContext*, TextTrackClient*, PassRefPtr<InbandTextTrackPrivate>);
 
-    WebVTTParser& parser();
+    WebVTTParser* parser();
     virtual void parseWebVTTCueData(InbandTextTrackPrivate*, const char* data, unsigned length) OVERRIDE;
     virtual void parseWebVTTCueData(InbandTextTrackPrivate*, const ISOWebVTTCue&) OVERRIDE;
 

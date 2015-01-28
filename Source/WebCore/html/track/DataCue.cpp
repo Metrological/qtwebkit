@@ -37,14 +37,14 @@
 namespace WebCore {
 
 DataCue::DataCue(ScriptExecutionContext& context, const MediaTime& start, const MediaTime& end, ArrayBuffer* data, const String& type, ExceptionCode& ec)
-    : TextTrackCue(context, start, end)
+    : TextTrackCue(&context, start, end)
     , m_type(type)
 {
     setData(data, ec);
 }
 
 DataCue::DataCue(ScriptExecutionContext& context, const MediaTime& start, const MediaTime& end, const void* data, unsigned length)
-    : TextTrackCue(context, start, end)
+    : TextTrackCue(&context, start, end)
 {
     m_data = ArrayBuffer::create(data, length);
 }
@@ -81,7 +81,7 @@ PassRefPtr<ArrayBuffer> DataCue::data() const
 #endif
 
     if (!m_data)
-        return nullptr;
+        return 0;
 
     return ArrayBuffer::create(m_data.get());
 }
@@ -161,7 +161,8 @@ bool DataCue::doesExtendCue(const TextTrackCue& cue) const
     if (!cueContentsMatch(cue))
         return false;
 
-    return TextTrackCue::doesExtendCue(cue);
+    // METRO VIDEOTRACK FIXME:
+    return /* TextTrackCue::doesExtendCue(cue) */ false;
 }
 
 #if ENABLE(DATACUE_VALUE)

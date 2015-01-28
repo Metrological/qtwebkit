@@ -184,10 +184,9 @@ RenderObject* TextTrackCueBox::createRenderer(RenderArena* arena, RenderStyle*)
 
 // ----------------------------
 
-TextTrackCue::TextTrackCue(ScriptExecutionContext* context, double start, double end, const String& content)
+TextTrackCue::TextTrackCue(ScriptExecutionContext* context, double start, double end)
     : m_startTime(start)
     , m_endTime(end)
-    , m_content(content)
     , m_linePosition(undefinedPosition)
     , m_computedLinePosition(undefinedPosition)
     , m_textPosition(50)

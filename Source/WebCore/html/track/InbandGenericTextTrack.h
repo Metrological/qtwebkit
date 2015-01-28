@@ -77,7 +77,7 @@ private:
     PassRefPtr<TextTrackCueGeneric> createCue(PassRefPtr<GenericCueData>);
     void updateCueFromCueData(TextTrackCueGeneric*, GenericCueData*);
 
-    WebVTTParser& parser();
+    WebVTTParser* parser();
     virtual void parseWebVTTCueData(InbandTextTrackPrivate*, const ISOWebVTTCue&) OVERRIDE;
     virtual void parseWebVTTFileHeader(InbandTextTrackPrivate*, String) OVERRIDE;
 

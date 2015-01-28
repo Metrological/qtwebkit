@@ -110,11 +110,12 @@ void InbandGenericTextTrack::updateCueFromCueData(TextTrackCueGeneric* cue, Gene
 {
     cue->willChange();
 
-    cue->setStartTime(cueData->startTime());
+    ExceptionCode ec;
+    cue->setStartTime(cueData->startTime(), ec);
     MediaTime endTime = cueData->endTime();
     if (endTime.isPositiveInfinite() && mediaElement())
         endTime = mediaElement()->duration();
-    cue->setEndTime(endTime);
+    cue->setEndTime(endTime, ec);
     cue->setText(cueData->content());
     cue->setId(cueData->id());
     cue->setBaseFontSizeRelativeToVideoHeight(cueData->baseFontSize());
@@ -153,7 +154,7 @@ void InbandGenericTextTrack::addGenericCue(InbandTextTrackPrivate* trackPrivate,
     if (m_cueMap.find(cueData.get()))
         return;
 
-    RefPtr<TextTrackCueGeneric> cue = TextTrackCueGeneric::create(*scriptExecutionContext(), cueData->startTime(), cueData->endTime(), cueData->content());
+    RefPtr<TextTrackCueGeneric> cue = TextTrackCueGeneric::create(scriptExecutionContext(), cueData->startTime(), cueData->endTime(), cueData->content());
     updateCueFromCueData(cue.get(), cueData.get());
     if (hasCue(cue.get(), TextTrackCue::IgnoreDuration)) {
         LOG(Media, "InbandGenericTextTrack::addGenericCue ignoring already added cue: start=%s, end=%s, content=\"%s\"\n", toString(cueData->startTime()).utf8().data(), toString(cueData->endTime()).utf8().data(), cueData->content().utf8().data());
@@ -165,7 +166,7 @@ void InbandGenericTextTrack::addGenericCue(InbandTextTrackPrivate* trackPrivate,
     if (cueData->status() != GenericCueData::Complete)
         m_cueMap.add(cueData.get(), cue.get());
 
-    addCue(cue, ASSERT_NO_EXCEPTION);
+    addCue(cue);
 }
 
 void InbandGenericTextTrack::updateGenericCue(InbandTextTrackPrivate*, GenericCueData* cueData)
@@ -198,38 +199,44 @@ void InbandGenericTextTrack::removeCue(TextTrackCue* cue, ExceptionCode& ec)
     TextTrack::removeCue(cue, ec);
 }
 
-WebVTTParser& InbandGenericTextTrack::parser()
+WebVTTParser* InbandGenericTextTrack::parser()
 {
     if (!m_webVTTParser)
-        m_webVTTParser = std::make_unique<WebVTTParser>(static_cast<WebVTTParserClient*>(this), scriptExecutionContext());
-    return *m_webVTTParser;
+        m_webVTTParser = WebVTTParser::create(static_cast<WebVTTParserClient*>(this), scriptExecutionContext());
+    return m_webVTTParser.get();
 }
 
 void InbandGenericTextTrack::parseWebVTTCueData(InbandTextTrackPrivate* trackPrivate, const ISOWebVTTCue& cueData)
 {
     ASSERT_UNUSED(trackPrivate, trackPrivate == m_private);
-    parser().parseCueData(cueData);
+    // METRO VIDEOTRACK FIXME: Needs parseCueData()
+    //parser()->parseCueData(cueData);
 }
 
 void InbandGenericTextTrack::parseWebVTTFileHeader(InbandTextTrackPrivate* trackPrivate, String header)
 {
     ASSERT_UNUSED(trackPrivate, trackPrivate == m_private);
-    parser().parseFileHeader(header);
+    // METRO VIDEOTRACK FIXME: Needs parseFileHeader
+    //parser()->parseFileHeader(header);
 }
 
 void InbandGenericTextTrack::newCuesParsed()
 {
     Vector<RefPtr<WebVTTCueData> > cues;
-    parser().getNewCues(cues);
+    parser()->getNewCues(cues);
 
-    for (auto& cueData : cues) {
+    // METRO VIDEOTRACK FIXME: Backport VTTCue
+    for (size_t i = 0; i < cues.size(); ++i) {
+        RefPtr<WebVTTCueData> cueData = cues[i];
+        /*
         RefPtr<VTTCue> vttCue = VTTCue::create(*scriptExecutionContext(), *cueData);
 
         if (hasCue(vttCue.get(), TextTrackCue::IgnoreDuration)) {
             LOG(Media, "InbandGenericTextTrack::newCuesParsed ignoring already added cue: start=%.2f, end=%.2f, content=\"%s\"\n", vttCue->startTime(), vttCue->endTime(), vttCue->text().utf8().data());
             return;
         }
-        addCue(vttCue.release(), ASSERT_NO_EXCEPTION);
+        addCue(vttCue.release());
+        */
     }
 }
 
