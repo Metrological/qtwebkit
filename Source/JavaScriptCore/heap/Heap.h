@@ -28,6 +28,7 @@
 #include "GCThreadSharedData.h"
 #include "HandleSet.h"
 #include "HandleStack.h"
+#include "HeapStatistics.h"
 #include "JITStubRoutineSet.h"
 #include "MarkedAllocator.h"
 #include "MarkedBlock.h"
@@ -268,6 +269,8 @@ namespace JSC {
         OwnPtr<GCActivityCallback> m_activityCallback;
         OwnPtr<IncrementalSweeper> m_sweeper;
         Vector<MarkedBlock*> m_blockSnapshot;
+
+        bool m_computingBacktrace;
     };
 
     struct MarkedBlockSnapshotFunctor : public MarkedBlock::VoidFunctor {
@@ -388,11 +391,19 @@ namespace JSC {
    
     inline CheckedBoolean Heap::tryAllocateStorage(size_t bytes, void** outPtr)
     {
+#if ENABLE(JS_MEMORY_TRACKING)
+        if (Options::showAllocationBacktraces())
+            HeapStatistics::showAllocBacktrace(this, bytes, *outPtr);
+#endif
         return m_storageSpace.tryAllocate(bytes, outPtr);
     }
     
     inline CheckedBoolean Heap::tryReallocateStorage(void** ptr, size_t oldSize, size_t newSize)
     {
+#if ENABLE(JS_MEMORY_TRACKING)
+        if (Options::showAllocationBacktraces())
+            HeapStatistics::showAllocBacktrace(this, newSize, *ptr);
+#endif
         return m_storageSpace.tryReallocate(ptr, oldSize, newSize);
     }
 

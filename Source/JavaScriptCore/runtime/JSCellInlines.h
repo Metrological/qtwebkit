@@ -28,6 +28,7 @@
 
 #include "CallFrame.h"
 #include "Handle.h"
+#include "HeapStatistics.h"
 #include "JSCell.h"
 #include "JSObject.h"
 #include "JSString.h"
@@ -84,10 +85,6 @@ template<typename T>
 void* allocateCell(Heap& heap, size_t size)
 {
     ASSERT(size >= sizeof(T));
-#if ENABLE(GC_VALIDATION)
-    ASSERT(!heap.vm()->isInitializingObject());
-    heap.vm()->setInitializingObjectClass(&T::s_info);
-#endif
     JSCell* result = 0;
     if (T::needsDestruction && T::hasImmortalStructure)
         result = static_cast<JSCell*>(heap.allocateWithImmortalStructureDestructor(size));
@@ -96,6 +93,14 @@ void* allocateCell(Heap& heap, size_t size)
     else 
         result = static_cast<JSCell*>(heap.allocateWithoutDestructor(size));
     result->clearStructure();
+#if ENABLE(JS_MEMORY_TRACKING)
+    if (Options::showAllocationBacktraces())
+        HeapStatistics::showAllocBacktrace(&heap, size, result);
+#endif
+#if ENABLE(GC_VALIDATION)
+    ASSERT(!heap.vm()->isInitializingObject());
+    heap.vm()->setInitializingObjectClass(&T::s_info);
+#endif
     return result;
 }
     

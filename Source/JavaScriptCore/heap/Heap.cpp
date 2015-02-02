@@ -264,6 +264,7 @@ Heap::Heap(VM* vm, HeapType heapType)
     , m_lastCodeDiscardTime(WTF::currentTime())
     , m_activityCallback(DefaultGCActivityCallback::create(this))
     , m_sweeper(IncrementalSweeper::create(this))
+    , m_computingBacktrace(false)
 {
     m_storageSpace.init();
 }

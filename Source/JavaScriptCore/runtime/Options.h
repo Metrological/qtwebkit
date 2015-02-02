@@ -168,7 +168,8 @@ typedef OptionRange optionRange;
     \
     v(unsigned, gcMaxHeapSize, 0) \
     v(bool, recordGCPauseTimes, false) \
-    v(bool, logHeapStatisticsAtExit, false) 
+    v(bool, logHeapStatisticsAtExit, false) \
+    v(bool, showAllocationBacktraces, false)
 
 class Options {
 public:

@@ -26,11 +26,15 @@
 #include "config.h"
 #include "HeapStatistics.h"
 
+#include <interpreter/CallFrame.h>
 #include "Heap.h"
 #include "JSObject.h"
 #include "Operations.h"
 #include "Options.h"
 #include <stdlib.h>
+#include "API/APICast.h"
+#include "API/OpaqueJSString.h"
+#include "API/JSContextRefPrivate.h"
 #if OS(UNIX)
 #include <sys/resource.h>
 #endif
@@ -250,5 +254,43 @@ void HeapStatistics::showObjectStatistics(Heap* heap)
     dataLogF("wasted .property storage: %ldkB (%ld%%)\n", wastedPropertyStorageBytes, wastedPropertyStoragePercent);
     dataLogF("objects with out-of-line .property storage: %ld (%ld%%)\n", objectWithOutOfLineStorageCount, objectsWithOutOfLineStoragePercent);
 }
+
+#if ENABLE(JS_MEMORY_TRACKING)
+void HeapStatistics::showAllocBacktrace(Heap *heap, size_t size, void *address)
+{
+    if (heap->m_computingBacktrace)
+        // we got called by an allocation triggered by JSContextCreateBacktrace()
+        return;
+
+    CallFrame *topCallFrame = heap->vm()->topCallFrame->removeHostCallFrameFlag();
+    //JSContextRef context = topCallFrame?toRef(topCallFrame):0;
+    dataLogF("\n%zu bytes at %p\n", size, address);
+
+    if (topCallFrame) {
+        if (*reinterpret_cast<int32_t*>(topCallFrame) == 0xabadcafe) {
+            /* dirty hackish workaround */
+            dataLogF("No backtrace: uninitialised top frame\n");
+        } else {
+            while (topCallFrame && topCallFrame != CallFrame::noCaller()
+                    && !topCallFrame->codeBlock()) {
+                // We are likely in the process of JITing this function, and
+                // getStackTrace() does not support this well, so we'll ignore
+                // the top frame(s) and start from the first one to have a code
+                // block)
+                dataLogF("No codeblock in frame at %p: ignoring it.\n", topCallFrame);
+                topCallFrame = topCallFrame->trueCallerFrame();
+            }
+            if (topCallFrame && topCallFrame != CallFrame::noCaller()) {
+                JSContextRef context = toRef(topCallFrame);
+                heap->m_computingBacktrace = true;
+                RefPtr<OpaqueJSString> backtrace = adoptRef(JSContextCreateBacktrace(context, 50));
+                heap->m_computingBacktrace = false;
+                dataLogF("Backtrace:\n%s\nBacktrace end.\n",
+                        backtrace->string().utf8().data());
+            }
+        }
+    }
+}
+#endif
 
 } // namespace JSC
