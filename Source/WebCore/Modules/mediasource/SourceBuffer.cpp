@@ -1251,6 +1251,14 @@ void SourceBuffer::sourceBufferPrivateDidReceiveSample(SourceBufferPrivate*, Pas
         // the coded frame's presentation timestamp in seconds.
         MediaTime presentationTimestamp = sample->presentationTime();
 
+        // METRO FIXME: Hack to add fake range to fill start hole
+        if (m_buffered && m_buffered->length() == 0 &&
+                presentationTimestamp >= MediaTime::zeroTime() &&
+                presentationTimestamp <= MediaTime::createWithDouble(0.1)) {
+            LOG(MediaSource, "SourceBuffer::sourceBufferPrivateDidReceiveSample(%p) - Adding a fake range to fill start hole", this);
+            m_buffered->add(0.0, presentationTimestamp.toDouble());
+        }
+
         // 1.2 Let decode timestamp be a double precision floating point representation of the coded frame's
         // decode timestamp in seconds.
         MediaTime decodeTimestamp = sample->decodeTime();
