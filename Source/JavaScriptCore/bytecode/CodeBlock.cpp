@@ -2731,17 +2731,21 @@ unsigned CodeBlock::bytecodeOffset(ExecState* exec, ReturnAddressPtr returnAddre
         return result->bytecodeOffset;
     }
     ClosureCallStubRoutine* closureInfo = findClosureCallForReturnPC(returnAddress);
-    CodeOrigin origin = closureInfo->codeOrigin();
-    while (InlineCallFrame* inlineCallFrame = origin.inlineCallFrame) {
-        if (inlineCallFrame->baselineCodeBlock() == this)
-            break;
-        origin = inlineCallFrame->caller;
+    if (closureInfo) {
+        CodeOrigin origin = closureInfo->codeOrigin();
+        while (InlineCallFrame* inlineCallFrame = origin.inlineCallFrame) {
+            if (inlineCallFrame->baselineCodeBlock() == this)
+                break;
+            origin = inlineCallFrame->caller;
+            RELEASE_ASSERT(origin.bytecodeIndex < CodeOrigin::maximumBytecodeIndex);
+        }
         RELEASE_ASSERT(origin.bytecodeIndex < CodeOrigin::maximumBytecodeIndex);
+        unsigned bytecodeIndex = origin.bytecodeIndex;
+        RELEASE_ASSERT(bytecodeIndex < instructionCount());
+        return bytecodeIndex;
+    } else {
+        return 0;
     }
-    RELEASE_ASSERT(origin.bytecodeIndex < CodeOrigin::maximumBytecodeIndex);
-    unsigned bytecodeIndex = origin.bytecodeIndex;
-    RELEASE_ASSERT(bytecodeIndex < instructionCount());
-    return bytecodeIndex;
 #endif // ENABLE(JIT)
 
 #if !ENABLE(LLINT) && !ENABLE(JIT)
