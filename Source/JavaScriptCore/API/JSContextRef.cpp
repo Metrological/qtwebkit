@@ -225,7 +225,6 @@ JSStringRef JSContextCreateBacktrace(JSContextRef ctx, unsigned maxStackSize)
     Interpreter::getStackTrace(&exec->vm(), stackTrace, maxStackSize);
 
     for (size_t i = 0; i < stackTrace.size(); i++) {
-        String urlString;
         String functionName;
         StackFrame& frame = stackTrace[i];
         JSValue function = frame.callee.get();
@@ -247,7 +246,7 @@ JSStringRef JSContextCreateBacktrace(JSContextRef ctx, unsigned maxStackSize)
         builder.append(' ');
         builder.append(functionName);
         builder.appendLiteral("() at ");
-        builder.append(urlString);
+        builder.append(frame.friendlySourceURL());
         if (frame.codeType != StackFrameNativeCode) {
             builder.append(':');
             builder.appendNumber(lineNumber);
