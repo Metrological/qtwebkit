@@ -419,6 +419,9 @@ void MediaSource::setReadyState(const AtomicString& state)
     m_readyState = state;
 
     onReadyStateChange(oldState, state);
+
+    for (SourceBufferList::iterator sourceBuffer = m_sourceBuffers->begin(); sourceBuffer != m_sourceBuffers->end(); sourceBuffer++)
+        (*sourceBuffer)->invalidateBuffered();
 }
 
 void MediaSource::endOfStream(ExceptionCode& ec)

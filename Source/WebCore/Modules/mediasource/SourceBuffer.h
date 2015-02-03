@@ -128,6 +128,8 @@ public:
 
     Document& document() const;
 
+    void invalidateBuffered();
+
 protected:
     // EventTarget interface
     virtual void refEventTarget() OVERRIDE { ref(); }
@@ -186,6 +188,7 @@ private:
 
     void removeTimerFired(Timer<SourceBuffer>*);
     void removeCodedFrames(const MediaTime& start, const MediaTime& end);
+    void recalculateBuffered() const;
 
     size_t extraMemoryCost() const;
     void reportExtraMemoryCost();
@@ -221,7 +224,7 @@ private:
 #endif
 
     HashMap<AtomicString, TrackBuffer> m_trackBufferMap;
-    RefPtr<TimeRanges> m_buffered;
+    mutable RefPtr<TimeRanges> m_buffered;
 
     enum AppendStateType { WaitingForSegment, ParsingInitSegment, ParsingMediaSegment };
     AppendStateType m_appendState;
@@ -240,6 +243,7 @@ private:
     bool m_receivedFirstInitializationSegment;
     bool m_active;
     bool m_bufferFull;
+    mutable bool m_shouldRecalculateBuffered;
 
     EventTargetData m_eventTargetData;
 };
