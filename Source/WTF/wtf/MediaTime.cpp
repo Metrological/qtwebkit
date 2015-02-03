@@ -345,6 +345,11 @@ bool MediaTime::operator>(const MediaTime& rhs) const
     return compare(rhs) == GreaterThan;
 }
 
+bool MediaTime::operator!=(const MediaTime& rhs) const
+{
+    return compare(rhs) != EqualTo;
+}
+
 bool MediaTime::operator==(const MediaTime& rhs) const
 {
     return compare(rhs) == EqualTo;

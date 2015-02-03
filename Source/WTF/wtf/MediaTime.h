@@ -71,6 +71,7 @@ public:
     MediaTime operator*(int32_t) const;
     bool operator<(const MediaTime& rhs) const;
     bool operator>(const MediaTime& rhs) const;
+    bool operator!=(const MediaTime& rhs) const;
     bool operator==(const MediaTime& rhs) const;
     bool operator>=(const MediaTime& rhs) const;
     bool operator<=(const MediaTime& rhs) const;
