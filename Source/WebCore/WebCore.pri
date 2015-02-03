@@ -300,6 +300,10 @@ enable?(opencl) {
     INCLUDEPATH += $$SOURCE_DIR/platform/graphics/gpu/opencl
 }
 
+enable?(js_memory_tracking) {
+    DEFINES += ENABLE_JS_MEMORY_TRACKING
+}
+
 mac {
     LIBS += -framework Carbon -framework AppKit -framework IOKit
 }
