@@ -58,7 +58,7 @@ public:
     void setLabel(const AtomicString& label) { m_label = label; }
 
     AtomicString language() const { return m_language; }
-    void setLanguage(const AtomicString& language) { m_language = language; }
+    virtual void setLanguage(const AtomicString& language) { m_language = language; }
 
     virtual void clearClient() = 0;
 
