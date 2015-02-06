@@ -877,7 +877,7 @@ MediaSourcePrivate::AddStatus MediaSourceClientGStreamer::addSourceBuffer(PassRe
         return MediaSourcePrivate::NotSupported;
     }
 
-    GST_ERROR_OBJECT(m_src.get(), "State %d", (int)GST_STATE(m_src.get()));
+    GST_DEBUG_OBJECT(m_src.get(), "State %d", (int)GST_STATE(m_src.get()));
 
     GST_OBJECT_LOCK(m_src.get());
 
