@@ -74,9 +74,6 @@ void SourceBufferPrivateGStreamer::append(const unsigned char* data, unsigned le
     if (!m_client->append(this, data, length)) {
         if (m_sourceBufferPrivateClient)
             m_sourceBufferPrivateClient->sourceBufferPrivateAppendComplete(this, SourceBufferPrivateClient::ReadStreamFailed);
-    } else {
-        if (m_sourceBufferPrivateClient)
-            m_sourceBufferPrivateClient->sourceBufferPrivateAppendComplete(this, SourceBufferPrivateClient::AppendSucceeded);
     }
 }
 
@@ -157,6 +154,13 @@ void SourceBufferPrivateGStreamer::didReceiveSample(PassRefPtr<MediaSample> samp
 {
     if (m_sourceBufferPrivateClient)
         m_sourceBufferPrivateClient->sourceBufferPrivateDidReceiveSample(this, sample);
+}
+
+void SourceBufferPrivateGStreamer::didReceiveAllPendingSamples()
+{
+    if (m_sourceBufferPrivateClient) {
+        m_sourceBufferPrivateClient->sourceBufferPrivateAppendComplete(this, SourceBufferPrivateClient::AppendSucceeded);
+    }
 }
 
 }

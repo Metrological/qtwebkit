@@ -75,6 +75,7 @@ private:
 
     void didReceiveInitializationSegment(const SourceBufferPrivateClient::InitializationSegment&);
     void didReceiveSample(PassRefPtr<MediaSample>);
+    void didReceiveAllPendingSamples();
 
     MediaSourceGStreamer* m_mediaSource;
     ContentType m_type;

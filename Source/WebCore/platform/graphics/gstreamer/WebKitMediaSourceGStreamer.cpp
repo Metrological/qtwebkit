@@ -618,6 +618,8 @@ static void webKitMediaSrcDemuxerPadAdded(GstElement* demuxer, GstPad* pad, Sour
     srcpad = get_internal_linked_pad(sinkpad);
     gst_object_unref(sinkpad);
 
+    gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback) webKitWebSrcBufferProbe, stream, NULL);
+
     if (stream->parser) {
         gst_bin_add(GST_BIN(source->parent), stream->parser);
         gst_element_sync_state_with_parent(stream->parser);
@@ -643,7 +645,6 @@ static void webKitMediaSrcDemuxerPadAdded(GstElement* demuxer, GstPad* pad, Sour
     gst_pad_set_event_function(ghostpad, webKitMediaSrcEventWithParent);
 
     gst_pad_set_element_private(ghostpad, stream);
-    gst_pad_add_probe(ghostpad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback) webKitWebSrcBufferProbe, stream, NULL);
 
     gst_pad_set_active(ghostpad, TRUE);
     gst_element_add_pad(GST_ELEMENT(source->parent), ghostpad);
@@ -718,6 +719,8 @@ static void webKitMediaSrcDidReceiveInitializationSegment(Source* source)
         g_list_free(stream->pendingReceiveSample);
         stream->pendingReceiveSample = NULL;
     }
+
+    source->parent->priv->mediaSourceClient->didReceiveAllPendingSamples(source->sourceBuffer);
 }
 
 static void webKitMediaSrcDemuxerNoMorePads(GstElement*, Source* source)
@@ -996,6 +999,11 @@ void MediaSourceClientGStreamer::didReceiveInitializationSegment(SourceBufferPri
 void MediaSourceClientGStreamer::didReceiveSample(SourceBufferPrivateGStreamer* sourceBuffer, PassRefPtr<MediaSample> sample)
 {
     sourceBuffer->didReceiveSample(sample);
+}
+
+void MediaSourceClientGStreamer::didReceiveAllPendingSamples(SourceBufferPrivateGStreamer* sourceBuffer)
+{
+    sourceBuffer->didReceiveAllPendingSamples();
 }
 
 };

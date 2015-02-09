@@ -87,6 +87,7 @@ class MediaSourceClientGStreamer: public RefCounted<MediaSourceClientGStreamer> 
         // From our WebKitMediaSrc
         void didReceiveInitializationSegment(SourceBufferPrivateGStreamer*, const SourceBufferPrivateClient::InitializationSegment&);
         void didReceiveSample(SourceBufferPrivateGStreamer* sourceBuffer, PassRefPtr<MediaSample> sample);
+        void didReceiveAllPendingSamples(SourceBufferPrivateGStreamer* sourceBuffer);
 
     private:
         MediaSourceClientGStreamer(WebKitMediaSrc*);
