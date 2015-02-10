@@ -780,7 +780,13 @@ static void webKitMediaSrcHaveType(GstElement* typefind, guint probability, GstC
 
     if (source->demuxer) {
         source->multiqueue = gst_element_factory_make("multiqueue", NULL);
-
+        g_object_set(G_OBJECT(source->multiqueue),
+                "low-percent", 0,
+                "high-percent", 100,
+                "max-size-buffers", 0,
+                "max-size-bytes", 0,
+                "max-size-time", guint64(0),
+                NULL);
         gst_bin_add_many(GST_BIN(source->parent), source->demuxer, source->multiqueue, NULL);
         gst_element_sync_state_with_parent(source->demuxer);
         gst_element_sync_state_with_parent(source->multiqueue);
