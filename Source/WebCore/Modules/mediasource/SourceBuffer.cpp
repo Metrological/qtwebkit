@@ -1344,8 +1344,8 @@ void SourceBuffer::sourceBufferPrivateDidReceiveSample(SourceBufferPrivate*, Pas
         // METRO FIXME: Hack to add fake range to fill start hole
         double fakeRangeEnd = 0.0;
         if (buffered() && buffered()->length() == 0 &&
-                presentationTimestamp >= MediaTime::zeroTime() &&
-                presentationTimestamp <= MediaTime::createWithDouble(0.1)) {
+                presentationTimestamp >= m_timestampOffset &&
+                presentationTimestamp <= m_timestampOffset + MediaTime::createWithDouble(0.1)) {
             fakeRangeEnd = presentationTimestamp.toDouble();
         }
 
@@ -1549,7 +1549,7 @@ void SourceBuffer::sourceBufferPrivateDidReceiveSample(SourceBufferPrivate*, Pas
         // METRO FIXME: Hack to add fake range to fill start hole (continued)
         if (fakeRangeEnd > 0.0) {
             LOG(MediaSource, "SourceBuffer::sourceBufferPrivateDidReceiveSample(%p) - Adding a fake range to fill start hole", this);
-            trackBuffer.m_buffered->add(0.0, fakeRangeEnd);
+            trackBuffer.m_buffered->add(m_timestampOffset.toDouble(), fakeRangeEnd);
         }
 
         trackBuffer.m_buffered->add(presentationTimestamp.toDouble(), (presentationTimestamp + frameDuration + microsecond).toDouble());
