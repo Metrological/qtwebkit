@@ -84,11 +84,11 @@ void SourceBufferPrivateGStreamer::abort()
 
 void SourceBufferPrivateGStreamer::removedFromMediaSource()
 {
-    if (!m_mediaSource)
+    if (!m_mediaSource || !m_client)
         return;
 
     m_mediaSource->removeSourceBuffer(this);
-    m_mediaSource->client().removedFromMediaSource(this);
+    m_client->removedFromMediaSource(this);
 }
 
 #if !ENABLE(VIDEO_TRACK)
