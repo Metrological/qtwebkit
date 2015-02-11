@@ -528,7 +528,6 @@ static void webKitMediaSrcParserNotifyCaps(GObject* object, GParamSpec*, Stream*
     gst_pad_set_event_function(ghostpad, webKitMediaSrcEventWithParent);
 
     gst_pad_set_element_private(ghostpad, stream);
-    gst_pad_add_probe(ghostpad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback) webKitWebSrcBufferProbe, stream, NULL);
 
     gst_pad_set_active(ghostpad, TRUE);
     gst_element_add_pad(GST_ELEMENT(stream->parent->parent), ghostpad);
