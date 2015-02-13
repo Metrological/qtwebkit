@@ -475,17 +475,10 @@ static GstPadProbeReturn webKitWebSrcBufferProbe(GstPad*, GstPadProbeInfo* info,
 {
     GstBuffer* buffer = GST_BUFFER(info->data);
 
-    if (!stream->audioTrack && !stream->videoTrack) {
-        PendingReceiveSample* sample = g_new0(PendingReceiveSample, 1);
-        sample->buffer = gst_buffer_ref(buffer);
-        sample->presentationSize = stream->presentationSize;
-        stream->pendingReceiveSample = g_list_append(stream->pendingReceiveSample, sample);
-    } else {
-        ReceiveSample* sample = g_new0(ReceiveSample, 1);
-        sample->sample = WebCore::GStreamerMediaSample::create(buffer, stream->presentationSize, stream->audioTrack ? stream->audioTrack->get()->id() : stream->videoTrack->get()->id());
-        sample->stream = stream;
-        g_idle_add((GSourceFunc)webKitWebSrcDidReceiveSample, sample);
-    }
+    PendingReceiveSample* sample = g_new0(PendingReceiveSample, 1);
+    sample->buffer = gst_buffer_ref(buffer);
+    sample->presentationSize = stream->presentationSize;
+    stream->pendingReceiveSample = g_list_append(stream->pendingReceiveSample, sample);
     return GST_PAD_PROBE_OK;
 }
 
