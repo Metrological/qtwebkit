@@ -34,12 +34,12 @@
 #include "MediaPlayerPrivateGStreamer.h"
 #include <wtf/text/StringBuilder.h>
 
+#include "dxdrm/DxDrmDebugApi.h"
+
 GST_DEBUG_CATEGORY_EXTERN(webkit_media_player_debug);
 #define GST_CAT_DEFAULT webkit_media_player_debug
 
-#if USE(DXDRM)
 #define MAX_CHALLENGE_LEN 100000
-#endif
 
 namespace WebCore {
 
@@ -114,15 +114,28 @@ bool CDMSessionGStreamer::update(Uint8Array* key, RefPtr<Uint8Array>& nextMessag
 {
     GST_MEMDUMP ("response received :", key->data (), key->byteLength ());
     
+    bool ret = false;
     DxBool isAckRequired = false;
     HDxResponseResult responseResult = NULL;
-    EDxDrmStatus status = DxDrmStream_ProcessLicenseResponse (m_DxDrmStream, key->data (), key->byteLength (), &responseResult, &isAckRequired);
+    EDxDrmStatus status;
+
+    if (m_waitAck == false) {
+      // Server replied to our license request
+      status = DxDrmStream_ProcessLicenseResponse (m_DxDrmStream, key->data (), key->byteLength (), &responseResult, &isAckRequired);
+    }
+    else {
+      // Server replied to our license response acknowledge
+      status = DxDrmClient_ProcessServerResponse (key->data (), key->byteLength (), DX_RESPONSE_LICENSE_ACK, &responseResult, &isAckRequired);
+      if (isAckRequired) {
+        GST_WARNING ("ack required when processing ack of ack !");
+      }
+    }
+
     if (status != DX_SUCCESS) {
       GST_WARNING ("failed processing license response (%d)", status);
-      return false;
+      goto error;
     }
-    
-    // We need to trak our state on our own as Discretix library seem to set isAckRequired to true even when processing the ack response..
+
     if (!m_waitAck && isAckRequired) {
       guint32 challenge_length = MAX_CHALLENGE_LEN;
       gpointer challenge = g_malloc0 (challenge_length);
@@ -131,7 +144,7 @@ bool CDMSessionGStreamer::update(Uint8Array* key, RefPtr<Uint8Array>& nextMessag
       if (status != DX_SUCCESS) {
         GST_WARNING ("failed generating license ack challenge (%d) response result %p", status, responseResult);
         g_free (challenge);
-        return false;
+        goto error;
       }
       
       GST_MEMDUMP ("generated license ack request :", (const guint8 *) challenge, challenge_length);
@@ -141,14 +154,21 @@ bool CDMSessionGStreamer::update(Uint8Array* key, RefPtr<Uint8Array>& nextMessag
       g_free (challenge);
       
       m_waitAck = true;
-      
-      return false;
     }
     else {
       // Notify the player instance that a key was added
       m_parent->keyAdded ();
-      return true;
+      ret = true;
     }
+
+done:
+  return ret;
+  
+error:
+  // FIXME: Should we unblock the player semaphore or the error will do it ?
+  errorCode = 1;
+  
+  return ret;
 }
 
 }
