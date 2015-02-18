@@ -111,7 +111,7 @@ public:
 #endif
 
 #if ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)
-    void keyAdded();
+    void signalDRM();
 #endif
 
 private:
