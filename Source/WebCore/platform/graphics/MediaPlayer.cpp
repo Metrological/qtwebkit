@@ -163,9 +163,9 @@ public:
 #endif
 };
 
-static PassOwnPtr<MediaPlayerPrivateInterface> createNullMediaPlayer(MediaPlayer* player) 
+static PassRefPtr<MediaPlayerPrivateInterface> createNullMediaPlayer(MediaPlayer* player)
 { 
-    return adoptPtr(new NullMediaPlayerPrivate(player)); 
+    return adoptRef(new NullMediaPlayerPrivate(player));
 }
 
 

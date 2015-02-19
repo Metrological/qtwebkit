@@ -47,6 +47,7 @@
 namespace WebCore {
 
 class GenericEventQueue;
+class HTMLMediaElement;
 
 class MediaSource : public MediaSourcePrivateClient, public ActiveDOMObject, public EventTarget, public ScriptWrappable, public URLRegistrable {
 public:
@@ -71,7 +72,7 @@ public:
 
     // MediaSourcePrivateClient
     virtual void setPrivateAndOpen(PassRefPtr<MediaSourcePrivate>) OVERRIDE;
-    virtual MediaTime duration() const;
+    virtual double duration() const;
     virtual PassOwnPtr<PlatformTimeRanges> buffered() const;
     virtual void seekToTime(const MediaTime&);
 

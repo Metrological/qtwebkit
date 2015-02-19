@@ -4004,26 +4004,46 @@ enable?(VIDEO_TRACK) {
         html/HTMLTrackElement.h \
         html/track/AudioTrack.h \
         html/track/AudioTrackList.h \
+        html/track/AudioTrack.idl \
+        html/track/AudioTrackList.idl \
+        html/track/DataCue.h \
+        html/track/DataCue.idl \
         html/track/InbandTextTrack.h \
+        html/track/InbandDataTextTrack.h \
+        html/track/InbandGenericTextTrack.h \
+        html/track/InbandWebVTTTextTrack.h \
         html/track/LoadableTextTrack.h \
         html/track/TextTrack.h \
         html/track/TextTrackCue.h \
         html/track/TextTrackCueGeneric.h \
         html/track/TextTrackCueList.h \
         html/track/TextTrackList.h \
+        html/track/TextTrackCue.idl \
+        html/track/TextTrackCueList.idl \
+        html/track/TextTrack.idl \
+        html/track/TextTrackList.idl \
+        html/track/TextTrackRegion.idl \
+        html/track/TextTrackRegionList.idl \
         html/track/TrackBase.h \
         html/track/TrackEvent.h \
+        html/track/TrackEvent.idl \
         html/track/TrackListBase.h \
         html/track/VideoTrack.h \
         html/track/VideoTrackList.h \
+        html/track/VideoTrack.idl \
+        html/track/VideoTrackList.idl \
+        html/track/VTTCue.h \
+        html/track/VTTCue.idl \
         html/track/WebVTTParser.h \
         html/track/WebVTTToken.h \
         html/track/WebVTTTokenizer.h \
         loader/TextTrackLoader.h \
         platform/graphics/AudioTrackPrivate.h \
         platform/graphics/InbandTextTrackPrivate.h \
-        platform/graphics/InbandTextTrackPrivateClient.h
-        platform/graphics/VideoTrackPrivate.h \
+        platform/graphics/InbandTextTrackPrivateClient.h \
+        platform/graphics/TrackPrivateBase.h \
+        platform/graphics/VideoTrackPrivate.h
+
 
     SOURCES += \
         bindings/js/JSAudioTrackCustom.cpp \
@@ -4038,7 +4058,11 @@ enable?(VIDEO_TRACK) {
         html/HTMLTrackElement.cpp \
         html/track/AudioTrack.cpp \
         html/track/AudioTrackList.cpp \
+        html/track/DataCue.cpp \
         html/track/InbandTextTrack.cpp \
+        html/track/InbandDataTextTrack.cpp \
+        html/track/InbandGenericTextTrack.cpp \
+        html/track/InbandWebVTTTextTrack.cpp \
         html/track/LoadableTextTrack.cpp \
         html/track/TextTrack.cpp \
         html/track/TextTrackCue.cpp \
@@ -4050,13 +4074,34 @@ enable?(VIDEO_TRACK) {
         html/track/TrackListBase.cpp \
         html/track/VideoTrack.cpp \
         html/track/VideoTrackList.cpp \
+        html/track/VTTCue.cpp \
         html/track/WebVTTElement.cpp \
         html/track/WebVTTParser.cpp \
         html/track/WebVTTTokenizer.cpp \
         loader/cache/CachedTextTrack.cpp \
         loader/TextTrackLoader.cpp \
         platform/graphics/TextTrackRepresentation.cpp \
-        rendering/RenderTextTrackCue.cpp
+        rendering/RenderVTTCue.cpp
+
+    use?(GSTREAMER) {
+
+        HEADERS += \
+            platform/graphics/gstreamer/TrackPrivateBaseGStreamer.h \
+            platform/graphics/gstreamer/VideoTrackPrivateGStreamer.h \
+            platform/graphics/gstreamer/AudioTrackPrivateGStreamer.h \
+            platform/graphics/gstreamer/InbandMetadataTextTrackPrivateGStreamer.h \
+            platform/graphics/gstreamer/InbandTextTrackPrivateGStreamer.h \
+            platform/graphics/gstreamer/TextCombinerGStreamer.h \
+            platform/graphics/gstreamer/TextSinkGStreamer.h
+
+        SOURCES += \
+            platform/graphics/gstreamer/TrackPrivateBaseGStreamer.cpp \
+            platform/graphics/gstreamer/VideoTrackPrivateGStreamer.cpp \
+            platform/graphics/gstreamer/AudioTrackPrivateGStreamer.cpp \
+            platform/graphics/gstreamer/InbandTextTrackPrivateGStreamer.cpp \
+            platform/graphics/gstreamer/TextCombinerGStreamer.cpp \
+            platform/graphics/gstreamer/TextSinkGStreamer.cpp
+    }
 }
 
 enable?(WEB_SOCKETS) {

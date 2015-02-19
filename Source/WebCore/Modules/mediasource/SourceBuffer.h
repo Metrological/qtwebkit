@@ -36,6 +36,7 @@
 
 #include "ActiveDOMObject.h"
 #include "AudioTrack.h"
+#include "Document.h"
 #include "EventTarget.h"
 #include "ExceptionCode.h"
 #include "GenericEventQueue.h"
@@ -56,11 +57,17 @@ class AudioTrackList;
 class MediaSource;
 class PlatformTimeRanges;
 class SourceBufferPrivate;
-class TextTrackList;
 class TimeRanges;
+#if ENABLE(VIDEO_TRACK)
+class TextTrackList;
 class VideoTrackList;
+#endif
 
-class SourceBuffer : public RefCounted<SourceBuffer>, public ActiveDOMObject, public EventTarget, public ScriptWrappable, public SourceBufferPrivateClient, public AudioTrackClient, public VideoTrackClient, public TextTrackClient {
+class SourceBuffer : public RefCounted<SourceBuffer>, public ActiveDOMObject, public EventTarget, public ScriptWrappable, public SourceBufferPrivateClient
+#if ENABLE(VIDEO_TRACK)
+, public AudioTrackClient, public VideoTrackClient, public TextTrackClient
+#endif
+{
 public:
     static PassRefPtr<SourceBuffer> create(PassRefPtr<SourceBufferPrivate>, PassRefPtr<MediaSource>);
 
@@ -80,7 +87,9 @@ public:
 
     void abortIfUpdating();
     void removedFromMediaSource();
+#if ENABLE(VIDEO_TRACK)
     const MediaTime& highestPresentationEndTimestamp() const { return m_highestPresentationEndTimestamp; }
+#endif
     void seekToTime(const MediaTime&);
 
 #if ENABLE(VIDEO_TRACK)
@@ -119,6 +128,8 @@ public:
 
     Document& document() const;
 
+    void invalidateBuffered();
+
 protected:
     // EventTarget interface
     virtual void refEventTarget() OVERRIDE { ref(); }
@@ -138,6 +149,7 @@ private:
     virtual void sourceBufferPrivateAppendComplete(SourceBufferPrivate*, AppendResult);
     virtual void sourceBufferPrivateDidReceiveRenderingError(SourceBufferPrivate*, int errorCode);
 
+#if ENABLE(VIDEO_TRACK)
     // AudioTrackClient
     virtual void audioTrackEnabledChanged(AudioTrack*);
 
@@ -151,6 +163,7 @@ private:
     virtual void textTrackRemoveCues(TextTrack*, const TextTrackCueList*);
     virtual void textTrackAddCue(TextTrack*, PassRefPtr<TextTrackCue>);
     virtual void textTrackRemoveCue(TextTrack*, PassRefPtr<TextTrackCue>);
+#endif
 
     static const WTF::AtomicString& decodeError();
     static const WTF::AtomicString& networkError();
@@ -175,6 +188,7 @@ private:
 
     void removeTimerFired(Timer<SourceBuffer>*);
     void removeCodedFrames(const MediaTime& start, const MediaTime& end);
+    void recalculateBuffered() const;
 
     size_t extraMemoryCost() const;
     void reportExtraMemoryCost();
@@ -192,19 +206,25 @@ private:
     Vector<unsigned char> m_pendingAppendData;
     Timer<SourceBuffer> m_appendBufferTimer;
 
+#if ENABLE(VIDEO_TRACK)
     RefPtr<VideoTrackList> m_videoTracks;
     RefPtr<AudioTrackList> m_audioTracks;
     RefPtr<TextTrackList> m_textTracks;
+#endif
 
     Vector<AtomicString> m_videoCodecs;
     Vector<AtomicString> m_audioCodecs;
     Vector<AtomicString> m_textCodecs;
 
+#if ENABLE(VIDEO_TRACK)
     MediaTime m_timestampOffset;
     MediaTime m_highestPresentationEndTimestamp;
+#else
+    double m_timestampOffset;
+#endif
 
     HashMap<AtomicString, TrackBuffer> m_trackBufferMap;
-    RefPtr<TimeRanges> m_buffered;
+    mutable RefPtr<TimeRanges> m_buffered;
 
     enum AppendStateType { WaitingForSegment, ParsingInitSegment, ParsingMediaSegment };
     AppendStateType m_appendState;
@@ -223,6 +243,7 @@ private:
     bool m_receivedFirstInitializationSegment;
     bool m_active;
     bool m_bufferFull;
+    mutable bool m_shouldRecalculateBuffered;
 
     EventTargetData m_eventTargetData;
 };

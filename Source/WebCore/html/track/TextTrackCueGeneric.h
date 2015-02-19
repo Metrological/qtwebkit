@@ -29,14 +29,14 @@
 #if ENABLE(VIDEO_TRACK)
 
 #include "Color.h"
-#include "TextTrackCue.h"
+#include "VTTCue.h"
 
 namespace WebCore {
 
 class GenericCueData;
 
 // A "generic" cue is a non-WebVTT cue, so it is not positioned/sized with the WebVTT logic.
-class TextTrackCueGeneric : public TextTrackCue {
+class TextTrackCueGeneric FINAL : public VTTCue {
 public:
     static PassRefPtr<TextTrackCueGeneric> create(ScriptExecutionContext* context, double start, double end, const String& content)
     {
@@ -45,7 +45,7 @@ public:
     
     virtual ~TextTrackCueGeneric() { }
 
-    virtual PassRefPtr<TextTrackCueBox> createDisplayTree() OVERRIDE;
+    virtual PassRefPtr<VTTCueBox> createDisplayTree() OVERRIDE;
 
     virtual void setLine(int, ExceptionCode&) OVERRIDE;
     virtual void setPosition(int, ExceptionCode&) OVERRIDE;
@@ -72,7 +72,7 @@ public:
     
     virtual void setFontSize(int, const IntSize&, bool important) OVERRIDE;
 
-    virtual bool isEqual(const TextTrackCue&, CueMatchRules) const OVERRIDE;
+    virtual bool isEqual(const VTTCue&, CueMatchRules) const OVERRIDE;
 
     virtual TextTrackCue::CueType cueType() const OVERRIDE { return TextTrackCue::Generic; }
 

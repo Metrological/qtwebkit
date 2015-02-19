@@ -23,8 +23,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
-#ifndef RenderTextTrackCue_h
-#define RenderTextTrackCue_h
+#ifndef RenderVTTCue_h
+#define RenderVTTCue_h
 
 #if ENABLE(VIDEO_TRACK)
 
@@ -36,11 +36,12 @@
 namespace WebCore {
 
 class RenderBox;
-class TextTrackCueBox;
+class VTTCue;
+class VTTCueBox;
 
-class RenderTextTrackCue : public RenderBlock {
+class RenderVTTCue : public RenderBlock {
 public:
-    explicit RenderTextTrackCue(TextTrackCueBox*);
+    explicit RenderVTTCue(VTTCueBox*);
 
 private:
     virtual void layout() OVERRIDE;
@@ -63,11 +64,11 @@ private:
     void repositionCueSnapToLinesNotSet();
     void repositionGenericCue();
 
-    TextTrackCue* m_cue;
+    VTTCue* m_cue;
     FloatPoint m_fallbackPosition;
 };
 
 } // namespace WebCore
 
 #endif
-#endif // RenderTextTrackCue_h
+#endif // RenderVTTCue_h

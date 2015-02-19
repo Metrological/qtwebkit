@@ -103,6 +103,9 @@ WTFLogChannel* getChannelFromName(const String& channelName)
     if (equalIgnoringCase(channelName, String("Media")))
         return &LogMedia;
 
+    if (equalIgnoringCase(channelName, String("MediaSource")))
+        return &LogMediaSource;
+
     if (equalIgnoringCase(channelName, String("Network")))
         return &LogNetwork;
 

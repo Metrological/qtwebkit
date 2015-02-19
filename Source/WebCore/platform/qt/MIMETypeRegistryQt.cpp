@@ -147,8 +147,7 @@ bool MIMETypeRegistry::isApplicationPluginMIMEType(const String& mimeType)
 #if ENABLE(MEDIA_SOURCE)
 bool MIMETypeRegistry::isSupportedMediaSourceMIMEType(const String&, const String&)
 {
-    notImplemented();
-    return false;
+    return true;
 }
 #endif
 

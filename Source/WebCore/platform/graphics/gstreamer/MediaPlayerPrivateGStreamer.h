@@ -31,14 +31,22 @@
 #include <glib.h>
 #include <gst/gst.h>
 #include <gst/pbutils/install-plugins.h>
+
+#if ENABLE(VIDEO_TRACK)
+#include "AudioTrackPrivateGStreamer.h"
+#include "InbandMetadataTextTrackPrivateGStreamer.h"
+#include "InbandTextTrackPrivateGStreamer.h"
+#include "VideoTrackPrivateGStreamer.h"
+#endif
+
 #include <wtf/Forward.h>
+
+#if ENABLE(VIDEO_TRACK) && USE(GSTREAMER_MPEGTS)
+#include <wtf/text/AtomicStringHash.h>
+#endif
 
 #if ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)
 #include <wtf/threads/BinarySemaphore.h>
-#endif
-
-#if ENABLE(MEDIA_SOURCE)
-#include "MediaSourceGStreamer.h"
 #endif
 
 typedef struct _GstBuffer GstBuffer;
@@ -53,6 +61,9 @@ public:
     static void registerMediaEngine(MediaEngineRegistrar);
     void handleMessage(GstMessage*);
     void handleSyncMessage(GstMessage*);
+
+    static MediaPlayer::SupportsType supportsType(const String& type, const String& codecs, const KURL&);
+
     void handlePluginInstallerResult(GstInstallPluginsReturn);
 
     bool hasVideo() const { return m_hasVideo; }
@@ -99,6 +110,14 @@ public:
     void notifyPlayerOfVideo();
     void notifyPlayerOfAudio();
 
+#if ENABLE(VIDEO_TRACK)
+    void textChanged();
+    void notifyPlayerOfText();
+
+    void newTextSample();
+    void notifyPlayerOfNewTextSample();
+#endif
+
     void sourceChanged();
     GstElement* audioSink() const;
 
@@ -117,10 +136,10 @@ public:
 private:
     MediaPlayerPrivateGStreamer(MediaPlayer*);
 
-    static PassOwnPtr<MediaPlayerPrivateInterface> create(MediaPlayer*);
+    static PassRefPtr<MediaPlayerPrivateInterface> create(MediaPlayer*);
 
     static void getSupportedTypes(HashSet<String>&);
-    static MediaPlayer::SupportsType supportsType(const String& type, const String& codecs, const KURL&);
+
 #if ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)
     static MediaPlayer::SupportsType extendedSupportsType(const String& type, const String& codecs, const String& keySystem, const KURL&);
     static void needKeyEventFromMain(void *invocation);
@@ -147,6 +166,14 @@ private:
     void setDownloadBuffering();
     void processBufferingStats(GstMessage*);
 
+#if ENABLE(VIDEO_TRACK) && USE(GSTREAMER_MPEGTS)
+    void processMpegTsSection(GstMpegtsSection*);
+#endif
+#if ENABLE(VIDEO_TRACK)
+    void processTableOfContents(GstMessage*);
+    void processTableOfContentsEntry(GstTocEntry*, GstTocEntry* parent);
+#endif
+
     bool doSeek(gint64 position, float rate, GstSeekFlags seekType);
     void updatePlaybackRate();
 
@@ -169,6 +196,10 @@ private:
 private:
     GRefPtr<GstElement> m_playBin;
     GRefPtr<GstElement> m_source;
+#if ENABLE(VIDEO_TRACK)
+    GRefPtr<GstElement> m_textAppSink;
+    GRefPtr<GstPad> m_textAppSinkPad;
+#endif
     float m_seekTime;
     bool m_changingRate;
     float m_endTime;
@@ -200,6 +231,7 @@ private:
     bool m_hasAudio;
     guint m_audioTimerHandler;
     guint m_videoTimerHandler;
+    guint m_textTimerHandler;
     GRefPtr<GstElement> m_webkitAudioSink;
     mutable unsigned long long m_totalBytes;
     KURL m_url;
@@ -207,6 +239,15 @@ private:
     GstState m_requestedState;
     GRefPtr<GstElement> m_autoAudioSink;
     bool m_missingPlugins;
+#if ENABLE(VIDEO_TRACK)
+    Vector<RefPtr<AudioTrackPrivateGStreamer> > m_audioTracks;
+    Vector<RefPtr<InbandTextTrackPrivateGStreamer> > m_textTracks;
+    Vector<RefPtr<VideoTrackPrivateGStreamer> > m_videoTracks;
+    RefPtr<InbandMetadataTextTrackPrivateGStreamer> m_chaptersTrack;
+#endif
+#if ENABLE(VIDEO_TRACK) && USE(GSTREAMER_MPEGTS)
+    HashMap<AtomicString, RefPtr<InbandMetadataTextTrackPrivateGStreamer> > m_metadataTracks;
+#endif
 #if ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)
     BinarySemaphore m_drmKeySemaphore;
 #endif

@@ -128,14 +128,14 @@ void MediaSource::removedFromRegistry()
     unsetPendingActivity(this);
 }
 
-MediaTime MediaSource::duration() const
+double MediaSource::duration() const
 {
-    return m_duration;
+    return isClosed() ? std::numeric_limits<double>::quiet_NaN() : m_duration.toDouble();
 }
 
 MediaTime MediaSource::currentTime() const
 {
-    return /*FIXME m_mediaElement ? m_mediaElement->currentMediaTime() : */MediaTime::zeroTime();
+    return MediaTime::createWithDouble(m_mediaElement ? m_mediaElement->currentTime() : 0);
 }
 
 PassOwnPtr<PlatformTimeRanges> MediaSource::buffered() const
@@ -419,6 +419,9 @@ void MediaSource::setReadyState(const AtomicString& state)
     m_readyState = state;
 
     onReadyStateChange(oldState, state);
+
+    for (SourceBufferList::iterator sourceBuffer = m_sourceBuffers->begin(); sourceBuffer != m_sourceBuffers->end(); sourceBuffer++)
+        (*sourceBuffer)->invalidateBuffered();
 }
 
 void MediaSource::endOfStream(ExceptionCode& ec)
@@ -595,6 +598,7 @@ void MediaSource::removeSourceBuffer(SourceBuffer* buffer, ExceptionCode& ec)
     // 3. If the sourceBuffer.updating attribute equals true, then run the following steps: ...
     buffer->abortIfUpdating();
 
+#if ENABLE(VIDEO_TRACK)
     // 4. Let SourceBuffer audioTracks list equal the AudioTrackList object returned by sourceBuffer.audioTracks.
     RefPtr<AudioTrackList> audioTracks = buffer->audioTracks();
 
@@ -714,7 +718,7 @@ void MediaSource::removeSourceBuffer(SourceBuffer* buffer, ExceptionCode& ec)
         if (removedEnabledTextTrack)
             mediaElement()->textTracks()->scheduleChangeEvent();
     }
-    
+#endif
     
     // 10. If sourceBuffer is in activeSourceBuffers, then remove sourceBuffer from activeSourceBuffers ...
     m_activeSourceBuffers->remove(buffer);
@@ -748,7 +752,10 @@ bool MediaSource::isTypeSupported(const String& type)
     // 4. If type contains at a codec that the MediaSource does not support, then return false.
     // 5. If the MediaSource does not support the specified combination of media type, media subtype, and codecs then return false.
     // 6. Return true.
-    return MIMETypeRegistry::isSupportedMediaSourceMIMEType(contentType.type(), codecs);
+
+    String keySystem;
+    KURL url;
+    return MediaPlayer::supportsType(contentType, keySystem, url, 0) != MediaPlayer::IsNotSupported;
 }
 
 bool MediaSource::isOpen() const
