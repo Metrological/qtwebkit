@@ -164,8 +164,10 @@ struct _Stream
     GstElement *parser;
     GstPad* srcpad;
     GstCaps* caps;
+#if ENABLE(VIDEO_TRACK)
     RefPtr<WebCore::AudioTrackPrivateGStreamer> *audioTrack;
     RefPtr<WebCore::VideoTrackPrivateGStreamer> *videoTrack;
+#endif
     WebCore::FloatSize presentationSize;
     GList* pendingReceiveSample;
 };
@@ -394,13 +396,16 @@ static gboolean webKitMediaSrcQueryWithParent(GstPad* pad, GstObject* parent, Gs
     return result;
 }
 
+#if ENABLE(VIDEO_TRACK)
 static void webKitMediaSrcDidReceiveInitializationSegment(Source* source);
+#endif
 
 static gboolean webKitMediaSrcEventWithParent(GstPad* pad, GstObject* parent, GstEvent* event)
 {
     gboolean result = FALSE;
 
     switch (GST_EVENT_TYPE(event)) {
+#if ENABLE(VIDEO_TRACK)
     case GST_EVENT_CUSTOM_UPSTREAM:{
         const GstStructure* s = gst_event_get_structure(event);
 
@@ -431,6 +436,7 @@ static gboolean webKitMediaSrcEventWithParent(GstPad* pad, GstObject* parent, Gs
         }
         break;
     }
+#endif
     default:
         result = gst_pad_event_default(pad, parent, event);
         break;
@@ -463,6 +469,7 @@ typedef struct {
     WTF::RefPtr<WebCore::GStreamerMediaSample> sample;
 } ReceiveSample;
 
+#if ENABLE(VIDEO_TRACK)
 static gboolean webKitWebSrcDidReceiveSample(ReceiveSample* sample)
 {
     sample->stream->parent->parent->priv->mediaSourceClient->didReceiveSample(sample->stream->parent->sourceBuffer, sample->sample);
@@ -470,6 +477,7 @@ static gboolean webKitWebSrcDidReceiveSample(ReceiveSample* sample)
     g_free(sample);
     return G_SOURCE_REMOVE;
 }
+#endif
 
 static GstPadProbeReturn webKitWebSrcBufferProbe(GstPad*, GstPadProbeInfo* info, Stream* stream)
 {
@@ -663,6 +671,7 @@ static void webKitMediaSrcDemuxerPadRemoved(GstElement* demuxer, GstPad* pad, So
 
 }
 
+#if ENABLE(VIDEO_TRACK)
 static void webKitMediaSrcDidReceiveInitializationSegment(Source* source)
 {
     GList* l;
@@ -714,6 +723,7 @@ static void webKitMediaSrcDidReceiveInitializationSegment(Source* source)
 
     source->parent->priv->mediaSourceClient->didReceiveAllPendingSamples(source->sourceBuffer);
 }
+#endif
 
 static void webKitMediaSrcDemuxerNoMorePads(GstElement*, Source* source)
 {
@@ -989,6 +999,7 @@ void MediaSourceClientGStreamer::removedFromMediaSource(PassRefPtr<SourceBufferP
         gst_app_src_end_of_stream(GST_APP_SRC(source->src));
 }
 
+#if ENABLE(VIDEO_TRACK)
 void MediaSourceClientGStreamer::didReceiveInitializationSegment(SourceBufferPrivateGStreamer* sourceBuffer, const SourceBufferPrivateClient::InitializationSegment& initializationSegment)
 {
     sourceBuffer->didReceiveInitializationSegment(initializationSegment);
@@ -1003,6 +1014,7 @@ void MediaSourceClientGStreamer::didReceiveAllPendingSamples(SourceBufferPrivate
 {
     sourceBuffer->didReceiveAllPendingSamples();
 }
+#endif
 
 };
 

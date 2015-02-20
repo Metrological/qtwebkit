@@ -140,11 +140,13 @@ private:
 
     // SourceBufferPrivateClient
     virtual void sourceBufferPrivateDidEndStream(SourceBufferPrivate*, const WTF::AtomicString&);
+#if ENABLE(VIDEO_TRACK)
     virtual void sourceBufferPrivateDidReceiveInitializationSegment(SourceBufferPrivate*, const InitializationSegment&);
     virtual void sourceBufferPrivateDidReceiveSample(SourceBufferPrivate*, PassRefPtr<MediaSample>);
     virtual bool sourceBufferPrivateHasAudio(const SourceBufferPrivate*) const;
     virtual bool sourceBufferPrivateHasVideo(const SourceBufferPrivate*) const;
     virtual void sourceBufferPrivateDidBecomeReadyForMoreSamples(SourceBufferPrivate*, AtomicString trackID);
+#endif
     virtual MediaTime sourceBufferPrivateFastSeekTimeForMediaTime(SourceBufferPrivate*, const MediaTime&, const MediaTime& negativeThreshold, const MediaTime& positiveThreshold);
     virtual void sourceBufferPrivateAppendComplete(SourceBufferPrivate*, AppendResult);
     virtual void sourceBufferPrivateDidReceiveRenderingError(SourceBufferPrivate*, int errorCode);
@@ -176,7 +178,9 @@ private:
 
     void setActive(bool);
 
+#if ENABLE(VIDEO_TRACK)
     bool validateInitializationSegment(const InitializationSegment&);
+#endif
 
     void reenqueueMediaForTime(TrackBuffer&, AtomicString trackID, const MediaTime&);
     void provideMediaData(TrackBuffer&, AtomicString trackID);

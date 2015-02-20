@@ -73,9 +73,11 @@ private:
     SourceBufferPrivateGStreamer(MediaSourceGStreamer*, PassRefPtr<MediaSourceClientGStreamer>, const ContentType&);
     friend class MediaSourceClientGStreamer;
 
+#if ENABLE(VIDEO_TRACK)
     void didReceiveInitializationSegment(const SourceBufferPrivateClient::InitializationSegment&);
     void didReceiveSample(PassRefPtr<MediaSample>);
     void didReceiveAllPendingSamples();
+#endif
 
     MediaSourceGStreamer* m_mediaSource;
     ContentType m_type;

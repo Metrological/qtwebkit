@@ -144,6 +144,7 @@ void SourceBufferPrivateGStreamer::notifyClientWhenReadyForMoreSamples(AtomicStr
     notImplemented();
 }
 
+#if ENABLE(VIDEO_TRACK)
 void SourceBufferPrivateGStreamer::didReceiveInitializationSegment(const SourceBufferPrivateClient::InitializationSegment& initializationSegment)
 {
     if (m_sourceBufferPrivateClient)
@@ -162,6 +163,7 @@ void SourceBufferPrivateGStreamer::didReceiveAllPendingSamples()
         m_sourceBufferPrivateClient->sourceBufferPrivateAppendComplete(this, SourceBufferPrivateClient::AppendSucceeded);
     }
 }
+#endif
 
 }
 #endif
