@@ -153,6 +153,8 @@ public:
     PassRefPtr<PlatformTextTrack> platformTextTrack();
 #endif
 
+    virtual bool isInband() const { return false; }
+
     using RefCounted<TrackBase>::ref;
     using RefCounted<TrackBase>::deref;
 
