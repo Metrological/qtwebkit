@@ -61,7 +61,6 @@ protected:
     RefPtr<InbandTextTrackPrivate> m_private;
 
 private:
-    virtual bool isInband() const OVERRIDE FINAL { return true; }
     virtual void idChanged(TrackPrivateBase*, const AtomicString&) OVERRIDE;
     virtual void labelChanged(TrackPrivateBase*, const AtomicString&) OVERRIDE;
     virtual void languageChanged(TrackPrivateBase*, const AtomicString&) OVERRIDE;
