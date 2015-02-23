@@ -345,12 +345,12 @@ void SourceBuffer::abort(ExceptionCode& ec)
     // FIXME(229408) Add steps 5-6 update appendWindowStart & appendWindowEnd.
 }
 
-void SourceBuffer::remove(double start, double end, ExceptionCode& ec)
+void SourceBuffer::remove(double start, double end, ExceptionCode& ec, bool sync)
 {
-    remove(MediaTime::createWithDouble(start), MediaTime::createWithDouble(end), ec);
+    remove(MediaTime::createWithDouble(start), MediaTime::createWithDouble(end), ec, sync);
 }
 
-void SourceBuffer::remove(const MediaTime& start, const MediaTime& end, ExceptionCode& ec)
+void SourceBuffer::remove(const MediaTime& start, const MediaTime& end, ExceptionCode& ec, bool sync)
 {
     LOG(MediaSource, "SourceBuffer::remove(%p) - start(%lf), end(%lf)", this, start.toDouble(), end.toDouble());
 
@@ -384,7 +384,12 @@ void SourceBuffer::remove(const MediaTime& start, const MediaTime& end, Exceptio
     // 8. Return control to the caller and run the rest of the steps asynchronously.
     m_pendingRemoveStart = start;
     m_pendingRemoveEnd = end;
-    m_removeTimer.startOneShot(0);
+
+    if (sync) {
+        removeTimerFired(0);
+    } else {
+        m_removeTimer.startOneShot(0);
+    }
 }
 
 void SourceBuffer::abortIfUpdating()
