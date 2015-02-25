@@ -207,12 +207,12 @@ void Node::dumpStatistics()
                 if (!result.isNewEntry)
                     result.iterator->value++;
 
-                if (ElementData* elementData = element->elementData()) {
+                if (const ElementData* elementData = element->elementData()) {
                     attributes += elementData->length();
                     ++elementsWithAttributeStorage;
                     for (unsigned i = 0; i < elementData->length(); ++i) {
-                        Attribute* attr = elementData->attributeItem(i);
-                        if (attr->attr())
+                        const Attribute* attr = elementData->attributeItem(i);
+                        if (!attr->isEmpty())
                             ++attributesWithAttr;
                     }
                 }
