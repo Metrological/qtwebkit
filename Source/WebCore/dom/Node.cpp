@@ -153,13 +153,13 @@ bool Node::isSupported(const String& feature, const String& version)
     return DOMImplementation::hasFeature(feature, version);
 }
 
-#if DUMP_NODE_STATISTICS
+#if ENABLE(DUMP_NODE_STATISTICS)
 static HashSet<Node*> liveNodeSet;
 #endif
 
 void Node::dumpStatistics()
 {
-#if DUMP_NODE_STATISTICS
+#if ENABLE(DUMP_NODE_STATISTICS)
     size_t nodesWithRareData = 0;
 
     size_t elementNodes = 0;
@@ -396,7 +396,7 @@ void Node::trackForDebugging()
         nodeCounter.increment();
 #endif
 
-#if DUMP_NODE_STATISTICS
+#if ENABLE(DUMP_NODE_STATISTICS)
     liveNodeSet.add(this);
 #endif
 }
@@ -411,7 +411,7 @@ Node::~Node()
         nodeCounter.decrement();
 #endif
 
-#if DUMP_NODE_STATISTICS
+#if ENABLE(DUMP_NODE_STATISTICS)
     liveNodeSet.remove(this);
 #endif
 

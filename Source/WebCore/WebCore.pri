@@ -310,6 +310,10 @@ enable?(js_memory_tracking) {
     DEFINES += ENABLE_JS_MEMORY_TRACKING
 }
 
+enable?(dump_node_statistics) {
+    DEFINES += ENABLE_DUMP_NODE_STATISTICS=1
+}
+
 mac {
     LIBS += -framework Carbon -framework AppKit -framework IOKit
 }

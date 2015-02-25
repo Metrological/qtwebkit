@@ -2870,7 +2870,7 @@ bool Element::fastAttributeLookupAllowed(const QualifiedName& name) const
 }
 #endif
 
-#ifdef DUMP_NODE_STATISTICS
+#if ENABLE(DUMP_NODE_STATISTICS)
 bool Element::hasNamedNodeMap() const
 {
     return hasRareData() && elementRareData()->attributeMap();

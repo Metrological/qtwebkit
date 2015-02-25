@@ -263,7 +263,7 @@ public:
     bool fastAttributeLookupAllowed(const QualifiedName&) const;
 #endif
 
-#ifdef DUMP_NODE_STATISTICS
+#if ENABLE(DUMP_NODE_STATISTICS)
     bool hasNamedNodeMap() const;
 #endif
     bool hasAttributes() const;

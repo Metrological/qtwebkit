@@ -485,9 +485,19 @@ Document::Document(Frame* frame, const KURL& url, unsigned documentClasses)
 #endif
     , m_didAssociateFormControlsTimer(this, &Document::didAssociateFormControlsTimerFired)
     , m_hasInjectedPlugInsScript(false)
+#if ENABLE(DUMP_NODE_STATISTICS)
+    , m_dumpTimer(this, &Document::dumpTimerFired)
+#endif
 {
     if (m_frame)
         provideContextFeaturesToDocumentFrom(this, m_frame->page());
+
+#if ENABLE(DUMP_NODE_STATISTICS)
+    char* dumpNodeStatistics = getenv("WEBKIT_DUMP_NODE_STATISTICS");
+    int interval = dumpNodeStatistics ? atoi(dumpNodeStatistics) : 0;
+    if (interval)
+        m_dumpTimer.startRepeating(interval);
+#endif
 
     // We depend on the url getting immediately set in subframes, but we
     // also depend on the url NOT getting immediately set in opened windows.
@@ -4813,6 +4823,13 @@ void Document::pendingTasksTimerFired(Timer<Document>*)
         task->performTask(this);
     }
 }
+
+#if ENABLE(DUMP_NODE_STATISTICS)
+void Document::dumpTimerFired(Timer<Document>*)
+{
+    Node::dumpStatistics();
+}
+#endif
 
 void Document::suspendScheduledTasks(ActiveDOMObject::ReasonForSuspension reason)
 {

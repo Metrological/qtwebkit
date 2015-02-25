@@ -1546,6 +1546,10 @@ private:
     void sharedObjectPoolClearTimerFired(Timer<Document>*);
     Timer<Document> m_sharedObjectPoolClearTimer;
 
+#if ENABLE(DUMP_NODE_STATISTICS)
+    void dumpTimerFired(Timer<Document>*);
+#endif
+
     OwnPtr<DocumentSharedObjectPool> m_sharedObjectPool;
 
 #ifndef NDEBUG
@@ -1568,6 +1572,10 @@ private:
     HashSet<RefPtr<Element> > m_associatedFormControls;
 
     bool m_hasInjectedPlugInsScript;
+
+#if ENABLE(DUMP_NODE_STATISTICS)
+    Timer<Document> m_dumpTimer;
+#endif
 };
 
 inline void Document::notifyRemovePendingSheetIfNeeded()
@@ -1632,7 +1640,7 @@ inline Node::Node(Document* document, ConstructionType type)
         m_treeScope = TreeScope::noDocumentInstance();
     m_treeScope->guardRef();
 
-#if !defined(NDEBUG) || (defined(DUMP_NODE_STATISTICS) && DUMP_NODE_STATISTICS)
+#if !defined(NDEBUG) || ENABLE(DUMP_NODE_STATISTICS)
     trackForDebugging();
 #endif
     InspectorCounters::incrementCounter(InspectorCounters::NodeCounter);

@@ -44,9 +44,6 @@ namespace JSC {
     class SlotVisitor;
 }
 
-// This needs to be here because Document.h also depends on it.
-#define DUMP_NODE_STATISTICS 0
-
 namespace WebCore {
 
 class Attribute;
