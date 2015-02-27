@@ -29,9 +29,12 @@
 #include "Image.h"
 
 #include <QImage>
-#include <QOpenGLContext>
 #include <QPainter>
 #include <QPaintDevice>
+
+#if ENABLE(ACCELERATED_2D_CANVAS)
+#include <QOpenGLContext>
+#endif
 
 #include <wtf/RefPtr.h>
 

@@ -265,6 +265,7 @@ HTMLMediaElement::HTMLMediaElement(const QualifiedName& tagName, Document* docum
     , m_readyState(HAVE_NOTHING)
     , m_readyStateMaximum(HAVE_NOTHING)
     , m_volume(1.0f)
+    , m_volumeInitialized(false)
     , m_lastSeekTime(0)
     , m_previousProgressTime(numeric_limits<double>::max())
     , m_lastTimeUpdateEventWallTime(0)
@@ -2746,6 +2747,7 @@ void HTMLMediaElement::setVolume(double vol, ExceptionCode& ec)
     
     if (m_volume != vol) {
         m_volume = vol;
+        m_volumeInitialized = true;
         updateVolume();
         scheduleEvent(eventNames().volumechangeEvent);
     }
@@ -5122,6 +5124,11 @@ void HTMLMediaElement::mediaPlayerPause()
 void HTMLMediaElement::mediaPlayerPlay()
 {
     play();
+}
+
+bool HTMLMediaElement::mediaPlayerPlatformVolumeConfigurationRequired() const
+{
+    return !m_volumeInitialized;
 }
 
 bool HTMLMediaElement::mediaPlayerIsPaused() const

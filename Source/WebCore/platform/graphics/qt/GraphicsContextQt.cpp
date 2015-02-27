@@ -678,6 +678,9 @@ void GraphicsContext::fillPath(const Path& path)
     if (paintingDisabled())
         return;
 
+    if (!(m_state.fillPattern || m_state.fillGradient || m_state.fillColor.isValid()))
+        return;
+
     QPainter* p = m_data->p();
     QPainterPath platformPath = path.platformPath();
     platformPath.setFillRule(toQtFillRule(fillRule()));
@@ -840,6 +843,9 @@ static inline void drawRepeatPattern(QPainter* p, PassRefPtr<Pattern> pattern, c
 void GraphicsContext::fillRect(const FloatRect& rect)
 {
     if (paintingDisabled())
+        return;
+
+    if (!(m_state.fillPattern || m_state.fillGradient || m_state.fillColor.isValid()))
         return;
 
     QPainter* p = m_data->p();
