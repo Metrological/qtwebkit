@@ -82,8 +82,8 @@ public:
     void appendBuffer(PassRefPtr<ArrayBuffer> data, ExceptionCode&);
     void appendBuffer(PassRefPtr<ArrayBufferView> data, ExceptionCode&);
     void abort(ExceptionCode&);
-    void remove(double start, double end, ExceptionCode&);
-    void remove(const MediaTime&, const MediaTime&, ExceptionCode&);
+    void remove(double start, double end, ExceptionCode&, bool sync = false);
+    void remove(const MediaTime&, const MediaTime&, ExceptionCode&, bool sync = false);
 
     void abortIfUpdating();
     void removedFromMediaSource();
@@ -175,6 +175,7 @@ private:
 
     void appendBufferInternal(unsigned char*, unsigned, ExceptionCode&);
     void appendBufferTimerFired(Timer<SourceBuffer>*);
+    void resetParserState();
 
     void setActive(bool);
 

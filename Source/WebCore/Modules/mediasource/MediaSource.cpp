@@ -384,7 +384,7 @@ void MediaSource::setDurationInternal(const MediaTime& duration)
     if (oldDuration.isValid() && duration < oldDuration) {
         for (SourceBufferList::const_iterator it = m_sourceBuffers->begin(); it != m_sourceBuffers->end(); ++it) {
             RefPtr<SourceBuffer> sourceBuffer = *it;
-            sourceBuffer->remove(duration, oldDuration, IGNORE_EXCEPTION);
+            sourceBuffer->remove(duration, oldDuration, IGNORE_EXCEPTION, true);
         }
     }
 

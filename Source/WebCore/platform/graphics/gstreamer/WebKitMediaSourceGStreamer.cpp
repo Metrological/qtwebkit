@@ -170,6 +170,7 @@ struct _Stream
 #endif
     WebCore::FloatSize presentationSize;
     GList* pendingReceiveSample;
+    bool initSegmentAlreadyProcessed;
 };
 
 struct _Source {
@@ -187,6 +188,10 @@ struct _Source {
 
     // Just for identification
     WebCore::SourceBufferPrivateGStreamer* sourceBuffer;
+
+    // Samples coming after the init segment arrive individually,
+    // we must detect when no more samples have arrived after a while
+    gint64 lastSampleTime;
 };
 
 struct _WebKitMediaSrcPrivate
@@ -479,14 +484,39 @@ static gboolean webKitWebSrcDidReceiveSample(ReceiveSample* sample)
 }
 #endif
 
+static gboolean webKitMediaSrcLastSampleTimeout(Source* source)
+{
+    // Check if the timer has been cancelled
+    if (!source->lastSampleTime) return FALSE;
+
+    if (g_get_monotonic_time() - source->lastSampleTime > 250) {
+        source->lastSampleTime = 0;
+        source->parent->priv->mediaSourceClient->didReceiveAllPendingSamples(source->sourceBuffer);
+        return FALSE;
+    } else
+        return TRUE;
+}
+
 static GstPadProbeReturn webKitWebSrcBufferProbe(GstPad*, GstPadProbeInfo* info, Stream* stream)
 {
     GstBuffer* buffer = GST_BUFFER(info->data);
 
-    PendingReceiveSample* sample = g_new0(PendingReceiveSample, 1);
-    sample->buffer = gst_buffer_ref(buffer);
-    sample->presentationSize = stream->presentationSize;
-    stream->pendingReceiveSample = g_list_append(stream->pendingReceiveSample, sample);
+    if (stream->initSegmentAlreadyProcessed) {
+        ReceiveSample* sample = g_new0(ReceiveSample, 1);
+        sample->sample = WebCore::GStreamerMediaSample::create(buffer, stream->presentationSize, stream->audioTrack ? stream->audioTrack->get()->id() : stream->videoTrack->get()->id());
+        sample->stream = stream;
+        webKitWebSrcDidReceiveSample(sample);
+        if (!stream->parent->lastSampleTime) {
+            g_timeout_add(100, GSourceFunc(webKitMediaSrcLastSampleTimeout), stream->parent);
+        }
+        stream->parent->lastSampleTime = g_get_monotonic_time();
+    } else {
+        PendingReceiveSample* sample = g_new0(PendingReceiveSample, 1);
+        sample->buffer = gst_buffer_ref(buffer);
+        sample->presentationSize = stream->presentationSize;
+        stream->pendingReceiveSample = g_list_append(stream->pendingReceiveSample, sample);
+    }
+
     return GST_PAD_PROBE_OK;
 }
 
@@ -545,6 +575,7 @@ static void webKitMediaSrcDemuxerPadAdded(GstElement* demuxer, GstPad* pad, Sour
     Stream* stream = g_new0(Stream, 1);
 
     stream->parent = source;
+    stream->initSegmentAlreadyProcessed = false;
     source->streams = g_list_prepend(source->streams, stream);
 
     g_assert(caps != 0);
@@ -719,6 +750,7 @@ static void webKitMediaSrcDidReceiveInitializationSegment(Source* source)
         }
         g_list_free(stream->pendingReceiveSample);
         stream->pendingReceiveSample = NULL;
+        stream->initSegmentAlreadyProcessed = true;
     }
 
     source->parent->priv->mediaSourceClient->didReceiveAllPendingSamples(source->sourceBuffer);
@@ -953,6 +985,7 @@ bool MediaSourceClientGStreamer::append(PassRefPtr<SourceBufferPrivateGStreamer>
         return false;
     buffer = gst_buffer_new_and_alloc(length);
     gst_buffer_fill(buffer, 0, data, length);
+    source->lastSampleTime = 0;
     ret = gst_app_src_push_buffer(GST_APP_SRC(source->src), buffer);
 
     return (ret == GST_FLOW_OK);

@@ -295,6 +295,34 @@ void SourceBuffer::appendBuffer(PassRefPtr<ArrayBufferView> data, ExceptionCode&
     appendBufferInternal(static_cast<unsigned char*>(data->baseAddress()), data->byteLength(), ec);
 }
 
+void SourceBuffer::resetParserState()
+{
+    // Section 3.5.2 Reset Parser State algorithm steps.
+    // http://www.w3.org/TR/2014/CR-media-source-20140717/#sourcebuffer-reset-parser-state
+    // 1. If the append state equals PARSING_MEDIA_SEGMENT and the input buffer contains some complete coded frames,
+    //    then run the coded frame processing algorithm until all of these complete coded frames have been processed.
+    // FIXME: If any implementation will work in pulling mode (instead of async push to SourceBufferPrivate, and forget)
+    //     this should be handled somehow either here, or in m_private->abort();
+
+    // 2. Unset the last decode timestamp on all track buffers.
+    // 3. Unset the last frame duration on all track buffers.
+    // 4. Unset the highest presentation timestamp on all track buffers.
+    // 5. Set the need random access point flag on all track buffers to true.
+    for (HashMap<AtomicString, TrackBuffer>::iterator::Values trackBufferPair = m_trackBufferMap.values().begin(); trackBufferPair != m_trackBufferMap.values().end(); ++trackBufferPair) {
+        trackBufferPair->lastDecodeTimestamp = MediaTime::invalidTime();
+        trackBufferPair->lastFrameDuration = MediaTime::invalidTime();
+        trackBufferPair->highestPresentationTimestamp = MediaTime::invalidTime();
+        trackBufferPair->needRandomAccessFlag = true;
+    }
+
+    // 6. Remove all bytes from the input buffer.
+    // Note: this is handled by abortIfUpdating()
+    // 7. Set append state to WAITING_FOR_SEGMENT.
+    m_appendState = WaitingForSegment;
+
+    m_private->abort();
+}
+
 void SourceBuffer::abort(ExceptionCode& ec)
 {
     // Section 3.2 abort() method steps.
@@ -312,17 +340,17 @@ void SourceBuffer::abort(ExceptionCode& ec)
     abortIfUpdating();
 
     // 4. Run the reset parser state algorithm.
-    m_private->abort();
+    resetParserState();
 
     // FIXME(229408) Add steps 5-6 update appendWindowStart & appendWindowEnd.
 }
 
-void SourceBuffer::remove(double start, double end, ExceptionCode& ec)
+void SourceBuffer::remove(double start, double end, ExceptionCode& ec, bool sync)
 {
-    remove(MediaTime::createWithDouble(start), MediaTime::createWithDouble(end), ec);
+    remove(MediaTime::createWithDouble(start), MediaTime::createWithDouble(end), ec, sync);
 }
 
-void SourceBuffer::remove(const MediaTime& start, const MediaTime& end, ExceptionCode& ec)
+void SourceBuffer::remove(const MediaTime& start, const MediaTime& end, ExceptionCode& ec, bool sync)
 {
     LOG(MediaSource, "SourceBuffer::remove(%p) - start(%lf), end(%lf)", this, start.toDouble(), end.toDouble());
 
@@ -356,7 +384,12 @@ void SourceBuffer::remove(const MediaTime& start, const MediaTime& end, Exceptio
     // 8. Return control to the caller and run the rest of the steps asynchronously.
     m_pendingRemoveStart = start;
     m_pendingRemoveEnd = end;
-    m_removeTimer.startOneShot(0);
+
+    if (sync) {
+        removeTimerFired(0);
+    } else {
+        m_removeTimer.startOneShot(0);
+    }
 }
 
 void SourceBuffer::abortIfUpdating()
