@@ -29,6 +29,9 @@
 
 #include "Event.h"
 
+// DEBUG
+#include <wtf/text/CString.h>
+
 namespace WebCore {
 
 PassOwnPtr<GenericEventQueue> GenericEventQueue::create(EventTarget* owner)
@@ -49,6 +52,10 @@ GenericEventQueue::~GenericEventQueue()
 
 bool GenericEventQueue::enqueueEvent(PassRefPtr<Event> event)
 {
+    Event* e = event.get();
+    printf("### enqueuing event %p: target=%s (%p), event=%s %s\n", e, (event->target())?event->target()->interfaceName().string().latin1().data():"no-target", event->target(), event->type().string().latin1().data(), (m_isClosed)?"(closed, cancelling!)":"");
+    fflush(stdout);
+
     if (m_isClosed)
         return false;
 
@@ -87,7 +94,12 @@ void GenericEventQueue::timerFired(Timer<GenericEventQueue>*)
     RefPtr<EventTarget> protect(m_owner);
     for (unsigned i = 0; i < pendingEvents.size(); ++i) {
         EventTarget* target = pendingEvents[i]->target() ? pendingEvents[i]->target() : m_owner;
+        Event* p = pendingEvents[i].get();
+        printf("### dispatching event %p %d/%d: target=%s (%p), event=%s\n", p, (i+1), pendingEvents.size(), target->interfaceName().string().latin1().data(), target, pendingEvents[i]->type().string().latin1().data());
+        fflush(stdout);
         target->dispatchEvent(pendingEvents[i].release());
+        printf("### dispatched event %p %d/%d\n", p, (i+1), pendingEvents.size());
+        fflush(stdout);
     }
 }
 
