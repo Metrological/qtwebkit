@@ -50,7 +50,8 @@ public:
     };
 
     MediaTime();
-    MediaTime(int64_t value, int32_t scale = DefaultTimeScale, uint32_t flags = Valid);
+    explicit MediaTime(int64_t value, int32_t scale = DefaultTimeScale, uint32_t flags = Valid);
+    MediaTime(double doubleTime);
     MediaTime(const MediaTime& rhs);
     ~MediaTime();
 
