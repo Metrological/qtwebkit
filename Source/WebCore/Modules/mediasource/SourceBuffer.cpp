@@ -68,7 +68,7 @@ static const MediaTime& currentTimeFudgeFactor()
 {
     // Given that we can nt use the variadic on templates, use the default constructor
     // which uses a 6000 scale, so 1/24 = 250/6000
-    static NeverDestroyed<MediaTime> fudgeFactor(250);
+    static NeverDestroyed<MediaTime> fudgeFactor(int64_t(250));
     return fudgeFactor;
 }
 

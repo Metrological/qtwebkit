@@ -75,6 +75,11 @@ MediaTime::MediaTime(int64_t value, int32_t scale, uint32_t flags)
 {
 }
 
+MediaTime::MediaTime(double doubleTime)
+{
+    *this = createWithDouble(doubleTime);
+}
+
 MediaTime::~MediaTime()
 {
 }
