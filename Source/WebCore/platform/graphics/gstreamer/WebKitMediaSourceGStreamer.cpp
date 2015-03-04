@@ -520,6 +520,22 @@ static GstPadProbeReturn webKitWebSrcBufferProbe(GstPad*, GstPadProbeInfo* info,
     return GST_PAD_PROBE_OK;
 }
 
+static GstPadProbeReturn webKitWebSrcBufferAfterMultiqueueProbe(GstPad* pad, GstPadProbeInfo* info, Stream* stream)
+{
+    GstBuffer* buffer = GST_BUFFER(info->data);
+    GstClockTime duration = stream->parent->parent->priv->duration;
+
+    // If the presentation time of this buffer is beyond the "logical" duration, synthesize EOS.
+    // The "logical" duration may be shorter than the "physical" duration that the buffered data can provide,
+    // which would throw a natural EOS anyway
+    if (GST_BUFFER_PTS_IS_VALID(buffer) && duration && GST_BUFFER_PTS(buffer) > duration) {
+        GRefPtr<GstPad> peerPad = adoptGRef(gst_pad_get_peer(pad));
+        gst_pad_send_event(peerPad.get(), gst_event_new_eos());
+        return GST_PAD_PROBE_DROP;
+    } else
+        return GST_PAD_PROBE_OK;
+}
+
 static void webKitMediaSrcDemuxerNoMorePads(GstElement*, Source* source);
 
 static void webKitMediaSrcParserNotifyCaps(GObject* object, GParamSpec*, Stream* stream)
@@ -647,6 +663,7 @@ static void webKitMediaSrcDemuxerPadAdded(GstElement* demuxer, GstPad* pad, Sour
     gst_pad_link(pad, sinkpad);
 
     srcpad = get_internal_linked_pad(sinkpad);
+    gst_pad_add_probe(srcpad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback) webKitWebSrcBufferAfterMultiqueueProbe, stream, NULL);
     gst_object_unref(sinkpad);
 
     gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback) webKitWebSrcBufferProbe, stream, NULL);
