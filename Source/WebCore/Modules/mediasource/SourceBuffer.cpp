@@ -534,15 +534,12 @@ void SourceBuffer::appendBufferInternal(unsigned char* data, unsigned size, Exce
     // 4. Run the coded frame eviction algorithm.
     evictCodedFrames(size);
 
-    // FIXME: enable this code when MSE libraries have been updated to support it.
-#if 0
     // 5. If the buffer full flag equals true, then throw a QUOTA_EXCEEDED_ERR exception and abort these step.
     if (m_bufferFull) {
         LOG(MediaSource, "SourceBuffer::appendBufferInternal(%p) -  buffer full, failing with QUOTA_EXCEEDED_ERR error", this);
         ec = QUOTA_EXCEEDED_ERR;
         return;
     }
-#endif
 
     // NOTE: Return to 3.2 appendBuffer()
     // 3. Add data to the end of the input buffer.
@@ -910,12 +907,7 @@ size_t SourceBuffer::maximumBufferSize() const
     if (isRemoved())
         return 0;
 
-    HTMLMediaElement* element = m_source->mediaElement();
-    if (!element)
-        return 0;
-
-    return 0;
-    // FIXME return element->maximumSourceBufferSize(*this);
+    return 150 * 1024 * 1024;
 }
 
 const AtomicString& SourceBuffer::decodeError()
