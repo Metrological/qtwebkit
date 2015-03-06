@@ -538,6 +538,9 @@ void SourceBuffer::appendBufferInternal(unsigned char* data, unsigned size, Exce
     if (m_bufferFull) {
         LOG(MediaSource, "SourceBuffer::appendBufferInternal(%p) -  buffer full, failing with QUOTA_EXCEEDED_ERR error", this);
         ec = QUOTA_EXCEEDED_ERR;
+        scheduleEvent(eventNames().updatestartEvent);
+        scheduleEvent(eventNames().updateEvent);
+        scheduleEvent(eventNames().updateendEvent);
         return;
     }
 
