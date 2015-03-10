@@ -32,6 +32,7 @@ public:
     QWidgetPluginImpl(QWidget *w) : m_widget(w) { }
     virtual ~QWidgetPluginImpl();
     virtual void update(const QRect &) OVERRIDE;
+    virtual void paint(QPainter*) OVERRIDE;
     virtual void setGeometryAndClip(const QRect&, const QRect&, bool isVisible) OVERRIDE;
     virtual void setVisible(bool) OVERRIDE;
     virtual void setStyleSheet(const QString&) OVERRIDE;

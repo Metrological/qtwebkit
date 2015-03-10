@@ -34,6 +34,7 @@ public:
     QGraphicsWidgetPluginImpl(QGraphicsWidget *w) : m_graphicsWidget(w) { }
     virtual ~QGraphicsWidgetPluginImpl();
     virtual void update(const QRect &) OVERRIDE;
+    virtual void paint(QPainter*) OVERRIDE;
     virtual void setGeometryAndClip(const QRect&, const QRect&, bool) OVERRIDE;
     virtual void setVisible(bool);
     virtual void setStyleSheet(const QString&) OVERRIDE { }

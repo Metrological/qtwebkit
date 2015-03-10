@@ -33,6 +33,10 @@ void QWidgetPluginImpl::update(const QRect &rect)
     m_widget->update(rect);
 }
 
+void QWidgetPluginImpl::paint(QPainter* painter)
+{
+}
+
 void QWidgetPluginImpl::setGeometryAndClip(const QRect &geometry, const QRect &clipRect, bool isVisible)
 {
     m_widget->setGeometry(geometry);

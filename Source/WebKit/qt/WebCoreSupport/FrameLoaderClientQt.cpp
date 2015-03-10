@@ -1460,6 +1460,12 @@ public:
             widgetAdapter()->setVisible(false);
     }
 
+    virtual void paint(GraphicsContext* context, const IntRect& rect)
+    {
+        if (platformWidget())
+            widgetAdapter()->paint(context->platformContext());
+    }
+
 private:
     QtPluginWidgetAdapter* m_adapter;
 

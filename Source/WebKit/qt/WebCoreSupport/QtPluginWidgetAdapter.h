@@ -24,6 +24,7 @@
 #include <QObject>
 #include <QRect>
 #include <QString>
+#include <QPainter>
 #include <qwebkitglobal.h>
 
 class WEBKIT_EXPORTDATA QtPluginWidgetAdapter : public QObject {
@@ -31,6 +32,7 @@ class WEBKIT_EXPORTDATA QtPluginWidgetAdapter : public QObject {
 public:
     QtPluginWidgetAdapter();
     virtual void update(const QRect&) = 0;
+    virtual void paint(QPainter*) = 0;
     virtual void setGeometryAndClip(const QRect&, const QRect&, bool isVisible = false) = 0;
     virtual void setVisible(bool) = 0;
     virtual void setStyleSheet(const QString&) = 0;

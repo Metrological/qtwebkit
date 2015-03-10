@@ -38,6 +38,11 @@ void QGraphicsWidgetPluginImpl::update(const QRect &rect)
         scene->update(rect);
 }
 
+void QGraphicsWidgetPluginImpl::paint(QPainter* painter)
+{
+    m_graphicsWidget->paint(painter, 0, 0);
+}
+
 void QGraphicsWidgetPluginImpl::setGeometryAndClip(const QRect &geometry, const QRect &, bool)
 {
     m_graphicsWidget->setGeometry(geometry);
