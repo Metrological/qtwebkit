@@ -552,8 +552,10 @@ static gboolean webKitWebSrcStart(WebKitWebSrc* src)
     else
         loader = s_cachedResourceLoader;
 
-    if (loader)
-        priv->client = new CachedResourceStreamingClient(src, loader, request, priv->player->mediaPlayerClient()->mediaPlayerCORSMode());
+    if (loader) {
+        MediaPlayerClient::CORSMode corsMode = priv->player ? priv->player->mediaPlayerClient()->mediaPlayerCORSMode() : MediaPlayerClient::CORSMode::Unspecified;
+        priv->client = new CachedResourceStreamingClient(src, loader, request, corsMode);
+    }
 
     if (!priv->client)
         priv->client = new ResourceHandleStreamingClient(src, request);
