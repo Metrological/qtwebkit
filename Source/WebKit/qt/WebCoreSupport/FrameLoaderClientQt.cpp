@@ -1451,7 +1451,8 @@ public:
     virtual void show()
     {
         Widget::show();
-        handleVisibility();
+        if (platformWidget())
+            widgetAdapter()->setVisible(true);
     }
     virtual void hide()
     {
@@ -1462,13 +1463,6 @@ public:
 
 private:
     QtPluginWidgetAdapter* m_adapter;
-
-    void handleVisibility()
-    {
-        if (!isVisible())
-            return;
-        widgetAdapter()->setVisible(true);
-    }
 };
 
 
