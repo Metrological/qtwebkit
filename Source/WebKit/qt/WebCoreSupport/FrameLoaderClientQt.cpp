@@ -1523,6 +1523,9 @@ PassRefPtr<Widget> FrameLoaderClientQt::createPlugin(const IntSize& pluginSize, 
     }
     if (pluginAdapter) {
         QtPluginWidgetAdapter* widget = qobject_cast<QtPluginWidgetAdapter*>(pluginAdapter);
+        // store the current QWebFrame as a plugin QObject property
+        // so we can retrieve it later inside the plugin's code
+        widget->handle()->setProperty("webFrame", qVariantFromValue((void*)m_webFrame->handle()));
         if (widget) {
             QObject* parentWidget = 0;
             if (m_webFrame->pageAdapter->client)
