@@ -116,6 +116,10 @@
 #include "NetworkServicesClientQt.h"
 #endif
 
+#if !USE(SOUP)
+#include "CookieJarQt.h"
+#endif
+
 // from text/qfont.cpp
 QT_BEGIN_NAMESPACE
 extern Q_GUI_EXPORT int qt_defaultDpi();
@@ -378,7 +382,15 @@ QNetworkAccessManager* QWebPageAdapter::networkAccessManager()
 {
     if (!networkManager) {
         networkManager = new QNetworkAccessManager(handle());
-    }
+#if !USE(SOUP)
+        // set the shared cookieJar by default to the network manager
+        SharedCookieJarQt* cookieJar = SharedCookieJarQt::shared();
+        if(cookieJar) {
+          networkManager->setCookieJar(cookieJar);
+          cookieJar->setParent(0);
+      }
+#endif
+     }
     return networkManager;
 }
 
