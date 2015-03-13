@@ -191,6 +191,12 @@ struct _Source {
     // Just for identification
     WebCore::SourceBufferPrivateGStreamer* sourceBuffer;
 
+    // Some appended data are only headers and don't generate any
+    // useful stream data for decoding. This is detected with a
+    // timeout and reported to the upper layers, so update/updateend
+    // can be generated and the append operation doesn't block.
+    guint noDataToDecodeTimeoutTag;
+
     // Samples coming after the init segment arrive individually,
     // we must detect when no more samples have arrived after a while
     gint64 lastSampleTime;
@@ -503,6 +509,11 @@ static GstPadProbeReturn webKitWebSrcBufferProbe(GstPad*, GstPadProbeInfo* info,
 {
     GstBuffer* buffer = GST_BUFFER(info->data);
 
+    if (stream->parent->noDataToDecodeTimeoutTag) {
+        g_source_remove(stream->parent->noDataToDecodeTimeoutTag);
+        stream->parent->noDataToDecodeTimeoutTag = 0;
+    }
+
     if (stream->initSegmentAlreadyProcessed) {
         ReceiveSample* sample = g_new0(ReceiveSample, 1);
         sample->sample = WebCore::GStreamerMediaSample::create(buffer, stream->presentationSize, stream->audioTrack ? stream->audioTrack->get()->id() : stream->videoTrack->get()->id());
@@ -581,6 +592,13 @@ static void webKitMediaSrcLinkStreamToSrcPad(GstPad* srcpad, Stream* stream)
     stream->srcpad = ghostpad;
 }
 
+static gboolean webKitMediaSrcNoDataToDecodeTimeout(Source* source)
+{
+    source->noDataToDecodeTimeoutTag = 0;
+    source->parent->priv->mediaSourceClient->didReceiveAllPendingSamples(source->sourceBuffer);
+    return FALSE;
+}
+
 static void webKitMediaSrcParserNotifyCaps(GObject* object, GParamSpec*, Stream* stream)
 {
     GstPad* srcpad = GST_PAD(object);
@@ -588,6 +606,11 @@ static void webKitMediaSrcParserNotifyCaps(GObject* object, GParamSpec*, Stream*
 
     if (!caps)
         return;
+
+    if (stream->parent->noDataToDecodeTimeoutTag) {
+        g_source_remove(stream->parent->noDataToDecodeTimeoutTag);
+        stream->parent->noDataToDecodeTimeoutTag = 0;
+    }
 
     webKitMediaSrcUpdatePresentationSize(caps, stream);
 
@@ -716,8 +739,11 @@ static void webKitMediaSrcDidReceiveInitializationSegment(Source* source)
     GList* l;
     for (l = source->streams; l; l = l->next) {
         Stream* stream = (Stream*)l->data;
-        if (!stream->audioTrack && !stream->videoTrack)
+        if (!stream->audioTrack && !stream->videoTrack) {
+            // No useful data, but notify anyway to complete the append operation
+            source->parent->priv->mediaSourceClient->didReceiveAllPendingSamples(source->sourceBuffer);
             return;
+        }
     }
 
     // TODO: Locking
@@ -934,6 +960,8 @@ MediaSourcePrivate::AddStatus MediaSourceClientGStreamer::addSourceBuffer(PassRe
     source->parent = m_src.get();
     source->src = gst_element_factory_make("appsrc", srcName.get());
     source->typefind = gst_element_factory_make("typefind", typefindName.get());
+    source->noDataToDecodeTimeoutTag = 0;
+
     g_signal_connect(source->typefind, "have-type", G_CALLBACK(webKitMediaSrcHaveType), source);
     source->sourceBuffer = sourceBufferPrivate.get();
 
@@ -989,6 +1017,10 @@ bool MediaSourceClientGStreamer::append(PassRefPtr<SourceBufferPrivateGStreamer>
     buffer = gst_buffer_new_and_alloc(length);
     gst_buffer_fill(buffer, 0, data, length);
     source->lastSampleTime = 0;
+
+    ASSERT(source->noDataToDecodeTimeoutTag == 0);
+
+    source->noDataToDecodeTimeoutTag = g_timeout_add(1000, GSourceFunc(webKitMediaSrcNoDataToDecodeTimeout), source);
     ret = gst_app_src_push_buffer(GST_APP_SRC(source->src), buffer);
 
     return (ret == GST_FLOW_OK);
