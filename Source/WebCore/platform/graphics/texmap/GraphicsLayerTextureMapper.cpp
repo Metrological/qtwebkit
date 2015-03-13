@@ -670,6 +670,7 @@ void GraphicsLayerTextureMapper::pauseAnimation(const String& animationName, dou
 void GraphicsLayerTextureMapper::removeAnimation(const String& animationName)
 {
     m_animations.remove(animationName);
+    notifyChange(AnimationChange);
 }
 
 #if ENABLE(CSS_FILTERS)
