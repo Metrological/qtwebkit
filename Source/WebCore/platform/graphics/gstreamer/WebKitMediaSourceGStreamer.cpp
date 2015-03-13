@@ -768,22 +768,17 @@ static void webKitMediaSrcDidReceiveInitializationSegment(Source* source)
 static void webKitMediaSrcDemuxerNoMorePads(GstElement*, Source* source)
 {
     GList* l;
-    bool allDone = true;
+    bool allPadsDone = true;
+
     source->noMorePads = true;
     // TODO: Locking
     for (l = source->parent->priv->sources; l; l = l->next) {
         Source* tmp = (Source*)l->data;
 
-        allDone = allDone && tmp->noMorePads;
-
-        GList* m;
-        for (m = source->streams; m; m = m->next) {
-            Stream* stream = (Stream*)m->data;
-
-            allDone = allDone && stream->caps != NULL;
-        }
+        allPadsDone = allPadsDone && tmp->noMorePads;
+        if (!allPadsDone) break;
     }
-    if (allDone) {
+    if (allPadsDone) {
         source->parent->priv->noMorePads = true;
         gst_element_no_more_pads(GST_ELEMENT(source->parent));
         webKitMediaSrcDoAsyncDone(source->parent);
