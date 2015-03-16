@@ -160,6 +160,8 @@ struct _Stream
 {
     Source* parent;
 
+    int id;
+
     // Might be 0, e.g. for VP8/VP9
     GstElement *parser;
     GstPad* srcpad;
@@ -188,6 +190,12 @@ struct _Source {
 
     // Just for identification
     WebCore::SourceBufferPrivateGStreamer* sourceBuffer;
+
+    // Some appended data are only headers and don't generate any
+    // useful stream data for decoding. This is detected with a
+    // timeout and reported to the upper layers, so update/updateend
+    // can be generated and the append operation doesn't block.
+    guint noDataToDecodeTimeoutTag;
 
     // Samples coming after the init segment arrive individually,
     // we must detect when no more samples have arrived after a while
@@ -501,6 +509,11 @@ static GstPadProbeReturn webKitWebSrcBufferProbe(GstPad*, GstPadProbeInfo* info,
 {
     GstBuffer* buffer = GST_BUFFER(info->data);
 
+    if (stream->parent->noDataToDecodeTimeoutTag) {
+        g_source_remove(stream->parent->noDataToDecodeTimeoutTag);
+        stream->parent->noDataToDecodeTimeoutTag = 0;
+    }
+
     if (stream->initSegmentAlreadyProcessed) {
         ReceiveSample* sample = g_new0(ReceiveSample, 1);
         sample->sample = WebCore::GStreamerMediaSample::create(buffer, stream->presentationSize, stream->audioTrack ? stream->audioTrack->get()->id() : stream->videoTrack->get()->id());
@@ -538,14 +551,8 @@ static GstPadProbeReturn webKitWebSrcBufferAfterMultiqueueProbe(GstPad* pad, Gst
 
 static void webKitMediaSrcDemuxerNoMorePads(GstElement*, Source* source);
 
-static void webKitMediaSrcParserNotifyCaps(GObject* object, GParamSpec*, Stream* stream)
+static void webKitMediaSrcUpdatePresentationSize(GstCaps* caps, Stream* stream)
 {
-    GstPad* srcpad = GST_PAD(object);
-    GstCaps* caps = gst_pad_get_current_caps(srcpad);
-
-    if (!caps)
-        return;
-
     GstStructure* s = gst_caps_get_structure(caps, 0);
     const gchar* structureName = gst_structure_get_name(s);
     GstVideoInfo info;
@@ -555,21 +562,25 @@ static void webKitMediaSrcParserNotifyCaps(GObject* object, GParamSpec*, Stream*
         // TODO: correct?
         width = info.width;
         height = info.height * ((float) info.par_d / (float) info.par_n);
+
         stream->presentationSize = WebCore::FloatSize(width, height);
     } else {
         stream->presentationSize = WebCore::FloatSize();
     }
 
-    // TODO
-    if (gst_pad_is_linked(srcpad)) {
-        gst_caps_unref(caps);
-        return;
-    }
+    if (stream->caps)
+        gst_caps_unref(stream->caps);
+
+    stream->caps = caps;
+}
+
+static void webKitMediaSrcLinkStreamToSrcPad(GstPad* srcpad, Stream* stream)
+{
+    Source* source = stream->parent;
 
     // TODO: Atomic ints, GRefPtr
-    gchar* padName = g_strdup_printf("src_%u", stream->parent->parent->priv->numberOfPads++);
+    gchar* padName = g_strdup_printf("src_%u", source->parent->priv->numberOfPads++);
     GstPad* ghostpad = gst_ghost_pad_new_from_template(padName, srcpad, gst_static_pad_template_get(&srcTemplate));
-
 
     gst_pad_set_query_function(ghostpad, webKitMediaSrcQueryWithParent);
     gst_pad_set_event_function(ghostpad, webKitMediaSrcEventWithParent);
@@ -577,38 +588,67 @@ static void webKitMediaSrcParserNotifyCaps(GObject* object, GParamSpec*, Stream*
     gst_pad_set_element_private(ghostpad, stream);
 
     gst_pad_set_active(ghostpad, TRUE);
-    gst_element_add_pad(GST_ELEMENT(stream->parent->parent), ghostpad);
+    gst_element_add_pad(GST_ELEMENT(source->parent), ghostpad);
     stream->srcpad = ghostpad;
-    stream->caps = caps;
+}
+
+static gboolean webKitMediaSrcNoDataToDecodeTimeout(Source* source)
+{
+    source->noDataToDecodeTimeoutTag = 0;
+    source->parent->priv->mediaSourceClient->didReceiveAllPendingSamples(source->sourceBuffer);
+    return FALSE;
+}
+
+static void webKitMediaSrcParserNotifyCaps(GObject* object, GParamSpec*, Stream* stream)
+{
+    GstPad* srcpad = GST_PAD(object);
+    GstCaps* caps = gst_pad_get_current_caps(srcpad);
+
+    if (!caps)
+        return;
+
+    if (stream->parent->noDataToDecodeTimeoutTag) {
+        g_source_remove(stream->parent->noDataToDecodeTimeoutTag);
+        stream->parent->noDataToDecodeTimeoutTag = 0;
+    }
+
+    webKitMediaSrcUpdatePresentationSize(caps, stream);
+
+    // TODO
+    if (!gst_pad_is_linked(srcpad))
+        webKitMediaSrcLinkStreamToSrcPad(srcpad, stream);
 
     webKitMediaSrcDemuxerNoMorePads(NULL, stream->parent);
 }
 
-static void webKitMediaSrcDemuxerPadAdded(GstElement* demuxer, GstPad* pad, Source* source)
+static void webKitMediaSrcDemuxerPadAdded(GstElement* demuxer, GstPad* demuxersrcpad, Source* source)
 {
-    GstCaps* caps = gst_pad_get_current_caps(pad);
-    GstStructure* s = gst_caps_get_structure(caps, 0);
+    GstCaps* demuxersrcpadcaps = gst_pad_get_current_caps(demuxersrcpad);
+    GstStructure* s = gst_caps_get_structure(demuxersrcpadcaps, 0);
     Stream* stream = g_new0(Stream, 1);
+    gchar *parserBinName;
 
+    stream->id = source->parent->priv->numberOfPads; // Just informative
     stream->parent = source;
     stream->initSegmentAlreadyProcessed = false;
     source->streams = g_list_prepend(source->streams, stream);
+    parserBinName = g_strdup_printf("streamparser%d", stream->id);
 
-    g_assert(caps != 0);
+    g_assert(demuxersrcpadcaps != 0);
 
     if (gst_structure_has_name(s, "video/x-h264")) {
         GstElement* parser;
         GstElement* capsfilter;
         GstPad* pad;
-        GstCaps* caps;
+        GstCaps* filtercaps;
 
-        caps = gst_caps_new_simple("video/x-h264", "alignment", G_TYPE_STRING, "au", NULL);
+        filtercaps = gst_caps_new_simple("video/x-h264", "alignment", G_TYPE_STRING, "au", NULL);
         parser = gst_element_factory_make("h264parse", 0);
         capsfilter = gst_element_factory_make("capsfilter", 0);
-        g_object_set(capsfilter, "caps", caps, NULL);
-        gst_caps_unref(caps);
+        g_object_set(capsfilter, "caps", filtercaps, NULL);
+        gst_caps_unref(filtercaps);
 
-        stream->parser = gst_bin_new(NULL);
+        stream->parser = gst_bin_new(parserBinName);
         gst_bin_add_many(GST_BIN(stream->parser), parser, capsfilter, NULL);
         gst_element_link_pads(parser, "src", capsfilter, "sink");
 
@@ -623,15 +663,15 @@ static void webKitMediaSrcDemuxerPadAdded(GstElement* demuxer, GstPad* pad, Sour
         GstElement* parser;
         GstElement* capsfilter;
         GstPad* pad;
-        GstCaps* caps;
+        GstCaps* filtercaps;
 
-        caps = gst_caps_new_simple("video/x-h265", "alignment", G_TYPE_STRING, "au", NULL);
+        filtercaps = gst_caps_new_simple("video/x-h265", "alignment", G_TYPE_STRING, "au", NULL);
         parser = gst_element_factory_make("h265parse", 0);
         capsfilter = gst_element_factory_make("capsfilter", 0);
-        g_object_set(capsfilter, "caps", caps, NULL);
-        gst_caps_unref(caps);
+        g_object_set(capsfilter, "caps", filtercaps, NULL);
+        gst_caps_unref(filtercaps);
 
-        stream->parser = gst_bin_new(NULL);
+        stream->parser = gst_bin_new(parserBinName);
         gst_bin_add_many(GST_BIN(stream->parser), parser, capsfilter, NULL);
         gst_element_link_pads(parser, "src", capsfilter, "sink");
 
@@ -655,18 +695,19 @@ static void webKitMediaSrcDemuxerPadAdded(GstElement* demuxer, GstPad* pad, Sour
         }
     }
 
+    g_free(parserBinName);
+
     GstPad* sinkpad;
     GstPad* srcpad;
-    GstPad* ghostpad;
 
     sinkpad = gst_element_get_request_pad(source->multiqueue, "sink_%u");
-    gst_pad_link(pad, sinkpad);
+    gst_pad_link(demuxersrcpad, sinkpad);
 
     srcpad = get_internal_linked_pad(sinkpad);
     gst_pad_add_probe(srcpad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback) webKitWebSrcBufferAfterMultiqueueProbe, stream, NULL);
     gst_object_unref(sinkpad);
 
-    gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback) webKitWebSrcBufferProbe, stream, NULL);
+    gst_pad_add_probe(demuxersrcpad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback) webKitWebSrcBufferProbe, stream, NULL);
 
     if (stream->parser) {
         gst_bin_add(GST_BIN(source->parent), stream->parser);
@@ -676,42 +717,15 @@ static void webKitMediaSrcDemuxerPadAdded(GstElement* demuxer, GstPad* pad, Sour
         gst_object_unref(srcpad);
         gst_object_unref(sinkpad);
         srcpad = gst_element_get_static_pad(stream->parser, "src");
-        g_signal_connect(srcpad, "notify::caps", G_CALLBACK(webKitMediaSrcParserNotifyCaps), stream);
-        gst_object_unref(srcpad);
-        gst_caps_unref(caps);
-        return;
+        gst_caps_unref(demuxersrcpadcaps);
+    } else {
+        webKitMediaSrcUpdatePresentationSize(demuxersrcpadcaps, stream);
     }
 
     g_signal_connect(srcpad, "notify::caps", G_CALLBACK(webKitMediaSrcParserNotifyCaps), stream);
+    webKitMediaSrcLinkStreamToSrcPad(srcpad, stream);
 
-    // TODO: Atomic ints, GRefPtr
-    gchar* padName = g_strdup_printf("src_%u", source->parent->priv->numberOfPads++);
-    ghostpad = gst_ghost_pad_new_from_template(padName, srcpad, gst_static_pad_template_get(&srcTemplate));
     gst_object_unref(srcpad);
-
-    gst_pad_set_query_function(ghostpad, webKitMediaSrcQueryWithParent);
-    gst_pad_set_event_function(ghostpad, webKitMediaSrcEventWithParent);
-
-    gst_pad_set_element_private(ghostpad, stream);
-
-    gst_pad_set_active(ghostpad, TRUE);
-    gst_element_add_pad(GST_ELEMENT(source->parent), ghostpad);
-    stream->srcpad = ghostpad;
-    stream->caps = caps;
-
-    const gchar* structureName = gst_structure_get_name(s);
-    GstVideoInfo info;
-    if (g_str_has_prefix(structureName, "video/") && gst_video_info_from_caps(&info, caps)) {
-        float width, height;
-
-        // TODO: correct?
-        width = info.width;
-        height = info.height * ((float) info.par_d / (float) info.par_n);
-
-        stream->presentationSize = WebCore::FloatSize(width, height);
-    } else {
-        stream->presentationSize = WebCore::FloatSize();
-    }
 }
 
 static void webKitMediaSrcDemuxerPadRemoved(GstElement* demuxer, GstPad* pad, Source* source)
@@ -725,8 +739,11 @@ static void webKitMediaSrcDidReceiveInitializationSegment(Source* source)
     GList* l;
     for (l = source->streams; l; l = l->next) {
         Stream* stream = (Stream*)l->data;
-        if (!stream->audioTrack && !stream->videoTrack)
+        if (!stream->audioTrack && !stream->videoTrack) {
+            // No useful data, but notify anyway to complete the append operation
+            source->parent->priv->mediaSourceClient->didReceiveAllPendingSamples(source->sourceBuffer);
             return;
+        }
     }
 
     // TODO: Locking
@@ -777,22 +794,17 @@ static void webKitMediaSrcDidReceiveInitializationSegment(Source* source)
 static void webKitMediaSrcDemuxerNoMorePads(GstElement*, Source* source)
 {
     GList* l;
-    bool allDone = true;
+    bool allPadsDone = true;
+
     source->noMorePads = true;
     // TODO: Locking
     for (l = source->parent->priv->sources; l; l = l->next) {
         Source* tmp = (Source*)l->data;
 
-        allDone = allDone && tmp->noMorePads;
-
-        GList* m;
-        for (m = source->streams; m; m = m->next) {
-            Stream* stream = (Stream*)m->data;
-
-            allDone = allDone && stream->caps != NULL;
-        }
+        allPadsDone = allPadsDone && tmp->noMorePads;
+        if (!allPadsDone) break;
     }
-    if (allDone) {
+    if (allPadsDone) {
         source->parent->priv->noMorePads = true;
         gst_element_no_more_pads(GST_ELEMENT(source->parent));
         webKitMediaSrcDoAsyncDone(source->parent);
@@ -948,6 +960,8 @@ MediaSourcePrivate::AddStatus MediaSourceClientGStreamer::addSourceBuffer(PassRe
     source->parent = m_src.get();
     source->src = gst_element_factory_make("appsrc", srcName.get());
     source->typefind = gst_element_factory_make("typefind", typefindName.get());
+    source->noDataToDecodeTimeoutTag = 0;
+
     g_signal_connect(source->typefind, "have-type", G_CALLBACK(webKitMediaSrcHaveType), source);
     source->sourceBuffer = sourceBufferPrivate.get();
 
@@ -1003,6 +1017,10 @@ bool MediaSourceClientGStreamer::append(PassRefPtr<SourceBufferPrivateGStreamer>
     buffer = gst_buffer_new_and_alloc(length);
     gst_buffer_fill(buffer, 0, data, length);
     source->lastSampleTime = 0;
+
+    ASSERT(source->noDataToDecodeTimeoutTag == 0);
+
+    source->noDataToDecodeTimeoutTag = g_timeout_add(1000, GSourceFunc(webKitMediaSrcNoDataToDecodeTimeout), source);
     ret = gst_app_src_push_buffer(GST_APP_SRC(source->src), buffer);
 
     return (ret == GST_FLOW_OK);
