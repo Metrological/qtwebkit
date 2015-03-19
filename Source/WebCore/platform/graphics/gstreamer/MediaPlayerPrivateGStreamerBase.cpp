@@ -468,8 +468,11 @@ PassRefPtr<BitmapTexture> MediaPlayerPrivateGStreamerBase::updateTexture(Texture
             }
 #endif
             g_mutex_unlock(m_bufferMutex);
-            client()->setPlatformLayerNeedsDisplay();
-            return texture;
+            if (client()) {
+                client()->setPlatformLayerNeedsDisplay();
+                return texture;
+            }
+            return 0;
         }
     }
 
@@ -701,7 +704,7 @@ void MediaPlayerPrivateGStreamerBase::paintToTextureMapper(TextureMapper* textur
     RefPtr<BitmapTexture> texture = updateTexture(textureMapper);
     if (texture) {
         textureMapper->drawTexture(*texture.get(), targetRect, modelViewMatrix, opacity);
-    } else if (!m_isEndReached)
+    } else if (client() && !m_isEndReached)
         client()->setPlatformLayerNeedsDisplay();
 #endif
 }
