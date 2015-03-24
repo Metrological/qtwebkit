@@ -234,6 +234,11 @@ MediaPlayerPrivateGStreamerBase::~MediaPlayerPrivateGStreamerBase()
             previous->makeCurrent(previous->surface());
     }
 #endif
+
+#if USE(ACCELERATED_COMPOSITING) && USE(TEXTURE_MAPPER_GL)
+    if (client())
+        client()->platformLayerWasDestroyed();
+#endif
 }
 
 // Returns the size of the video
