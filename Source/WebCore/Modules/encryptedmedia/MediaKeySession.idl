@@ -40,9 +40,9 @@
     void close();
     
     // EventListeners
-    attribute EventListener onwebkitkeyadded;
-    attribute EventListener onwebkitkeyerror;
-    attribute EventListener onwebkitkeymessage;
+    attribute EventListener onkeyadded;
+    attribute EventListener onkeyerror;
+    attribute EventListener onkeymessage;
 
     // EventTarget interface
     void addEventListener(DOMString type, 

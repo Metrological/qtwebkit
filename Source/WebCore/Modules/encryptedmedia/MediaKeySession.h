@@ -73,9 +73,9 @@ public:
     // ActiveDOMObject
     virtual bool hasPendingActivity() const OVERRIDE;
 
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(webkitkeyadded);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(webkitkeyerror);
-    DEFINE_ATTRIBUTE_EVENT_LISTENER(webkitkeymessage);
+    DEFINE_ATTRIBUTE_EVENT_LISTENER(keyadded);
+    DEFINE_ATTRIBUTE_EVENT_LISTENER(keyerror);
+    DEFINE_ATTRIBUTE_EVENT_LISTENER(keymessage);
 
     virtual const AtomicString& interfaceName() const OVERRIDE;
     virtual ScriptExecutionContext* scriptExecutionContext() const OVERRIDE { return ActiveDOMObject::scriptExecutionContext(); }
