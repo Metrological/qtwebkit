@@ -196,6 +196,7 @@ enable?(GAMEPAD) {
 enable?(ENCRYPTED_MEDIA_V2) {
     INCLUDEPATH += \
         $$SOURCE_DIR/Modules/encryptedmedia
+    LIBS += -lcrypto
     use?(DXDRM) {
         LIBS += -lDxDrm
     }

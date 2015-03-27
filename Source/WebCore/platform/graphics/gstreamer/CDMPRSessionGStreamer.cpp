@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2014 FLUENDO S.A. All rights reserved.
+ * Copyright (C) 2014-2015 FLUENDO S.A. All rights reserved.
+ * Copyright (C) 2014-2015 METROLOGICAL All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,16 +25,17 @@
  */
 
 #include "config.h"
-#include "CDMSessionGStreamer.h"
 
-#if ENABLE(ENCRYPTED_MEDIA_V2) && USE(GSTREAMER)
+#if ENABLE(ENCRYPTED_MEDIA_V2) && USE(GSTREAMER) && USE(DXDRM)
 
 #include "CDM.h"
-#include "CDMSession.h"
 #include "MediaKeyError.h"
 #include "UUID.h"
-#include "MediaPlayerPrivateGStreamer.h"
+
 #include <wtf/text/StringBuilder.h>
+
+#include "CDMPRSessionGStreamer.h"
+#include "MediaPlayerPrivateGStreamer.h"
 
 #include "dxdrm/DxDrmDebugApi.h"
 
@@ -44,7 +46,7 @@ GST_DEBUG_CATEGORY_EXTERN(webkit_media_player_debug);
 
 namespace WebCore {
 
-CDMSessionGStreamer::CDMSessionGStreamer(MediaPlayerPrivateGStreamer* parent)
+CDMPRSessionGStreamer::CDMPRSessionGStreamer(MediaPlayerPrivateGStreamer* parent)
     : m_parent(parent)
     , m_client(NULL)
     , m_sessionId(createCanonicalUUIDString())
@@ -52,7 +54,7 @@ CDMSessionGStreamer::CDMSessionGStreamer(MediaPlayerPrivateGStreamer* parent)
 {
 }
 
-CDMSessionGStreamer::~CDMSessionGStreamer ()
+CDMPRSessionGStreamer::~CDMPRSessionGStreamer ()
 {
   if (m_DxDrmStream) {
     DxDrmStream_Close (&m_DxDrmStream);
@@ -60,7 +62,7 @@ CDMSessionGStreamer::~CDMSessionGStreamer ()
   }
 }
 
-PassRefPtr<Uint8Array> CDMSessionGStreamer::generateKeyRequest(const String& mimeType, Uint8Array* initData, String& destinationURL, unsigned short& errorCode, unsigned long& systemCode)
+PassRefPtr<Uint8Array> CDMPRSessionGStreamer::generateKeyRequest(const String& mimeType, Uint8Array* initData, String& destinationURL, unsigned short& errorCode, unsigned long& systemCode)
 {
     UNUSED_PARAM(mimeType);
     UNUSED_PARAM(errorCode);
@@ -112,12 +114,12 @@ PassRefPtr<Uint8Array> CDMSessionGStreamer::generateKeyRequest(const String& mim
     return result;
 }
 
-void CDMSessionGStreamer::releaseKeys()
+void CDMPRSessionGStreamer::releaseKeys()
 {
     m_parent->signalDRM ();
 }
 
-bool CDMSessionGStreamer::update(Uint8Array* key, RefPtr<Uint8Array>& nextMessage, unsigned short& errorCode, unsigned long& systemCode)
+bool CDMPRSessionGStreamer::update(Uint8Array* key, RefPtr<Uint8Array>& nextMessage, unsigned short& errorCode, unsigned long& systemCode)
 {
     GST_MEMDUMP ("response received :", key->data (), key->byteLength ());
     

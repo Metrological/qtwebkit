@@ -41,7 +41,10 @@
 #include <limits>
 #include <wtf/gobject/GOwnPtr.h>
 #include <wtf/text/CString.h>
-#include "CDMSessionGStreamer.h"
+#if USE(DXDRM)
+#include "CDMPRSessionGStreamer.h"
+#endif
+#include "CDMCKSessionGStreamer.h"
 
 #ifdef GST_API_VERSION_1
 #include <gst/audio/streamvolume.h>
@@ -1040,6 +1043,8 @@ void MediaPlayerPrivateGStreamer::handleSyncMessage(GstMessage* message)
                   GST_DEBUG ("queueing keyNeeded event with %u bytes of data", data_length);
                   RefPtr<Uint8Array> initData = Uint8Array::create(reinterpret_cast<const unsigned char *>(data), data_length);
                   MainThreadNeedKeyCallbackInfo info(this, initData);
+                  // Store a reference to the drm message sender
+                  m_drmElement = GST_ELEMENT(GST_MESSAGE_SRC (message));
                   // We need to reset the semaphore first. signal, wait
                   m_drmKeySemaphore.signal ();
                   m_drmKeySemaphore.wait ();
@@ -2005,8 +2010,17 @@ PassOwnPtr<CDMSession> MediaPlayerPrivateGStreamer::createSession(const String& 
 {
     if (!supportsKeySystem(keySystem, emptyString()))
         return nullptr;
+    
+#if USE(DXDRM)
+    if (equalIgnoringCase(keySystem, "com.microsoft.playready") ||
+        equalIgnoringCase(keySystem, "com.youtube.playready"))
+        return adoptPtr(new CDMPRSessionGStreamer(this));
+#endif
 
-    return adoptPtr(new CDMSessionGStreamer(this));
+    if (equalIgnoringCase(keySystem, "org.w3.clearkey"))
+        return adoptPtr(new CDMCKSessionGStreamer(this));
+
+    return nullptr;
 }
 
 void MediaPlayerPrivateGStreamer::needKey(RefPtr<Uint8Array> initData)

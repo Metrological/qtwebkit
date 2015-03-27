@@ -249,7 +249,12 @@ private:
     HashMap<AtomicString, RefPtr<InbandMetadataTextTrackPrivateGStreamer> > m_metadataTracks;
 #endif
 #if ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)
+    friend class CDMCKSessionGStreamer;
+#if USE(DXDRM)
+    friend class CDMPRSessionGStreamer;
+#endif
     BinarySemaphore m_drmKeySemaphore;
+    GRefPtr<GstElement> m_drmElement;
 #endif
 #if ENABLE(MEDIA_SOURCE)
     RefPtr<MediaSourcePrivateClient> m_mediaSource;

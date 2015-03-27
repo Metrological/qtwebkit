@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2014 FLUENDO S.A. All rights reserved.
+ * Copyright (C) 2014-2015 FLUENDO S.A. All rights reserved.
+ * Copyright (C) 2014-2015 METROLOGICAL All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,27 +24,27 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CDMSessionGStreamer_h
-#define CDMSessionGStreamer_h
+#ifndef CDMCKSessionGStreamer_h
+#define CDMCKSessionGStreamer_h
+
+#if ENABLE(ENCRYPTED_MEDIA_V2) && USE(GSTREAMER)
 
 #include "CDMSession.h"
 #include <wtf/PassOwnPtr.h>
 #include <wtf/RetainPtr.h>
 
-#if ENABLE(ENCRYPTED_MEDIA_V2) && USE(GSTREAMER)
+#include <gst/gst.h>
 
-#if USE(DXDRM)
-#include "dxdrm/DxDrmClient.h"
-#endif
+#include <openssl/evp.h>
 
 namespace WebCore {
 
 class MediaPlayerPrivateGStreamer;
 
-class CDMSessionGStreamer : public CDMSession {
+class CDMCKSessionGStreamer : public CDMSession {
 public:
-    CDMSessionGStreamer(MediaPlayerPrivateGStreamer* parent);
-    virtual ~CDMSessionGStreamer() OVERRIDE;
+    CDMCKSessionGStreamer(MediaPlayerPrivateGStreamer* parent);
+    virtual ~CDMCKSessionGStreamer() OVERRIDE;
 
     virtual void setClient(CDMSessionClient* client) OVERRIDE { m_client = client; }
     virtual const String& sessionId() const OVERRIDE { return m_sessionId; }
@@ -51,20 +52,22 @@ public:
     virtual void releaseKeys() OVERRIDE;
     virtual bool update(Uint8Array*, RefPtr<Uint8Array>& nextMessage, unsigned short& errorCode, unsigned long& systemCode) OVERRIDE;
 
-protected:
+    void addProbe (GstPad *pad);
+    bool decryptData (const guint8* in, gint in_length, guint8* out, gint *out_length);
+
+private:
     MediaPlayerPrivateGStreamer* m_parent;
     CDMSessionClient* m_client;
     String m_sessionId;
-    bool m_waitAck;
+    std::vector<ulong> m_vprobes; 
+    EVP_CIPHER_CTX* m_decryptctx;
 
-#if USE(DXDRM)
-    HDxDrmStream m_DxDrmStream;
-#endif
-
+    void installProbes (GstElement* elem);
+    bool initializeCipher(const unsigned char* key_data, int key_data_len);
 };
 
 }
 
 #endif
 
-#endif // CDMSessionGStreamer_h
+#endif // CDMCKSessionGStreamer_h
