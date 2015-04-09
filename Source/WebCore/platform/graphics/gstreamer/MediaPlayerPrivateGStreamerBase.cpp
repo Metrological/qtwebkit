@@ -252,6 +252,10 @@ IntSize MediaPlayerPrivateGStreamerBase::naturalSize() const
 
 #ifdef GST_API_VERSION_1
     GRefPtr<GstCaps> caps = currentVideoSinkCaps();
+
+    // We may not have enough data available for the video sink yet, but the demuxer might haver it already.
+    if (!caps)
+        caps = currentDemuxerCaps();
 #else
     g_mutex_lock(m_bufferMutex);
     GRefPtr<GstCaps> caps = m_buffer ? GST_BUFFER_CAPS(m_buffer) : 0;

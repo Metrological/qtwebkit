@@ -87,6 +87,8 @@ public:
     float currentTime() const;
     void seek(float);
 
+    void setReadyState(MediaPlayer::ReadyState state);
+
     void setRate(float);
     void setPreservesPitch(bool);
 
@@ -132,6 +134,8 @@ public:
 #if ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)
     void signalDRM();
 #endif
+
+    static void notifyDurationChanged(MediaPlayerPrivateGStreamer* instance);
 
 private:
     MediaPlayerPrivateGStreamer(MediaPlayer*);
@@ -191,6 +195,7 @@ private:
     virtual unsigned long droppedVideoFrames() { return 0; }
     virtual unsigned long corruptedVideoFrames() { return 0; }
     virtual MediaTime totalFrameDelay() { return MediaTime::zeroTime(); }
+    virtual GRefPtr<GstCaps> currentDemuxerCaps() const OVERRIDE;
 #endif
 
 private:
@@ -257,6 +262,9 @@ private:
 #else
     bool isMediaSource() const { return false; }
 #endif
+
+    Mutex m_pendingAsyncOperationsLock;
+    GList* m_pendingAsyncOperations;
 };
 }
 

@@ -68,6 +68,8 @@ public:
     virtual void setActive(bool) OVERRIDE;
     virtual void stopAskingForMoreSamples(AtomicString) OVERRIDE;
     virtual void notifyClientWhenReadyForMoreSamples(AtomicString) OVERRIDE;
+    virtual bool isAborted() { return m_aborted; }
+    virtual void resetAborted() { m_aborted = false; }
 
 private:
     SourceBufferPrivateGStreamer(MediaSourceGStreamer*, PassRefPtr<MediaSourceClientGStreamer>, const ContentType&);
@@ -83,7 +85,7 @@ private:
     ContentType m_type;
     RefPtr<MediaSourceClientGStreamer> m_client;
     SourceBufferPrivateClient* m_sourceBufferPrivateClient;
-    MediaPlayer::ReadyState m_readyState;
+    bool m_aborted;
 };
 
 }
