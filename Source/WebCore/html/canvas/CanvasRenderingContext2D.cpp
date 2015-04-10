@@ -2296,6 +2296,17 @@ const Font& CanvasRenderingContext2D::accessFont()
 {
     canvas()->document()->updateStyleIfNeeded();
 
+#if PLATFORM(QT) && ENABLE(ACCELERATED_2D_CANVAS)
+    // The call to updateStyleIfNeeded() may have changed the gl context, so next
+    // painting to the canvas won't go the appropriate FBO. To avoid this, force
+    // the painter to call ensureActiveTarget() to rebind the proper context
+    // before the next paint.
+    if (drawingContext()->isAcceleratedContext()) {
+        drawingContext()->platformContext()->beginNativePainting();
+        drawingContext()->platformContext()->endNativePainting();
+    }
+#endif
+
     if (!state().m_realizedFont)
         setFont(state().m_unparsedFont);
     return state().m_font;
