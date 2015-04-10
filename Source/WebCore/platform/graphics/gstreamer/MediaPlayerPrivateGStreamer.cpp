@@ -2202,6 +2202,10 @@ MediaPlayer::SupportsType MediaPlayerPrivateGStreamer::supportsType(const String
     if (type.isNull() || type.isEmpty())
         return MediaPlayer::IsNotSupported;
 
+    // Disable VPX/Opus on MSE for now, mp4/avc1 seems way more reliable currently.
+    if (type.endsWith("webm"))
+        return MediaPlayer::IsNotSupported;
+
     // spec says we should not return "probably" if the codecs string is empty
     if (mimeTypeCache().contains(type))
         return codecs.isEmpty() ? MediaPlayer::MayBeSupported : MediaPlayer::IsSupported;
