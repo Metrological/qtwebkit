@@ -141,6 +141,7 @@ protected:
     void setStreamVolumeElement(GstStreamVolume*);
     virtual GstElement* audioSink() const { return 0; }
     GRefPtr<GstCaps> currentVideoSinkCaps() const;
+    virtual GRefPtr<GstCaps> currentDemuxerCaps() const { return 0; }
 
     MediaPlayer* m_player;
     GRefPtr<GstStreamVolume> m_volumeElement;
