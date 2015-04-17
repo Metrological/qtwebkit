@@ -2217,6 +2217,11 @@ void MediaPlayerPrivateGStreamer::setDownloadBuffering()
     if (!m_playBin)
         return;
 
+#if ENABLE(MEDIA_SOURCE)
+    if (isMediaSource())
+        return;
+#endif
+
     unsigned flags;
     g_object_get(m_playBin.get(), "flags", &flags, NULL);
 
