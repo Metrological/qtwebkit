@@ -69,9 +69,7 @@ public:
 
     void sourceBufferPrivateDidChangeActiveState(SourceBufferPrivateGStreamer*, bool isActive);
 
-#if !ENABLE(VIDEO_TRACK)
-    PassRefPtr<TimeRanges> buffered();
-#endif
+    PassOwnPtr<PlatformTimeRanges> buffered();
 
 private:
     MediaSourceGStreamer(MediaSourcePrivateClient*, WebKitMediaSrc*);

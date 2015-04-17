@@ -154,29 +154,19 @@ PassRefPtr<TimeRanges> SourceBuffer::buffered(ExceptionCode& ec) const
         return 0;
     }
 
-#if ENABLE(VIDEO_TRACK)
     // Note: Steps 2-4 are handled by recalculateBuffered
     if (m_shouldRecalculateBuffered)
         recalculateBuffered();
 
     // 5. Return the intersection ranges.
     return m_buffered->copy();
-#else
-    const_cast<SourceBuffer*>(this)->m_buffered = m_private->buffered();
-    return m_buffered;
-#endif
 }
 
 const RefPtr<TimeRanges>& SourceBuffer::buffered() const
 {
-#if ENABLE(VIDEO_TRACK)
     if (m_shouldRecalculateBuffered)
         recalculateBuffered();
     return m_buffered;
-#else
-    const_cast<SourceBuffer*>(this)->m_buffered = m_private->buffered();
-    return m_buffered;
-#endif
 }
 
 void SourceBuffer::invalidateBuffered()
@@ -652,7 +642,7 @@ void SourceBuffer::sourceBufferPrivateAppendComplete(SourceBufferPrivate*, Appen
     if (extraMemoryCost() > this->maximumBufferSize())
         m_bufferFull = true;
 
-    LOG(Media, "SourceBuffer::sourceBufferPrivateAppendComplete(%p) - buffered = %f", this, buffered()->ranges().totalDuration().toDouble());
+    LOG(MediaSource, "SourceBuffer::sourceBufferPrivateAppendComplete(%p) - buffered = %f", this, buffered()->ranges().totalDuration().toDouble());
 }
 
 void SourceBuffer::sourceBufferPrivateDidReceiveRenderingError(SourceBufferPrivate*, int error)
@@ -787,7 +777,7 @@ void SourceBuffer::removeCodedFrames(const MediaTime& start, const MediaTime& en
     // 4. If buffer full flag equals true and this object is ready to accept more bytes, then set the buffer full flag to false.
     // No-op
 
-    LOG(Media, "SourceBuffer::removeCodedFrames(%p) - buffered = %f", this, buffered()->ranges().totalDuration().toDouble());
+    LOG(MediaSource, "SourceBuffer::removeCodedFrames(%p) - buffered = %f", this, buffered()->ranges().totalDuration().toDouble());
 }
 
 void SourceBuffer::removeTimerFired(Timer<SourceBuffer>*)

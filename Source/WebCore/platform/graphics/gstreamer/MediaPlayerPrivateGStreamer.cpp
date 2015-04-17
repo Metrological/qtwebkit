@@ -1051,6 +1051,11 @@ void MediaPlayerPrivateGStreamer::setPreservesPitch(bool preservesPitch)
 
 PassOwnPtr<PlatformTimeRanges> MediaPlayerPrivateGStreamer::buffered() const
 {
+#if ENABLE(MEDIA_SOURCE)
+    if (isMediaSource())
+        return m_mediaSource->buffered();
+#endif
+
     OwnPtr<PlatformTimeRanges> timeRanges = PlatformTimeRanges::create();
     if (m_errorOccured || isLiveStream())
         return timeRanges.release();
