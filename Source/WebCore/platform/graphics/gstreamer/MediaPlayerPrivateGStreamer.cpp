@@ -721,7 +721,7 @@ bool MediaPlayerPrivateGStreamer::paused() const
 
     GstState state;
     gst_element_get_state(m_playBin.get(), &state, 0, 0);
-    return state == GST_STATE_PAUSED;
+    return state <= GST_STATE_PAUSED;
 }
 
 bool MediaPlayerPrivateGStreamer::seeking() const
