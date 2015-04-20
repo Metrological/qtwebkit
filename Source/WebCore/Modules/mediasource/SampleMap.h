@@ -31,6 +31,7 @@
 #include <map>
 #include <wtf/MediaTime.h>
 #include <wtf/RefPtr.h>
+#include <wtf/text/WTFString.h>
 
 namespace WebCore {
 
@@ -113,6 +114,7 @@ public:
     PresentationOrderSampleMap& presentationOrder() { return m_decodeOrder.m_presentationOrder; }
     const PresentationOrderSampleMap& presentationOrder() const { return m_decodeOrder.m_presentationOrder; }
 
+    WTF::String toString();
 private:
     DecodeOrderSampleMap m_decodeOrder;
     size_t m_totalSize;

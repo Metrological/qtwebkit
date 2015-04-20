@@ -144,6 +144,23 @@ void SampleMap::removeSample(MediaSample* sample)
     m_totalSize -= sample->sizeInBytes();
 }
 
+WTF::String SampleMap::toString()
+{
+    WTF::String s;
+    for (DecodeOrderSampleMap::iterator iter = decodeOrder().begin(); iter != decodeOrder().end(); ++iter) {
+        DecodeOrderSampleMap::KeyType k = iter->first;
+        RefPtr<MediaSample> v = iter->second;
+        double k1 = k.first.toDouble();
+        double k2 = k.second.toDouble();
+        s = s + "[(" + WTF::String::numberToStringECMAScript(k1) + ", " + WTF::String::numberToStringECMAScript(k2) +
+                ") --> (PTS=" + WTF::String::numberToStringECMAScript(v->presentationTime().toDouble()) +
+                ", DTS=" + WTF::String::numberToStringECMAScript(v->decodeTime().toDouble()) +
+                ", DUR=" + WTF::String::numberToStringECMAScript(v->duration().toDouble()) +
+                ")] ";
+    }
+    return s;
+}
+
 PresentationOrderSampleMap::iterator PresentationOrderSampleMap::findSampleWithPresentationTime(const MediaTime& time)
 {
     iterator_range range = m_samples.equal_range(time);

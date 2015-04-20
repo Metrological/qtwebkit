@@ -31,6 +31,7 @@
 #include <wtf/PassRefPtr.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>
+#include <wtf/text/WTFString.h>
 
 namespace WebCore {
 
@@ -62,6 +63,8 @@ public:
 
     const PlatformTimeRanges& ranges() const { return m_ranges; }
     PlatformTimeRanges& ranges() { return m_ranges; }
+
+    WTF::String toString() const;
 
 private:
     TimeRanges();

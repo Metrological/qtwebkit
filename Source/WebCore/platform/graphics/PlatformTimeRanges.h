@@ -32,6 +32,7 @@
 #include <wtf/PassRefPtr.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>
+#include <wtf/text/WTFString.h>
 
 namespace WTF {
 class PrintStream;
@@ -73,6 +74,8 @@ public:
     MediaTime nearest(const MediaTime&) const;
 
     MediaTime totalDuration() const;
+
+    WTF::String toString() const;
 
 private:
     PlatformTimeRanges& copy(const PlatformTimeRanges&);

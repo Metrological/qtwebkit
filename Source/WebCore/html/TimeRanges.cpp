@@ -135,4 +135,9 @@ double TimeRanges::totalDuration() const
     return m_ranges.totalDuration().toDouble();
 }
 
+WTF::String TimeRanges::toString() const
+{
+    return m_ranges.toString();
+}
+
 }

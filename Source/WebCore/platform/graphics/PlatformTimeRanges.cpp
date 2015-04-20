@@ -259,4 +259,15 @@ MediaTime PlatformTimeRanges::totalDuration() const
     return total;
 }
 
+WTF::String PlatformTimeRanges::toString() const
+{
+    WTF::String s;
+    unsigned n = length();
+    for (unsigned i = 0; i < n; i++) {
+        const Range& r = m_ranges[i];
+        s = s + "[" + WTF::String::numberToStringECMAScript(r.m_start.toDouble()) + ", " + WTF::String::numberToStringECMAScript(r.m_end.toDouble()) + "] ";
+    }
+    return s;
+}
+
 }
