@@ -27,6 +27,7 @@
 #include "MediaSource.h"
 #include "SourceBufferPrivateClient.h"
 #include "SourceBufferPrivate.h"
+#include "MediaPlayerPrivateGStreamer.h"
 
 #include "GRefPtrGStreamer.h"
 
@@ -64,6 +65,7 @@ GType webkit_media_src_get_type(void);
 GstPad* webkit_media_src_get_audio_pad(WebKitMediaSrc* src, guint i);
 GstPad* webkit_media_src_get_video_pad(WebKitMediaSrc* src, guint i);
 GstPad* webkit_media_src_get_text_pad(WebKitMediaSrc* src, guint i);
+void webkit_media_src_set_mediaplayerprivate(WebKitMediaSrc* src, WebCore::MediaPlayerPrivateGStreamer* player);
 
 void webkit_media_src_track_added(WebKitMediaSrc*, GstPad* pad, GstEvent* event);
 

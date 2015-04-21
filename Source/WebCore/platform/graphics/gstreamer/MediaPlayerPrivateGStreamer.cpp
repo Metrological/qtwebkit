@@ -302,6 +302,7 @@ MediaPlayerPrivateGStreamer::~MediaPlayerPrivateGStreamer()
             reinterpret_cast<gpointer>(setAudioStreamPropertiesCallback), this);
 
     if (m_source && WEBKIT_IS_MEDIA_SRC(m_source.get())) {
+        webkit_media_src_set_mediaplayerprivate(WEBKIT_MEDIA_SRC(m_source.get()), 0);
         g_signal_handlers_disconnect_by_func(m_source.get(), reinterpret_cast<gpointer>(mediaPlayerPrivateVideoChangedCallback), this);
         g_signal_handlers_disconnect_by_func(m_source.get(), reinterpret_cast<gpointer>(mediaPlayerPrivateAudioChangedCallback), this);
         g_signal_handlers_disconnect_by_func(m_source.get(), reinterpret_cast<gpointer>(mediaPlayerPrivateTextChangedCallback), this);
@@ -590,7 +591,6 @@ void MediaPlayerPrivateGStreamer::seek(float time)
         return;
 
     if (isLiveStream()) {
-        printf("### %s: Returning because isLiveStream\n", __PRETTY_FUNCTION__); fflush(stdout);
         return;
     }
 
@@ -600,7 +600,6 @@ void MediaPlayerPrivateGStreamer::seek(float time)
     if (m_seeking) {
         m_timeOfOverlappingSeek = time;
         if (m_seekIsPending) {
-            printf("### %s: Returning because m_seekIsPending\n", __PRETTY_FUNCTION__); fflush(stdout);
             m_seekTime = time;
             return;
         }
@@ -629,10 +628,13 @@ void MediaPlayerPrivateGStreamer::seek(float time)
             endTime = clockTime;
         }
 
+        printf("### %s: We can seek now\n", __PRETTY_FUNCTION__); fflush(stdout);
+
         // We can seek now.
         if (!gst_element_seek(m_playBin.get(), m_player->rate(), GST_FORMAT_TIME, static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
             GST_SEEK_TYPE_SET, startTime, GST_SEEK_TYPE_SET, endTime)) {
             LOG_MEDIA_MESSAGE("[Seek] seeking to %f failed", time);
+            printf("### %s: Seeking to %f (startTime=%" GST_TIME_FORMAT ", endTime=%" GST_TIME_FORMAT ") failed\n", __PRETTY_FUNCTION__, time, GST_TIME_ARGS(startTime), GST_TIME_ARGS(endTime)); fflush(stdout);
             return;
         }
     }
@@ -1611,6 +1613,7 @@ void MediaPlayerPrivateGStreamer::sourceChanged()
         g_signal_connect(m_source.get(), "video-changed", G_CALLBACK(mediaPlayerPrivateVideoChangedCallback), this);
         g_signal_connect(m_source.get(), "audio-changed", G_CALLBACK(mediaPlayerPrivateAudioChangedCallback), this);
         g_signal_connect(m_source.get(), "text-changed", G_CALLBACK(mediaPlayerPrivateTextChangedCallback), this);
+        webkit_media_src_set_mediaplayerprivate(WEBKIT_MEDIA_SRC(m_source.get()), this);
     }
 #endif
 }

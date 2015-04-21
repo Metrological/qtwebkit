@@ -223,6 +223,15 @@ struct _WebKitMediaSrcPrivate
     bool noMorePads;
     int numberOfPads;
 
+    gboolean paused;
+    gboolean seekable;
+    guint64 offset;
+    guint64 requestedOffset;
+    guint needDataID;
+    guint enoughDataID;
+    guint seekID;
+
+    WebCore::MediaPlayerPrivateGStreamer* mediaPlayerPrivate;
     WebCore::MediaSourceClientGStreamer* mediaSourceClient;
 };
 
@@ -259,6 +268,16 @@ static void webKitMediaSrcGetProperty(GObject*, guint propertyId, GValue*, GPara
 static GstStateChangeReturn webKitMediaSrcChangeState(GstElement*, GstStateChange);
 static gboolean webKitMediaSrcQueryWithParent(GstPad*, GstObject*, GstQuery*);
 static gboolean webKitMediaSrcEventWithParent(GstPad*, GstObject*, GstEvent*);
+static void webKitMediaSrcNeedDataCb(GstAppSrc*, guint length, gpointer userData);
+static void webKitMediaSrcEnoughDataCb(GstAppSrc*, gpointer userData);
+static gboolean webKitMediaSrcSeekDataCb(GstAppSrc*, guint64 offset, gpointer userData);
+
+static GstAppSrcCallbacks appsrcCallbacks = {
+    webKitMediaSrcNeedDataCb,
+    webKitMediaSrcEnoughDataCb,
+    webKitMediaSrcSeekDataCb,
+    { 0 }
+};
 
 #define webkit_media_src_parent_class parent_class
 // We split this out into another macro to avoid a check-webkit-style error.
@@ -334,6 +353,10 @@ static void webKitMediaSrcFinalize(GObject* object)
 
     // TODO: Free sources
     g_free(priv->location);
+
+    if (priv->mediaPlayerPrivate) {
+        priv->mediaPlayerPrivate = 0;
+    }
 
     GST_CALL_PARENT(G_OBJECT_CLASS, finalize, (object));
 }
@@ -1216,6 +1239,136 @@ static void webKitMediaSrcUriHandlerInit(gpointer gIface, gpointer)
     iface->set_uri = webKitMediaSrcSetUri;
 }
 
+static gboolean webKitMediaSrcNeedDataMainCb(WebKitMediaSrc* src)
+{
+    printf("### %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout);
+/*
+    WebKitMediaSrcPrivate* priv = src->priv;
+
+    ASSERT(isMainThread());
+
+    GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
+    // already stopped
+    if (!priv->needDataID)
+        return FALSE;
+
+    priv->paused = FALSE;
+    priv->needDataID = 0;
+    locker.unlock();
+
+    if (priv->client)
+        priv->client->setDefersLoading(false);
+*/
+    return FALSE;
+}
+
+static void webKitMediaSrcNeedDataCb(GstAppSrc*, guint length, gpointer userData)
+{
+    printf("### %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout);
+
+    WebKitMediaSrc* src = WEBKIT_MEDIA_SRC(userData);
+    WebKitMediaSrcPrivate* priv = src->priv;
+
+    GST_DEBUG_OBJECT(src, "Need more data: %u", length);
+
+    GST_OBJECT_LOCK(src);
+    if (!priv->needDataID && priv->paused) {
+        priv->needDataID = g_idle_add_full(G_PRIORITY_DEFAULT, (GSourceFunc) webKitMediaSrcNeedDataMainCb, gst_object_ref(src), (GDestroyNotify) gst_object_unref);
+        g_source_set_name_by_id(priv->needDataID, "[WebKit] webKitMediaSrcNeedDataMainCb");
+    }
+    GST_OBJECT_UNLOCK(src);
+}
+
+static gboolean webKitMediaSrcEnoughDataMainCb(WebKitMediaSrc* src)
+{
+    printf("### %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout);
+    /*
+    WebKitMediaSrcPrivate* priv = src->priv;
+
+    ASSERT(isMainThread());
+
+    GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
+    // already stopped
+    if (!priv->enoughDataID)
+        return FALSE;
+
+    priv->paused = TRUE;
+    priv->enoughDataID = 0;
+    locker.unlock();
+
+    if (priv->client)
+        priv->client->setDefersLoading(true);
+    */
+    return FALSE;
+}
+
+static void webKitMediaSrcEnoughDataCb(GstAppSrc*, gpointer userData)
+{
+    printf("### %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout);
+
+    WebKitMediaSrc* src = WEBKIT_MEDIA_SRC(userData);
+    WebKitMediaSrcPrivate* priv = src->priv;
+
+    GST_DEBUG_OBJECT(src, "Have enough data");
+
+    GST_OBJECT_LOCK(src);
+    if (!(priv->enoughDataID || priv->paused)) {
+        priv->enoughDataID = g_idle_add_full(G_PRIORITY_DEFAULT, (GSourceFunc) webKitMediaSrcEnoughDataMainCb, gst_object_ref(src), (GDestroyNotify) gst_object_unref);
+        g_source_set_name_by_id(priv->enoughDataID, "[WebKit] webKitMediaSrcEnoughDataMainCb");
+    }
+    GST_OBJECT_UNLOCK(src);
+}
+
+static gboolean webKitMediaSrcSeekMainCb(WebKitMediaSrc* src)
+{
+    printf("### %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout);
+    /*
+    WebKitMediaSrcPrivate* priv = src->priv;
+
+    ASSERT(isMainThread());
+
+    GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
+    // already stopped
+    if (!priv->seekID)
+        return FALSE;
+    locker.unlock();
+
+    webKitMediaSrcStop(src);
+    webKitMediaSrcStart(src);
+    */
+    return FALSE;
+}
+
+static gboolean webKitMediaSrcSeekDataCb(GstAppSrc*, guint64 offset, gpointer userData)
+{
+    printf("### %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout);
+
+    WebKitMediaSrc* src = WEBKIT_MEDIA_SRC(userData);
+    WebKitMediaSrcPrivate* priv = src->priv;
+    bool result;
+
+    GST_DEBUG_OBJECT(src, "Seeking to offset: %" G_GUINT64_FORMAT, offset);
+
+    GST_OBJECT_LOCK(src);
+    if (offset == priv->offset && priv->requestedOffset == priv->offset)
+        result = TRUE;
+    else if (!priv->mediaPlayerPrivate || priv->mediaPlayerPrivate->isLiveStream())
+        result = FALSE;
+    else {
+        GST_DEBUG_OBJECT(src, "Doing range-request seek");
+        priv->requestedOffset = offset;
+
+        if (priv->seekID)
+            g_source_remove(priv->seekID);
+        priv->seekID = g_idle_add_full(G_PRIORITY_DEFAULT, (GSourceFunc) webKitMediaSrcSeekMainCb, gst_object_ref(src), (GDestroyNotify) gst_object_unref);
+        g_source_set_name_by_id(priv->seekID, "[WebKit] webKitMediaSrcSeekMainCb");
+        result = TRUE;
+    }
+    GST_OBJECT_UNLOCK(src);
+
+    return result;
+}
+
 namespace WebCore {
 PassRefPtr<MediaSourceClientGStreamer> MediaSourceClientGStreamer::create(WebKitMediaSrc* src)
 {
@@ -1255,6 +1408,10 @@ MediaSourcePrivate::AddStatus MediaSourceClientGStreamer::addSourceBuffer(PassRe
     source->src = gst_element_factory_make("appsrc", srcName.get());
     source->typefind = gst_element_factory_make("typefind", typefindName.get());
     source->noDataToDecodeTimeoutTag = 0;
+
+    gst_app_src_set_callbacks(GST_APP_SRC(source->src), &appsrcCallbacks, source->parent, 0);
+    gst_app_src_set_emit_signals(GST_APP_SRC(source->src), FALSE);
+    gst_app_src_set_stream_type(GST_APP_SRC(source->src), GST_APP_STREAM_TYPE_SEEKABLE);
 
     g_signal_connect(source->typefind, "have-type", G_CALLBACK(webKitMediaSrcHaveType), source);
     source->sourceBuffer = sourceBufferPrivate.get();
@@ -1523,6 +1680,14 @@ GstPad* webkit_media_src_get_text_pad(WebKitMediaSrc* src, guint i)
     GST_OBJECT_UNLOCK(src);
 
     return result;
+}
+
+void webkit_media_src_set_mediaplayerprivate(WebKitMediaSrc* src, WebCore::MediaPlayerPrivateGStreamer* mediaPlayerPrivate)
+{
+    GST_OBJECT_LOCK(src);
+    // Set to 0 on MediaPlayerPrivateGStreamer destruction, never a dangling pointer
+    src->priv->mediaPlayerPrivate = mediaPlayerPrivate;
+    GST_OBJECT_UNLOCK(src);
 }
 
 // Pad NUST be the WebKitMediaSrc demuxer pad (aka: stream->demuxersrcpad) associated with the added track
