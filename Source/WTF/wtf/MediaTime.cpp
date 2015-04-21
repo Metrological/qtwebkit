@@ -380,7 +380,7 @@ MediaTime::operator bool() const
     return compare(zeroTime()) != EqualTo;
 }
 
-MediaTime::ComparisonFlags MediaTime::compare(const MediaTime& rhs) const
+MediaTime::ComparisonFlags MediaTime::compare(const MediaTime& rhs, bool fuzzy) const
 {
     if ((isPositiveInfinite() && rhs.isPositiveInfinite())
         || (isNegativeInfinite() && rhs.isNegativeInfinite())
@@ -408,6 +408,8 @@ MediaTime::ComparisonFlags MediaTime::compare(const MediaTime& rhs) const
 
     if (hasDoubleValue() && rhs.hasDoubleValue()) {
         if (m_timeValueAsDouble == rhs.m_timeValueAsDouble)
+            return EqualTo;
+        if (fuzzy && fabs(m_timeValueAsDouble - rhs.m_timeValueAsDouble) <= fuzzynessThreshold().toDouble())
             return EqualTo;
 
         return m_timeValueAsDouble < rhs.m_timeValueAsDouble ? LessThan : GreaterThan;
@@ -467,6 +469,12 @@ const MediaTime& MediaTime::indefiniteTime()
 {
     static const MediaTime* time = new MediaTime(0, 1, Indefinite | Valid);
     return *time;
+}
+
+const MediaTime& MediaTime::fuzzynessThreshold()
+{
+    static const MediaTime* time = new MediaTime(0.00002);
+        return *time;
 }
 
 void MediaTime::setTimeScale(int32_t timeScale)
