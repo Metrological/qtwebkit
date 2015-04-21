@@ -575,6 +575,8 @@ float MediaPlayerPrivateGStreamer::currentTime() const
 
 void MediaPlayerPrivateGStreamer::seek(float time)
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
+
     if (!m_playBin)
         return;
 
@@ -587,8 +589,10 @@ void MediaPlayerPrivateGStreamer::seek(float time)
     if (time == currentTime())
         return;
 
-    if (isLiveStream())
+    if (isLiveStream()) {
+        printf("### %s: Returning because isLiveStream\n", __PRETTY_FUNCTION__); fflush(stdout);
         return;
+    }
 
     GstClockTime clockTime = toGstClockTime(time);
     INFO_MEDIA_MESSAGE("[Seek] seeking to %" GST_TIME_FORMAT " (%f)", GST_TIME_ARGS(clockTime), time);
@@ -596,6 +600,7 @@ void MediaPlayerPrivateGStreamer::seek(float time)
     if (m_seeking) {
         m_timeOfOverlappingSeek = time;
         if (m_seekIsPending) {
+            printf("### %s: Returning because m_seekIsPending\n", __PRETTY_FUNCTION__); fflush(stdout);
             m_seekTime = time;
             return;
         }
