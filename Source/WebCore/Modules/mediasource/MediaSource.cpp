@@ -182,6 +182,7 @@ PassOwnPtr<PlatformTimeRanges> MediaSource::buffered() const
 
 void MediaSource::seekToTime(const MediaTime& time)
 {
+    printf("### %s: MediaSource seeking to time %f\n", __PRETTY_FUNCTION__, time.toDouble()); fflush(stdout);
     // 2.4.3 Seeking
     // https://dvcs.w3.org/hg/html-media/raw-file/tip/media-source/media-source.html#mediasource-seeking
 
@@ -216,6 +217,8 @@ void MediaSource::seekToTime(const MediaTime& time)
 
 void MediaSource::completeSeek()
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
+
     // 2.4.3 Seeking, ctd.
     // https://dvcs.w3.org/hg/html-media/raw-file/tip/media-source/media-source.html#mediasource-seeking
 

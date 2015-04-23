@@ -96,6 +96,7 @@ class MediaSourceClientGStreamer: public RefCounted<MediaSourceClientGStreamer> 
         // From SourceBufferPrivateGStreamer
         bool append(PassRefPtr<SourceBufferPrivateGStreamer>, const unsigned char*, unsigned);
         void removedFromMediaSource(PassRefPtr<SourceBufferPrivateGStreamer>);
+        void flushAndEnqueueNonDisplayingSamples(Vector<RefPtr<MediaSample> > samples, AtomicString trackIDString);
 
         // From our WebKitMediaSrc
 #if ENABLE(VIDEO_TRACK)

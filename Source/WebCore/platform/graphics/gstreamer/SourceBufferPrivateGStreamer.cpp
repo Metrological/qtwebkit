@@ -101,18 +101,21 @@ void SourceBufferPrivateGStreamer::setReadyState(MediaPlayer::ReadyState state)
 }
 
 // TODO: Implement these
-void SourceBufferPrivateGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefPtr<MediaSample> >, AtomicString)
+void SourceBufferPrivateGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefPtr<MediaSample> > samples, AtomicString trackIDString)
 {
-    notImplemented();
+    if (m_client)
+        m_client->flushAndEnqueueNonDisplayingSamples(samples, trackIDString);
 }
 
 void SourceBufferPrivateGStreamer::enqueueSample(PassRefPtr<MediaSample>, AtomicString)
 {
+    printf("### %s: Not implemented\n", __PRETTY_FUNCTION__); fflush(stdout);
     notImplemented();
 }
 
 bool SourceBufferPrivateGStreamer::isReadyForMoreSamples(AtomicString)
 {
+    printf("### %s: Not implemented\n", __PRETTY_FUNCTION__); fflush(stdout);
     notImplemented();
 
     return false;
@@ -126,11 +129,13 @@ void SourceBufferPrivateGStreamer::setActive(bool isActive)
 
 void SourceBufferPrivateGStreamer::stopAskingForMoreSamples(AtomicString)
 {
+    printf("### %s: Not implemented\n", __PRETTY_FUNCTION__); fflush(stdout);
     notImplemented();
 }
 
 void SourceBufferPrivateGStreamer::notifyClientWhenReadyForMoreSamples(AtomicString)
 {
+    printf("### %s: Not implemented\n", __PRETTY_FUNCTION__); fflush(stdout);
     notImplemented();
 }
 

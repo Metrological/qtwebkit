@@ -628,7 +628,7 @@ void MediaPlayerPrivateGStreamer::seek(float time)
             endTime = clockTime;
         }
 
-        printf("### %s: We can seek now\n", __PRETTY_FUNCTION__); fflush(stdout);
+        printf("### %s: We can seek now to %f (startTime=%" GST_TIME_FORMAT ", endTime=%" GST_TIME_FORMAT ")\n", __PRETTY_FUNCTION__, time, GST_TIME_ARGS(startTime), GST_TIME_ARGS(endTime)); fflush(stdout);
 
         // We can seek now.
         if (!gst_element_seek(m_playBin.get(), m_player->rate(), GST_FORMAT_TIME, static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
@@ -636,6 +636,10 @@ void MediaPlayerPrivateGStreamer::seek(float time)
             LOG_MEDIA_MESSAGE("[Seek] seeking to %f failed", time);
             printf("### %s: Seeking to %f (startTime=%" GST_TIME_FORMAT ", endTime=%" GST_TIME_FORMAT ") failed\n", __PRETTY_FUNCTION__, time, GST_TIME_ARGS(startTime), GST_TIME_ARGS(endTime)); fflush(stdout);
             return;
+        }
+
+        if (isMediaSource()) {
+            m_mediaSource->seekToTime(time);
         }
     }
 
@@ -646,12 +650,16 @@ void MediaPlayerPrivateGStreamer::seek(float time)
 
 bool MediaPlayerPrivateGStreamer::doSeek(gint64 position, float rate, GstSeekFlags seekType)
 {
+    printf("### %s: position=%" GST_TIME_FORMAT "\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(position)); fflush(stdout);
+
     gint64 startTime, endTime;
 
     // TODO: Should do more than that, need to notify the media source
     // and probably flush the pipeline at least
-    if (isMediaSource())
+    if (isMediaSource()) {
+        printf("### Returing because isMediaSource\n"); fflush(stdout);
         return true;
+    }
 
     if (rate > 0) {
         startTime = position;
@@ -746,6 +754,8 @@ void MediaPlayerPrivateGStreamer::videoChanged()
 
 void MediaPlayerPrivateGStreamer::notifyPlayerOfVideo()
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
+
     m_videoTimerHandler = 0;
     gint numTracks = 0;
     bool useMediaSource = false;
@@ -837,6 +847,8 @@ void MediaPlayerPrivateGStreamer::audioChanged()
 
 void MediaPlayerPrivateGStreamer::notifyPlayerOfAudio()
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
+
     m_audioTimerHandler = 0;
     gint numTracks = 0;
     bool useMediaSource = false;
@@ -1581,6 +1593,21 @@ unsigned long long MediaPlayerPrivateGStreamer::totalBytes() const
     return m_totalBytes;
 }
 
+// #### DEBUG
+GstPadProbeReturn videoDecoderProbe (GstPad*, GstPadProbeInfo *info, gpointer)
+{
+    GstBuffer* buf = GST_BUFFER(info->data);
+    printf("### %s: PTS=%" GST_TIME_FORMAT "\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(buf->pts)); fflush(stdout);
+    return GST_PAD_PROBE_OK;
+}
+
+GstPadProbeReturn videoSinkProbe (GstPad*, GstPadProbeInfo *info, gpointer)
+{
+    GstBuffer* buf = GST_BUFFER(info->data);
+    printf("### %s: PTS=%" GST_TIME_FORMAT "\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(buf->pts)); fflush(stdout);
+    return GST_PAD_PROBE_OK;
+}
+
 void MediaPlayerPrivateGStreamer::updateAudioSink()
 {
     if (!m_playBin)
@@ -1591,6 +1618,43 @@ void MediaPlayerPrivateGStreamer::updateAudioSink()
     g_object_get(m_playBin.get(), "audio-sink", &sinkPtr, NULL);
     m_webkitAudioSink = adoptGRef(sinkPtr);
 
+    // #### DEBUG
+    {
+        static gulong videoSinkProbeId = 0;
+        static gulong videoDecoderProbeId = 0;
+
+        GstIterator* iter = gst_bin_iterate_recurse(GST_BIN(m_pipeline));
+        GValue v = G_VALUE_INIT;
+        while (gst_iterator_next(iter, &v) == GST_ITERATOR_OK) {
+            GstElement* element = GST_ELEMENT(g_value_get_object(&v));
+            const gchar* elementName = G_OBJECT_CLASS_NAME(G_OBJECT_GET_CLASS(G_OBJECT(element)));
+            if (g_str_equal(elementName, "GstOMXH264Dec-omxh264dec")) {
+                GstPad* sinkPad = gst_element_get_static_pad(element, "sink");
+                if (sinkPad) {
+                    printf("### %s: [DEBUG] Installing probe in video decoder sink\n", __PRETTY_FUNCTION__); fflush(stdout);
+                    if (videoDecoderProbeId)
+                        gst_pad_remove_probe(sinkPad, videoDecoderProbeId);
+                    videoDecoderProbeId = gst_pad_add_probe(sinkPad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback) videoDecoderProbe, NULL, NULL);
+                    g_object_unref(sinkPad);
+                }
+            }
+            g_value_reset(&v);
+        }
+        g_value_unset(&v);
+        gst_iterator_free(iter);
+
+        GstElement* videoSink = 0;
+        g_object_get(m_playBin.get(), "video-sink", &videoSink, NULL);
+        if (videoSink) {
+            GstPad* pad = gst_element_get_static_pad(videoSink, "sink");
+            if (videoSinkProbeId)
+                gst_pad_remove_probe(pad, videoSinkProbeId);
+            printf("### %s: [DEBUG] Installing probe in video sink\n", __PRETTY_FUNCTION__); fflush(stdout);
+            videoSinkProbeId = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback) videoSinkProbe, NULL, NULL);
+            g_object_unref(pad);
+            g_object_unref(videoSink);
+        }
+    }
 }
 
 GstElement* MediaPlayerPrivateGStreamer::audioSink() const

@@ -427,6 +427,7 @@ void SourceBuffer::removedFromMediaSource()
 
 void SourceBuffer::seekToTime(const MediaTime& time)
 {
+    printf("### %s: SourceBuffer seeking to time %f\n", __PRETTY_FUNCTION__, time.toDouble()); fflush(stdout);
     LOG(MediaSource, "SourceBuffer::seekToTime(%p) - time(%f)", this, time.toDouble ());
 
     for (HashMap<AtomicString, TrackBuffer>::iterator it = m_trackBufferMap.begin(); it != m_trackBufferMap.end(); ++it) {
@@ -1756,6 +1757,8 @@ void SourceBuffer::provideMediaData(TrackBuffer& trackBuffer, AtomicString track
 
 void SourceBuffer::reenqueueMediaForTime(TrackBuffer& trackBuffer, AtomicString trackID, const MediaTime& time)
 {
+    printf("### %s: time=%f\n", __PRETTY_FUNCTION__, time.toDouble()); fflush(stdout);
+
     // Find the sample which contains the current presentation time.
     PresentationOrderSampleMap::iterator currentSamplePTSIterator = trackBuffer.samples.presentationOrder().findSampleContainingPresentationTime(time);
 
