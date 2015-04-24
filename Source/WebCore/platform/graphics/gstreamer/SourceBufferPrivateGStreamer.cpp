@@ -107,18 +107,17 @@ void SourceBufferPrivateGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<Re
         m_client->flushAndEnqueueNonDisplayingSamples(samples, trackIDString);
 }
 
-void SourceBufferPrivateGStreamer::enqueueSample(PassRefPtr<MediaSample>, AtomicString)
+void SourceBufferPrivateGStreamer::enqueueSample(PassRefPtr<MediaSample> sample, AtomicString trackIDString)
 {
-    printf("### %s: Not implemented\n", __PRETTY_FUNCTION__); fflush(stdout);
-    notImplemented();
+    if (m_client)
+        m_client->enqueueSample(sample, trackIDString);
 }
 
 bool SourceBufferPrivateGStreamer::isReadyForMoreSamples(AtomicString)
 {
-    printf("### %s: Not implemented\n", __PRETTY_FUNCTION__); fflush(stdout);
-    notImplemented();
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
 
-    return false;
+    return true;
 }
 
 void SourceBufferPrivateGStreamer::setActive(bool isActive)

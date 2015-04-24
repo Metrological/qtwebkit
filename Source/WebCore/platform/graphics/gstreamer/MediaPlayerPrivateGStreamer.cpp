@@ -438,9 +438,12 @@ float MediaPlayerPrivateGStreamer::playbackPosition() const
         gst_query_parse_position(query, 0, &position);
 
     float result = 0.0f;
-    if (static_cast<GstClockTime>(position) != GST_CLOCK_TIME_NONE)
+    if (static_cast<GstClockTime>(position) != GST_CLOCK_TIME_NONE) {
         result = static_cast<double>(position) / GST_SECOND;
-    else if (m_canFallBackToLastFinishedSeekPosition)
+        // METRO FIXME: Instead of offsetting the current X position here, it would be better to make GStreamer use m_seekTime+X as its position
+        if (isMediaSource() && m_seekTime != GST_CLOCK_TIME_NONE)
+            result += m_seekTime;
+    } else if (m_canFallBackToLastFinishedSeekPosition)
         result = m_seekTime;
 
     LOG_MEDIA_MESSAGE("Position %" GST_TIME_FORMAT, GST_TIME_ARGS(position));
@@ -554,24 +557,34 @@ float MediaPlayerPrivateGStreamer::duration() const
 
 float MediaPlayerPrivateGStreamer::currentTime() const
 {
-    if (!m_playBin)
+    if (!m_playBin) {
+        printf("### %s: (NO PLAYBIN) %f\n", __PRETTY_FUNCTION__, 0.0f); fflush(stdout);
         return 0.0f;
+    }
 
-    if (m_errorOccured)
+    if (m_errorOccured) {
+        printf("### %s: (ERROR) %f\n", __PRETTY_FUNCTION__, 0.0f); fflush(stdout);
         return 0.0f;
+    }
 
-    if (m_seeking)
+    if (m_seeking) {
+        printf("### %s: (SEEKING) %f\n", __PRETTY_FUNCTION__, m_seekTime); fflush(stdout);
         return m_seekTime;
+    }
 
     // Workaround for
     // https://bugzilla.gnome.org/show_bug.cgi?id=639941 In GStreamer
     // 0.10.35 basesink reports wrong duration in case of EOS and
     // negative playback rate. There's no upstream accepted patch for
     // this bug yet, hence this temporary workaround.
-    if (m_isEndReached && m_playbackRate < 0)
+    if (m_isEndReached && m_playbackRate < 0) {
+        printf("### %s: (END OR NEGATIVE) %f\n", __PRETTY_FUNCTION__, 0.0f); fflush(stdout);
         return 0.0f;
+    }
 
-    return playbackPosition();
+    float playpos = playbackPosition();
+    printf("### %s: (PLAYBACK POSITION) %f\n", __PRETTY_FUNCTION__, playpos); fflush(stdout);
+    return playpos;
 }
 
 void MediaPlayerPrivateGStreamer::seek(float time)

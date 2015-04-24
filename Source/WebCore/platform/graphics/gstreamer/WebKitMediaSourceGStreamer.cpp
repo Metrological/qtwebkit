@@ -492,6 +492,7 @@ static gboolean webKitMediaSrcQueryWithParent(GstPad* pad, GstObject* parent, Gs
         result = TRUE;
         break;
     default:{
+        printf("### %s: UNMANAGED query: %s\n", __PRETTY_FUNCTION__, gst_query_type_get_name(GST_QUERY_TYPE(query))); fflush(stdout);
         GRefPtr<GstPad> target = adoptGRef(gst_ghost_pad_get_target(GST_GHOST_PAD_CAST(pad)));
         // Forward the query to the proxy target pad.
         if (target)
@@ -1617,26 +1618,36 @@ void MediaSourceClientGStreamer::removedFromMediaSource(PassRefPtr<SourceBufferP
     }
 }
 
-void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefPtr<MediaSample> > samples, AtomicString trackIDString)
+static Stream* getStreamByTrackId(WebKitMediaSrc* src, AtomicString trackIDString)
 {
-    printf("### %s: trackIDString=%s: Reenqueuing %d samples after the demuxer\n", __PRETTY_FUNCTION__, trackIDString.string().utf8().data(), samples.size()); fflush(stdout);
-
-    GST_OBJECT_LOCK(m_src.get());
-    GstEvent* seek = NULL;
-    GstPad* demuxersrcpad = NULL;
-    for (GList* sources = m_src->priv->sources; sources && !demuxersrcpad; sources = sources->next) {
+    for (GList* sources = src->priv->sources; sources; sources = sources->next) {
         Source* source = (Source*)sources->data;
         for (GList* streams = source->streams; streams; streams = streams->next) {
             Stream* stream = (Stream*)streams->data;
             const AtomicString& id = stream->audioTrack ? stream->audioTrack->get()->id() : stream->videoTrack->get()->id();
             if (id == trackIDString) {
-                demuxersrcpad = stream->demuxersrcpad;
-                seek = stream->seek;
-                stream->seek = 0;
-                break;
+                return stream;
             }
         }
     }
+    return NULL;
+}
+
+void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefPtr<MediaSample> > samples, AtomicString trackIDString)
+{
+    printf("### %s: trackIDString=%s: Reenqueuing %d samples after the demuxer\n", __PRETTY_FUNCTION__, trackIDString.string().utf8().data(), samples.size()); fflush(stdout);
+
+    GST_OBJECT_LOCK(m_src.get());
+    Stream* stream = getStreamByTrackId(m_src.get(), trackIDString);
+
+    if (!stream) {
+        printf("### %s: stream not found\n", __PRETTY_FUNCTION__); fflush(stdout);
+        return;
+    }
+
+    GstPad* demuxersrcpad = stream->demuxersrcpad;
+    GstEvent* seek = stream->seek;
+    stream->seek = NULL;
     GST_OBJECT_UNLOCK(m_src.get());
 
     GstSegment* segment = NULL;
@@ -1669,12 +1680,35 @@ void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefP
     for (Vector<RefPtr<MediaSample> >::iterator it = samples.begin(); it != samples.end(); ++it) {
         GStreamerMediaSample* sample = static_cast<GStreamerMediaSample*>(it->get());
         GstBuffer* buffer = gst_buffer_ref(sample->buffer());
-        printf("### Sample: PTS=%f\n", sample->presentationTime().toDouble()); fflush(stdout);
+        printf("### [REENQ] Sample: PTS=%f\n", sample->presentationTime().toDouble()); fflush(stdout);
         gst_pad_chain(multiqueuesinkpad, buffer);
     }
     gst_object_unref(multiqueuesinkpad);
 }
 
+void MediaSourceClientGStreamer::enqueueSample(PassRefPtr<MediaSample> prsample, AtomicString trackIDString)
+{
+    printf("### %s: trackIDString=%s: Reenqueuing sample after the demuxer\n", __PRETTY_FUNCTION__, trackIDString.string().utf8().data()); fflush(stdout);
+
+    GST_OBJECT_LOCK(m_src.get());
+    Stream* stream = getStreamByTrackId(m_src.get(), trackIDString);
+
+    if (!stream) {
+        printf("### %s: stream not found\n", __PRETTY_FUNCTION__); fflush(stdout);
+        return;
+    }
+
+    GstPad* demuxersrcpad = stream->demuxersrcpad;
+    GST_OBJECT_UNLOCK(m_src.get());
+
+    GstPad* multiqueuesinkpad = gst_pad_get_peer(demuxersrcpad);
+    RefPtr<MediaSample> rsample(prsample);
+    GStreamerMediaSample* sample = static_cast<GStreamerMediaSample*>(rsample.get());
+    GstBuffer* buffer = gst_buffer_ref(sample->buffer());
+    printf("### [REENQ] Sample: PTS=%f\n", sample->presentationTime().toDouble()); fflush(stdout);
+    gst_pad_chain(multiqueuesinkpad, buffer);
+    gst_object_unref(multiqueuesinkpad);
+}
 
 #if ENABLE(VIDEO_TRACK)
 void MediaSourceClientGStreamer::didReceiveInitializationSegment(SourceBufferPrivateGStreamer* sourceBuffer, const SourceBufferPrivateClient::InitializationSegment& initializationSegment)

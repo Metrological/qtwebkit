@@ -1305,6 +1305,8 @@ void SourceBuffer::sourceBufferPrivateDidReceiveSample(SourceBufferPrivate*, Pas
 
     RefPtr<MediaSample> sample = prpSample;
 
+    printf("### [APPEND] Sample: PTS=%f\n", sample->presentationTime().toDouble()); fflush(stdout);
+
     // 3.5.8 Coded Frame Processing
     // When complete coded frames have been parsed by the segment parser loop then the following steps
     // are run:
