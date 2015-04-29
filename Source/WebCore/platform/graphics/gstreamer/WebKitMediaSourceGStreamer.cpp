@@ -1642,6 +1642,7 @@ void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefP
 
     if (!stream) {
         printf("### %s: stream not found\n", __PRETTY_FUNCTION__); fflush(stdout);
+        GST_OBJECT_UNLOCK(m_src.get());
         return;
     }
 
@@ -1695,6 +1696,7 @@ void MediaSourceClientGStreamer::enqueueSample(PassRefPtr<MediaSample> prsample,
 
     if (!stream) {
         printf("### %s: stream not found\n", __PRETTY_FUNCTION__); fflush(stdout);
+        GST_OBJECT_UNLOCK(m_src.get());
         return;
     }
 
