@@ -586,6 +586,8 @@ void SourceBuffer::appendBufferTimerFired(Timer<SourceBuffer>*)
 
 void SourceBuffer::sourceBufferPrivateAppendComplete(SourceBufferPrivate*, AppendResult result)
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
+
     if (isRemoved())
         return;
 
@@ -1708,6 +1710,8 @@ void SourceBuffer::textTrackKindChanged(TextTrack* track)
 
 void SourceBuffer::sourceBufferPrivateDidBecomeReadyForMoreSamples(SourceBufferPrivate*, AtomicString trackID)
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
+
     LOG(MediaSource, "SourceBuffer::sourceBufferPrivateDidBecomeReadyForMoreSamples(%p)", this);
     HashMap<AtomicString, TrackBuffer>::iterator it = m_trackBufferMap.find(trackID);
     if (it == m_trackBufferMap.end())
@@ -1721,6 +1725,7 @@ void SourceBuffer::sourceBufferPrivateDidBecomeReadyForMoreSamples(SourceBufferP
 
 void SourceBuffer::provideMediaData(TrackBuffer& trackBuffer, AtomicString trackID)
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
 #if !LOG_DISABLED
     unsigned enqueuedSamples = 0;
 #endif
