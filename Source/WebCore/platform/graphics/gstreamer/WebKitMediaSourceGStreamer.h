@@ -68,6 +68,8 @@ GstPad* webkit_media_src_get_text_pad(WebKitMediaSrc* src, guint i);
 void webkit_media_src_set_mediaplayerprivate(WebKitMediaSrc* src, WebCore::MediaPlayerPrivateGStreamer* player);
 
 void webkit_media_src_track_added(WebKitMediaSrc*, GstPad* pad, GstEvent* event);
+void webkit_media_src_set_seek_time(WebKitMediaSrc*, const MediaTime&);
+void webkit_media_src_video_segment_needed(WebKitMediaSrc*);
 
 G_END_DECLS
 

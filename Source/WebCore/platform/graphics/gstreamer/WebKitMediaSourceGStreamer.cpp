@@ -243,9 +243,7 @@ struct _WebKitMediaSrcPrivate
     gboolean seekable;
     guint64 offset;
     guint64 requestedOffset;
-    guint needDataID;
-    guint enoughDataID;
-    guint seekID;
+    MediaTime seekTime;
 
     WebCore::MediaPlayerPrivateGStreamer* mediaPlayerPrivate;
     WebCore::MediaSourceClientGStreamer* mediaSourceClient;
@@ -285,15 +283,13 @@ static GstStateChangeReturn webKitMediaSrcChangeState(GstElement*, GstStateChang
 static gboolean webKitMediaSrcQueryWithParent(GstPad*, GstObject*, GstQuery*);
 static gboolean webKitMediaSrcEventWithParent(GstPad*, GstObject*, GstEvent*);
 static gboolean webKitMediaSrcDemuxerEventWithParent(GstPad*, GstObject*, GstEvent*);
-static void webKitMediaSrcNeedDataCb(GstAppSrc*, guint length, gpointer userData);
-static void webKitMediaSrcEnoughDataCb(GstAppSrc*, gpointer userData);
 static gboolean webKitMediaSrcSeekDataCb(GstAppSrc*, guint64 offset, gpointer userData);
 
 static Stream* getStreamByDemuxerPad(WebKitMediaSrc* src, const GstPad* demuxersrcpad);
 
 static GstAppSrcCallbacks appsrcCallbacks = {
-    webKitMediaSrcNeedDataCb,
-    webKitMediaSrcEnoughDataCb,
+    0,
+    0,
     webKitMediaSrcSeekDataCb,
     { 0 }
 };
@@ -575,6 +571,23 @@ static gboolean webKitMediaSrcDemuxerEventWithParent(GstPad* pad, GstObject* par
     switch (GST_EVENT_TYPE(event)) {
     case GST_EVENT_SEEK: {
         printf("### %s: Processing SEEK event\n", __PRETTY_FUNCTION__); fflush(stdout);
+
+        gdouble rate;
+        GstFormat format;
+        GstSeekFlags flags;
+        GstSeekType start_type;
+        gint64 start;
+        GstSeekType stop_type;
+        gint64 stop;
+
+        gst_event_parse_seek(event, &rate, &format, &flags, &start_type, &start, &stop_type, &stop);
+
+        if (format == GST_FORMAT_TIME) {
+            printf("### %s: Info about SEEK event: start=%" GST_TIME_FORMAT ", stop=%" GST_TIME_FORMAT ", rate=%f, format=%s\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(start), GST_TIME_ARGS(stop), rate, gst_format_get_name(format)); fflush(stdout);
+        } else {
+            printf("### %s: Info about SEEK event: start=%" G_GINT64_FORMAT ", stop=%" G_GINT64_FORMAT ", rate=%f, format=%s\n", __PRETTY_FUNCTION__, start, stop, rate, gst_format_get_name(format)); fflush(stdout);
+        }
+
         WebKitMediaSrc* src = NULL;
 
         if (parent)
@@ -583,7 +596,7 @@ static gboolean webKitMediaSrcDemuxerEventWithParent(GstPad* pad, GstObject* par
         if (src) {
             GST_OBJECT_LOCK(src);
             Stream* stream = getStreamByDemuxerPad(src, pad);
-            if (stream && stream->parent && stream->parent->parent) {
+            if (stream && stream->parent && stream->parent->parent && format == GST_FORMAT_TIME) {
                 gst_event_ref(event);
                 if (stream->seek)
                     gst_event_unref(stream->seek);
@@ -594,7 +607,15 @@ static gboolean webKitMediaSrcDemuxerEventWithParent(GstPad* pad, GstObject* par
             printf("### %s: Can't get WebKitMediaSrc instance!\n", __PRETTY_FUNCTION__); fflush(stdout);
         }
         printf("### %s: Processed SEEK event\n", __PRETTY_FUNCTION__); fflush(stdout);
-        // No break, will fall back to the "default" case on purpose
+
+        // ####
+
+        if (true) {
+            // No break, will fall back to the "default" case on purpose
+        } else {
+            result = TRUE;
+            break;
+        }
     }
 
     default:
@@ -1307,106 +1328,6 @@ static void webKitMediaSrcUriHandlerInit(gpointer gIface, gpointer)
     iface->set_uri = webKitMediaSrcSetUri;
 }
 
-static gboolean webKitMediaSrcNeedDataMainCb(WebKitMediaSrc* src)
-{
-    printf("### %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout);
-/*
-    WebKitMediaSrcPrivate* priv = src->priv;
-
-    ASSERT(isMainThread());
-
-    GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
-    // already stopped
-    if (!priv->needDataID)
-        return FALSE;
-
-    priv->paused = FALSE;
-    priv->needDataID = 0;
-    locker.unlock();
-
-    if (priv->client)
-        priv->client->setDefersLoading(false);
-*/
-    return FALSE;
-}
-
-static void webKitMediaSrcNeedDataCb(GstAppSrc*, guint length, gpointer userData)
-{
-    printf("### %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout);
-
-    WebKitMediaSrc* src = WEBKIT_MEDIA_SRC(userData);
-    WebKitMediaSrcPrivate* priv = src->priv;
-
-    GST_DEBUG_OBJECT(src, "Need more data: %u", length);
-
-    GST_OBJECT_LOCK(src);
-    if (!priv->needDataID && priv->paused) {
-        priv->needDataID = g_timeout_add_full(G_PRIORITY_DEFAULT, 0, (GSourceFunc) webKitMediaSrcNeedDataMainCb, gst_object_ref(src), (GDestroyNotify) gst_object_unref);
-        g_source_set_name_by_id(priv->needDataID, "[WebKit] webKitMediaSrcNeedDataMainCb");
-    }
-    GST_OBJECT_UNLOCK(src);
-}
-
-static gboolean webKitMediaSrcEnoughDataMainCb(WebKitMediaSrc* src)
-{
-    printf("### %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout);
-    /*
-    WebKitMediaSrcPrivate* priv = src->priv;
-
-    ASSERT(isMainThread());
-
-    GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
-    // already stopped
-    if (!priv->enoughDataID)
-        return FALSE;
-
-    priv->paused = TRUE;
-    priv->enoughDataID = 0;
-    locker.unlock();
-
-    if (priv->client)
-        priv->client->setDefersLoading(true);
-    */
-    return FALSE;
-}
-
-static void webKitMediaSrcEnoughDataCb(GstAppSrc*, gpointer userData)
-{
-    printf("### %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout);
-
-    WebKitMediaSrc* src = WEBKIT_MEDIA_SRC(userData);
-    WebKitMediaSrcPrivate* priv = src->priv;
-
-    GST_DEBUG_OBJECT(src, "Have enough data");
-
-    GST_OBJECT_LOCK(src);
-    if (!(priv->enoughDataID || priv->paused)) {
-        priv->enoughDataID = g_timeout_add_full(G_PRIORITY_DEFAULT, 0, (GSourceFunc) webKitMediaSrcEnoughDataMainCb, gst_object_ref(src), (GDestroyNotify) gst_object_unref);
-        g_source_set_name_by_id(priv->enoughDataID, "[WebKit] webKitMediaSrcEnoughDataMainCb");
-    }
-    GST_OBJECT_UNLOCK(src);
-}
-
-static gboolean webKitMediaSrcSeekMainCb(WebKitMediaSrc* src)
-{
-    printf("### %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout);
-    /*
-    WebKitMediaSrcPrivate* priv = src->priv;
-
-    ASSERT(isMainThread());
-
-    GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
-    // already stopped
-    if (!priv->seekID)
-        return FALSE;
-    locker.unlock();
-
-    webKitMediaSrcStop(src);
-    webKitMediaSrcStart(src);
-    */
-    return FALSE;
-}
-
 static gboolean webKitMediaSrcSeekDataCb(GstAppSrc*, guint64 offset, gpointer userData)
 {
     printf("### %s [%d]: offset=%" GST_TIME_FORMAT "\n", __PRETTY_FUNCTION__, WTF::currentThread(), GST_TIME_ARGS(offset)); fflush(stdout);
@@ -1427,12 +1348,6 @@ static gboolean webKitMediaSrcSeekDataCb(GstAppSrc*, guint64 offset, gpointer us
     } else {
         GST_DEBUG_OBJECT(src, "Doing range-request seek");
         priv->requestedOffset = offset;
-
-        if (priv->seekID)
-            g_source_remove(priv->seekID);
-        printf("### Enqueuing timeout (C)\n"); fflush(stdout);
-        priv->seekID = g_timeout_add_full(G_PRIORITY_DEFAULT, 0, (GSourceFunc) webKitMediaSrcSeekMainCb, gst_object_ref(src), (GDestroyNotify) gst_object_unref);
-        g_source_set_name_by_id(priv->seekID, "[WebKit] webKitMediaSrcSeekMainCb");
         result = TRUE;
     }
     GST_OBJECT_UNLOCK(src);
@@ -1707,6 +1622,8 @@ void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefP
     }
 
     GstPad* demuxersrcpad = stream->demuxersrcpad;
+    GstElement* appsrc = stream->parent->src;
+    MediaTime seekTime = stream->parent->parent->priv->seekTime;
     GstEvent* seek = stream->seek;
     stream->seek = NULL;
     GST_OBJECT_UNLOCK(m_src.get());
@@ -1726,6 +1643,10 @@ void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefP
         gst_event_parse_seek(seek, &rate, &format, &flags, &start_type, &start, &stop_type, &stop);
 
         printf("### %s: Parsing SEEK event: start=%" GST_TIME_FORMAT ", stop=%" GST_TIME_FORMAT ", rate=%f, format=%s\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(start), GST_TIME_ARGS(stop), rate, gst_format_get_name(format)); fflush(stdout);
+
+//#### USE gst_element_query_convert() ON stream->parser TO CONVERT THE seekTime STORED
+//#### IN WebKitMediaSrc FROM TIME TO BYTES IF THE FORMAT IS IN BYTES
+//        stream->parser####
 
         segment = gst_segment_new();
         segment->format = format;
@@ -1750,6 +1671,19 @@ void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefP
 
     // ####
 
+    /*
+    printf("### %s: Manually flushing appsrc\n", __PRETTY_FUNCTION__); fflush(stdout);
+
+    GstEvent* flushStart = gst_event_new_flush_start();
+    GstEvent* flushStop = gst_event_new_flush_stop(false);
+    GstPad* appsrcpad = gst_element_get_static_pad(appsrc, "src");
+    gst_pad_send_event(appsrcpad, flushStart);
+    gst_pad_send_event(appsrcpad, flushStop);
+    gst_object_unref(appsrcpad);
+    */
+
+    gst_pad_set_offset(demuxersrcpad, seekTime);
+
     printf("### %s: Pushing artificial SEGMENT event: start=%" GST_TIME_FORMAT ", stop=%" GST_TIME_FORMAT ", time=%" GST_TIME_FORMAT ", rate=%f, format=%s\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(segment->start), GST_TIME_ARGS(segment->stop), GST_TIME_ARGS(segment->time), segment->rate, gst_format_get_name(segment->format)); fflush(stdout);
 
     GstEvent* segmentEvent = gst_event_new_segment(segment);
@@ -1760,6 +1694,9 @@ void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefP
     for (Vector<RefPtr<MediaSample> >::iterator it = samples.begin(); it != samples.end(); ++it) {
         GStreamerMediaSample* sample = static_cast<GStreamerMediaSample*>(it->get());
         GstBuffer* buffer = gst_buffer_ref(sample->buffer());
+
+        GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DECODE_ONLY);
+
         printf("### [REENQ] Sample: PTS=%f\n", sample->presentationTime().toDouble()); fflush(stdout);
         gst_pad_chain(multiqueuesinkpad, buffer);
     }
@@ -1908,6 +1845,49 @@ void webkit_media_src_track_added(WebKitMediaSrc* src, GstPad* pad, GstEvent* ev
     ASSERT(srcpad);
 
     webKitMediaSrcEventWithParent(srcpad, NULL, event);
+}
+
+void webkit_media_src_set_seek_time(WebKitMediaSrc* src, const MediaTime& time)
+{
+    src->priv->seekTime = time;
+}
+
+static GstClockTime toGstClockTime(float time)
+{
+    // Extract the integer part of the time (seconds) and the fractional part (microseconds). Attempt to
+    // round the microseconds so no floating point precision is lost and we can perform an accurate seek.
+    float seconds;
+    float microSeconds = std::modf(time, &seconds) * 1000000;
+    GTimeVal timeValue;
+    timeValue.tv_sec = static_cast<glong>(seconds);
+    timeValue.tv_usec = static_cast<glong>(roundf(microSeconds / 10000) * 10000);
+    return GST_TIMEVAL_TO_TIME(timeValue);
+}
+
+void webkit_media_src_video_segment_needed(WebKitMediaSrc* src)
+{
+    // The video sink has received reset-time and needs a new segment before
+    // new frames can be pushed. The new segment will be pushed to the
+    // multiqueue video srcpad
+    GST_OBJECT_LOCK(src);
+    MediaTime seekTime = src->priv->seekTime;
+    GST_OBJECT_UNLOCK(src);
+
+    if (seekTime) {
+        GstPad* demuxersrcpad = webkit_media_src_get_video_pad(src, 0);
+        GstSegment* segment = gst_segment_new();
+
+        gst_segment_init(segment, GST_FORMAT_TIME);
+        segment->start = toGstClockTime(seekTime.toFloat());
+        segment->stop = GST_CLOCK_TIME_NONE;
+
+        GstEvent* segmentEvent = gst_event_new_segment(segment);
+
+        printf("### %s: Pushing artificial SEGMENT event: start=%" GST_TIME_FORMAT ", stop=%" GST_TIME_FORMAT ", time=%" GST_TIME_FORMAT ", rate=%f, format=%s\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(segment->start), GST_TIME_ARGS(segment->stop), GST_TIME_ARGS(segment->time), segment->rate, gst_format_get_name(segment->format)); fflush(stdout);
+
+        gst_pad_push_event(demuxersrcpad, segmentEvent);
+        gst_segment_free(segment);
+    }
 }
 
 namespace WTF {

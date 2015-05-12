@@ -181,6 +181,7 @@ private:
 
     bool doSeek(gint64 position, float rate, GstSeekFlags seekType);
     void updatePlaybackRate();
+    void adjustVideoSinkPositionIfNeeded(gint64 position);
 
     virtual String engineDescription() const { return "GStreamer"; }
     virtual bool didPassCORSAccessCheck() const;

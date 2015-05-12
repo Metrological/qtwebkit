@@ -120,11 +120,13 @@ void MediaSourceGStreamer::setReadyState(MediaPlayer::ReadyState state)
 
 void MediaSourceGStreamer::waitForSeekCompleted()
 {
+    printf("### %s: NOT IMPLEMENTED!\n", __PRETTY_FUNCTION__); fflush(stdout);
     notImplemented();
 }
 
 void MediaSourceGStreamer::seekCompleted()
 {
+    printf("### %s: NOT IMPLEMENTED!\n", __PRETTY_FUNCTION__); fflush(stdout);
     notImplemented();
 }
 
