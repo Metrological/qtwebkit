@@ -41,6 +41,8 @@ G_BEGIN_DECLS
 #define WEBKIT_IS_MEDIA_SRC(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WEBKIT_TYPE_MEDIA_SRC))
 #define WEBKIT_IS_MEDIA_SRC_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WEBKIT_TYPE_MEDIA_SRC))
 
+typedef enum _StreamType {STREAM_TYPE_UNKNOWN, STREAM_TYPE_AUDIO, STREAM_TYPE_VIDEO, STREAM_TYPE_TEXT} StreamType;
+
 typedef struct _WebKitMediaSrc        WebKitMediaSrc;
 typedef struct _WebKitMediaSrcClass   WebKitMediaSrcClass;
 typedef struct _WebKitMediaSrcPrivate WebKitMediaSrcPrivate;
@@ -69,7 +71,7 @@ void webkit_media_src_set_mediaplayerprivate(WebKitMediaSrc* src, WebCore::Media
 
 void webkit_media_src_track_added(WebKitMediaSrc*, GstPad* pad, GstEvent* event);
 void webkit_media_src_set_seek_time(WebKitMediaSrc*, const MediaTime&);
-void webkit_media_src_video_segment_needed(WebKitMediaSrc*);
+void webkit_media_src_segment_needed(WebKitMediaSrc*, StreamType);
 
 G_END_DECLS
 

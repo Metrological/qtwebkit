@@ -1170,6 +1170,48 @@ struct MainThreadNeedKeyCallbackInfo {
 
 static gboolean mediaPlayerPrivateNotifyDurationChanged(MediaPlayerPrivateGStreamer* instance);
 
+#if ENABLE(MEDIA_SOURCE)
+static StreamType getStreamType(GstElement* element)
+{
+    g_return_val_if_fail(GST_IS_ELEMENT(element), STREAM_TYPE_UNKNOWN);
+
+    GstIterator* it;
+    GstPad* pad;
+    GValue item = G_VALUE_INIT;
+    StreamType result = STREAM_TYPE_UNKNOWN;
+
+    it = gst_element_iterate_sink_pads(element);
+
+    if (it && (gst_iterator_next(it, &item)) == GST_ITERATOR_OK
+        && ((pad = GST_PAD(g_value_get_object(&item))) != 0)) {
+        GstCaps* caps = gst_pad_get_current_caps(pad);
+        const gchar* mediatype = gst_structure_get_name(gst_caps_get_structure(caps, 0));
+        // Look for "audio", "video", "text"
+        switch (mediatype[0]) {
+        case 'a':
+            result = STREAM_TYPE_AUDIO;
+            break;
+        case 'v':
+            result = STREAM_TYPE_VIDEO;
+            break;
+        case 't':
+            result = STREAM_TYPE_TEXT;
+            break;
+        default:
+            break;
+        }
+        gst_caps_unref(caps);
+    }
+
+    g_value_unset(&item);
+
+    if (it)
+        gst_iterator_free(it);
+
+    return result;
+}
+#endif
+
 void MediaPlayerPrivateGStreamer::handleSyncMessage(GstMessage* message)
 {
     switch (GST_MESSAGE_TYPE(message)) {
@@ -1362,17 +1404,19 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
         processTableOfContents(message);
         break;
 #endif
+#if ENABLE(MEDIA_SOURCE)
     case GST_MESSAGE_RESET_TIME:
         if (m_source && WEBKIT_IS_MEDIA_SRC(m_source.get())) {
-                GstElement* videosink = 0;
-                g_object_get(m_playBin.get(), "video-sink", &videosink, NULL);
-                if (videosink) {
-                    WebKitMediaSrc* src = WEBKIT_MEDIA_SRC(m_source.get());
-                    webkit_media_src_video_segment_needed(src);
-                    g_object_unref(videosink);
-                }
+                printf("### %s: Received reset-time message for %s\n", __PRETTY_FUNCTION__, GST_MESSAGE_SRC_NAME(message)); fflush(stdout);
+
+                StreamType streamType = getStreamType(GST_ELEMENT(GST_MESSAGE_SRC(message)));
+                printf("### %s: streamType=%d\n", __PRETTY_FUNCTION__, streamType); fflush(stdout);
+
+                if (streamType == STREAM_TYPE_AUDIO || streamType == STREAM_TYPE_VIDEO)
+                    webkit_media_src_segment_needed(WEBKIT_MEDIA_SRC(m_source.get()), streamType);
         }
         break;
+#endif
     default:
         LOG_MEDIA_MESSAGE("Unhandled GStreamer message type: %s",
                     GST_MESSAGE_TYPE_NAME(message));
@@ -2438,6 +2482,13 @@ void MediaPlayerPrivateGStreamer::createAudioSink()
     gst_element_add_pad(audioSink, gst_ghost_pad_new("sink", pad.get()));
 
     g_object_set(m_playBin.get(), "audio-sink", audioSink, NULL);
+
+    GRefPtr<GstElement> playsink = adoptGRef(gst_bin_get_by_name(GST_BIN(m_playBin.get()), "playsink"));
+    if (playsink) {
+        // The default value (0) means "send events to all the sinks", instead
+        // of "only to the first that returns true". This is needed for MSE seek.
+        g_object_set(G_OBJECT(playsink.get()), "send-event-mode", 0, NULL);
+    }
 }
 
 void MediaPlayerPrivateGStreamer::createGSTPlayBin()

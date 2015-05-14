@@ -171,8 +171,6 @@ typedef struct {
     WebCore::FloatSize presentationSize;
 } PendingReceiveSample;
 
-typedef enum {STREAM_TYPE_UNKNOWN, STREAM_TYPE_AUDIO, STREAM_TYPE_VIDEO, STREAM_TYPE_TEXT} StreamType;
-
 struct _Stream
 {
     Source* parent;
@@ -195,7 +193,6 @@ struct _Stream
     WebCore::FloatSize presentationSize;
     GList* pendingReceiveSample;
     bool initSegmentAlreadyProcessed;
-    GstEvent* seek;
 };
 
 struct _Source {
@@ -244,6 +241,8 @@ struct _WebKitMediaSrcPrivate
     guint64 offset;
     guint64 requestedOffset;
     MediaTime seekTime;
+    int flushAndReenqueueCount;
+    GstEvent* seekEvent;
 
     WebCore::MediaPlayerPrivateGStreamer* mediaPlayerPrivate;
     WebCore::MediaSourceClientGStreamer* mediaSourceClient;
@@ -368,6 +367,11 @@ static void webKitMediaSrcFinalize(GObject* object)
 
     // TODO: Free sources
     g_free(priv->location);
+
+    if (priv->seekEvent) {
+        gst_event_unref(priv->seekEvent);
+        priv->seekEvent = 0;
+    }
 
     if (priv->mediaPlayerPrivate) {
         priv->mediaPlayerPrivate = 0;
@@ -596,11 +600,15 @@ static gboolean webKitMediaSrcDemuxerEventWithParent(GstPad* pad, GstObject* par
         if (src) {
             GST_OBJECT_LOCK(src);
             Stream* stream = getStreamByDemuxerPad(src, pad);
-            if (stream && stream->parent && stream->parent->parent && format == GST_FORMAT_TIME) {
+            const AtomicString& id = stream->audioTrack ? stream->audioTrack->get()->id() : stream->videoTrack->get()->id();
+            printf("### %s: Stream is %s\n", __PRETTY_FUNCTION__, id.string().utf8().data()); fflush(stdout);
+
+            if (format == GST_FORMAT_TIME) {
                 gst_event_ref(event);
-                if (stream->seek)
-                    gst_event_unref(stream->seek);
-                stream->seek = event;
+                if (src->priv->seekEvent)
+                    gst_event_unref(src->priv->seekEvent);
+                printf("### %s: Setting priv->seek\n", __PRETTY_FUNCTION__);
+                src->priv->seekEvent = event;
             }
             GST_OBJECT_UNLOCK(src);
         } else {
@@ -872,7 +880,6 @@ static void webKitMediaSrcDemuxerPadAdded(GstElement* demuxer, GstPad* demuxersr
     stream->initSegmentAlreadyProcessed = false;
     stream->type = STREAM_TYPE_UNKNOWN;
     stream->demuxersrcpad = demuxersrcpad;
-    stream->seek = 0;
 
     parserBinName = g_strdup_printf("streamparser%d", stream->id);
 
@@ -1014,8 +1021,6 @@ static gboolean freeStreamLater(Stream* stream)
 #endif
     if (stream->multiqueuesrcpad)
         g_object_unref(stream->multiqueuesrcpad);
-    if (stream->seek)
-        gst_event_unref(stream->seek);
 
     g_free(stream);
 
@@ -1624,13 +1629,12 @@ void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefP
     GstPad* demuxersrcpad = stream->demuxersrcpad;
     GstElement* appsrc = stream->parent->src;
     MediaTime seekTime = stream->parent->parent->priv->seekTime;
-    GstEvent* seek = stream->seek;
-    stream->seek = NULL;
+    GstEvent* seekEvent = stream->parent->parent->priv->seekEvent;
     GST_OBJECT_UNLOCK(m_src.get());
 
     GstSegment* segment = NULL;
 
-    if (seek) {
+    if (seekEvent) {
         gdouble rate;
         GstFormat format;
         GstSeekFlags flags;
@@ -1640,7 +1644,7 @@ void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefP
         gint64 stop;
         gboolean update = false;
 
-        gst_event_parse_seek(seek, &rate, &format, &flags, &start_type, &start, &stop_type, &stop);
+        gst_event_parse_seek(seekEvent, &rate, &format, &flags, &start_type, &start, &stop_type, &stop);
 
         printf("### %s: Parsing SEEK event: start=%" GST_TIME_FORMAT ", stop=%" GST_TIME_FORMAT ", rate=%f, format=%s\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(start), GST_TIME_ARGS(stop), rate, gst_format_get_name(format)); fflush(stdout);
 
@@ -1655,10 +1659,8 @@ void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefP
         gboolean seekOk = gst_segment_do_seek(segment, rate, format, flags, start_type, start, stop_type, stop, &update);
 
         printf("### %s: New segment configured by gst_segment_do_seek: ok=%s, update=%s, format=%s\n", __PRETTY_FUNCTION__, (seekOk)?"true":"false", (update)?"true":"false", gst_format_get_name(segment->format)); fflush(stdout);
-
-        gst_event_unref(seek);
     } else {
-        printf("### %s: stream->seek not found\n", __PRETTY_FUNCTION__); fflush(stdout);
+        printf("### %s: priv->seekEvent not found\n", __PRETTY_FUNCTION__); fflush(stdout);
         return;
     }
 
@@ -1689,6 +1691,17 @@ void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefP
     GstEvent* segmentEvent = gst_event_new_segment(segment);
     gst_pad_push_event(demuxersrcpad, segmentEvent);
     gst_segment_free(segment);
+
+    GST_OBJECT_LOCK(m_src.get());
+    WebKitMediaSrc* src = m_src.get();
+
+    printf("### %s: flushAndReenqueueCount=%d\n", __PRETTY_FUNCTION__, src->priv->flushAndReenqueueCount); fflush(stdout);
+
+    src->priv->flushAndReenqueueCount++;
+
+    printf("### %s: (incrementing) flushAndReenqueueCount=%d\n", __PRETTY_FUNCTION__, src->priv->flushAndReenqueueCount); fflush(stdout);
+
+    GST_OBJECT_UNLOCK(m_src.get());
 
     GstPad* multiqueuesinkpad = gst_pad_get_peer(demuxersrcpad);
     for (Vector<RefPtr<MediaSample> >::iterator it = samples.begin(); it != samples.end(); ++it) {
@@ -1850,6 +1863,8 @@ void webkit_media_src_track_added(WebKitMediaSrc* src, GstPad* pad, GstEvent* ev
 void webkit_media_src_set_seek_time(WebKitMediaSrc* src, const MediaTime& time)
 {
     src->priv->seekTime = time;
+    src->priv->flushAndReenqueueCount = 0;
+    printf("### %s: (reset) flushAndReenqueueCount=%d\n", __PRETTY_FUNCTION__, src->priv->flushAndReenqueueCount); fflush(stdout);
 }
 
 static GstClockTime toGstClockTime(float time)
@@ -1864,17 +1879,49 @@ static GstClockTime toGstClockTime(float time)
     return GST_TIMEVAL_TO_TIME(timeValue);
 }
 
-void webkit_media_src_video_segment_needed(WebKitMediaSrc* src)
+void webkit_media_src_segment_needed(WebKitMediaSrc* src, StreamType streamType)
 {
     // The video sink has received reset-time and needs a new segment before
     // new frames can be pushed. The new segment will be pushed to the
     // multiqueue video srcpad
     GST_OBJECT_LOCK(src);
     MediaTime seekTime = src->priv->seekTime;
+    int flushAndReenqueueCount = src->priv->flushAndReenqueueCount;
+    printf("### %s: flushAndReenqueueCount=%d\n", __PRETTY_FUNCTION__, src->priv->flushAndReenqueueCount); fflush(stdout);
+    if (seekTime && flushAndReenqueueCount > 0) {
+        src->priv->flushAndReenqueueCount--;
+        printf("### %s: (decrementing) flushAndReenqueueCount=%d\n", __PRETTY_FUNCTION__, src->priv->flushAndReenqueueCount); fflush(stdout);
+        if (src->priv->flushAndReenqueueCount == 0) {
+            printf("### %s: Freeing stored seek event\n", __PRETTY_FUNCTION__); fflush(stdout);
+            GstEvent* seekEvent = src->priv->seekEvent;
+            src->priv->seekEvent = NULL;
+            gst_event_unref(seekEvent);
+        }
+    }
     GST_OBJECT_UNLOCK(src);
 
     if (seekTime) {
-        GstPad* demuxersrcpad = webkit_media_src_get_video_pad(src, 0);
+        // The flushAndReenqueue method will take care of pushing the segment
+        if (flushAndReenqueueCount > 0) {
+            printf("### %s: Seek involves flushAndReenqueue, not pushing any artificial segment\n", __PRETTY_FUNCTION__); fflush(stdout);
+            return;
+        }
+
+        GstPad* demuxersrcpad = NULL;
+
+        switch (streamType) {
+        case STREAM_TYPE_AUDIO:
+            demuxersrcpad = webkit_media_src_get_audio_pad(src, 0);
+            break;
+        case STREAM_TYPE_VIDEO:
+            demuxersrcpad = webkit_media_src_get_video_pad(src, 0);
+            break;
+        }
+
+        if (!demuxersrcpad) {
+            printf("### %s: No demuxer pad found for streamType=%d! returning\n", __PRETTY_FUNCTION__, streamType); fflush(stdout);
+            return;
+        }
         GstSegment* segment = gst_segment_new();
 
         gst_segment_init(segment, GST_FORMAT_TIME);
