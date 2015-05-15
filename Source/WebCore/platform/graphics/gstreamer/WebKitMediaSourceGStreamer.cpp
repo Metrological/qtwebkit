@@ -358,6 +358,7 @@ static void webkit_media_src_class_init(WebKitMediaSrcClass* klass)
 static void webkit_media_src_init(WebKitMediaSrc* src)
 {
     src->priv = WEBKIT_MEDIA_SRC_GET_PRIVATE(src);
+    src->priv->seekTime = MediaTime::zeroTime();
 }
 
 static void webKitMediaSrcFinalize(GObject* object)
@@ -367,6 +368,8 @@ static void webKitMediaSrcFinalize(GObject* object)
 
     // TODO: Free sources
     g_free(priv->location);
+
+    priv->seekTime = MediaTime::zeroTime();
 
     if (priv->seekEvent) {
         gst_event_unref(priv->seekEvent);
@@ -1634,6 +1637,13 @@ void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefP
 
     GstSegment* segment = NULL;
 
+    // !!! THIS COMPARISON CONFUSES THE ALGORITHM WHEN THE DESTINATION SEEK TIME IS 0
+
+    if (!seekTime) {
+        printf("### %s: SeekTime is invalid\n", __PRETTY_FUNCTION__); fflush(stdout);
+        return;
+    }
+
     if (seekEvent) {
         gdouble rate;
         GstFormat format;
@@ -1889,15 +1899,23 @@ void webkit_media_src_segment_needed(WebKitMediaSrc* src, StreamType streamType)
     int flushAndReenqueueCount = src->priv->flushAndReenqueueCount;
     printf("### %s: flushAndReenqueueCount=%d\n", __PRETTY_FUNCTION__, src->priv->flushAndReenqueueCount); fflush(stdout);
 
+    // !!! THIS COMPARISON CONFUSES THE ALGORITHM WHEN THE DESTINATION SEEK TIME IS 0
+
     if (seekTime && flushAndReenqueueCount > 0) {
         src->priv->flushAndReenqueueCount--;
         printf("### %s: (decrementing) flushAndReenqueueCount=%d\n", __PRETTY_FUNCTION__, src->priv->flushAndReenqueueCount); fflush(stdout);
 
         if (src->priv->flushAndReenqueueCount == 0) {
-            printf("### %s: Freeing stored seek event\n", __PRETTY_FUNCTION__); fflush(stdout);
+            if (src->priv->seekTime) {
+                printf("### %s: Clearing seekTime %f\n", __PRETTY_FUNCTION__, src->priv->seekTime.toDouble()); fflush(stdout);
+                src->priv->seekTime = MediaTime::zeroTime();
+            }
             GstEvent* seekEvent = src->priv->seekEvent;
-            src->priv->seekEvent = NULL;
-            gst_event_unref(seekEvent);
+            if (seekEvent) {
+                printf("### %s: Freeing stored seek event\n", __PRETTY_FUNCTION__); fflush(stdout);
+                src->priv->seekEvent = NULL;
+                gst_event_unref(seekEvent);
+            }
         }
     }
     GST_OBJECT_UNLOCK(src);
