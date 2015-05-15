@@ -440,9 +440,6 @@ float MediaPlayerPrivateGStreamer::playbackPosition() const
     float result = 0.0f;
     if (static_cast<GstClockTime>(position) != GST_CLOCK_TIME_NONE) {
         result = static_cast<double>(position) / GST_SECOND;
-        // METRO FIXME: Instead of offsetting the current X position here, it would be better to make GStreamer use m_seekTime+X as its position
-        // if (isMediaSource() && m_seekTime != GST_CLOCK_TIME_NONE)
-        //    result += m_seekTime;
     } else if (m_canFallBackToLastFinishedSeekPosition)
         result = m_seekTime;
 
@@ -589,21 +586,29 @@ float MediaPlayerPrivateGStreamer::currentTime() const
 
 void MediaPlayerPrivateGStreamer::seek(float time)
 {
-    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
+    printf("### %s: time=%f\n", __PRETTY_FUNCTION__, time); fflush(stdout);
 
-    if (!m_playBin)
-        return;
+    if (!m_playBin) {
 
-    if (m_errorOccured)
+        printf("### %s: No playbin, returning\n", __PRETTY_FUNCTION__); fflush(stdout);
         return;
+    }
+
+    if (m_errorOccured) {
+        printf("### %s: Error occured, returning\n", __PRETTY_FUNCTION__); fflush(stdout);
+        return;
+    }
 
     INFO_MEDIA_MESSAGE("[Seek] seek attempt to %f secs", time);
 
     // Avoid useless seeking.
-    if (time == currentTime())
+    if (time == currentTime()) {
+        printf("### %s: Time equals currentTime(), returning\n", __PRETTY_FUNCTION__); fflush(stdout);
         return;
+    }
 
     if (isLiveStream()) {
+        printf("### %s: Is live stream, returning\n", __PRETTY_FUNCTION__); fflush(stdout);
         return;
     }
 
@@ -614,6 +619,7 @@ void MediaPlayerPrivateGStreamer::seek(float time)
         m_timeOfOverlappingSeek = time;
         if (m_seekIsPending) {
             m_seekTime = time;
+            printf("### %s: Seek pending, returning\n", __PRETTY_FUNCTION__); fflush(stdout);
             return;
         }
     }
@@ -622,11 +628,15 @@ void MediaPlayerPrivateGStreamer::seek(float time)
     GstStateChangeReturn getStateResult = gst_element_get_state(m_playBin.get(), &state, 0, 0);
     if (getStateResult == GST_STATE_CHANGE_FAILURE || getStateResult == GST_STATE_CHANGE_NO_PREROLL) {
         LOG_MEDIA_MESSAGE("[Seek] cannot seek, current state change is %s", gst_element_state_change_return_get_name(getStateResult));
+        printf("### %s: State change failure or no preroll (%s), returning\n", __PRETTY_FUNCTION__, gst_element_state_change_return_get_name(getStateResult)); fflush(stdout);
         return;
     }
+
     if (getStateResult == GST_STATE_CHANGE_ASYNC || state < GST_STATE_PAUSED || m_isEndReached) {
         m_seekIsPending = true;
+        printf("### %s: State change async, less than paused or end reached\n", __PRETTY_FUNCTION__); fflush(stdout);
         if (m_isEndReached) {
+            printf("### %s: Resetting pipeline\n", __PRETTY_FUNCTION__); fflush(stdout);
             LOG_MEDIA_MESSAGE("[Seek] reset pipeline");
             m_resetPipeline = true;
             changePipelineState(GST_STATE_PAUSED);
@@ -663,49 +673,23 @@ void MediaPlayerPrivateGStreamer::seek(float time)
     m_seeking = true;
     m_seekTime = time;
     m_isEndReached = false;
-}
-
-void MediaPlayerPrivateGStreamer::adjustVideoSinkPositionIfNeeded(gint64 position)
-{
-    /*
-    if (isMediaSource() && m_playBin) {
-        GstElement* videoSink = 0;
-        g_object_get(m_playBin.get(), "video-sink", &videoSink, NULL);
-        if (videoSink) {
-            printf("### %s: Convince videosink to have the right position\n", __PRETTY_FUNCTION__); fflush(stdout);
-
-            // ####
-
-            GstClockTime baseTime = gst_element_get_base_time(videoSink);
-            printf("### %s: baseTime=%" GST_TIME_FORMAT ", position=%" GST_TIME_FORMAT "\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(baseTime), GST_TIME_ARGS(position)); fflush(stdout);
-            baseTime -= position;
-            printf("### %s: corrected baseTime=%" GST_TIME_FORMAT "\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(baseTime)); fflush(stdout);
-            gst_element_set_base_time(videoSink, baseTime);
-
-            gint64 actualPosition;
-            if (gst_element_query_position(videoSink, GST_FORMAT_TIME, &actualPosition)) {
-                printf("### %s: The new videosink position is %" GST_TIME_FORMAT "\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(actualPosition)); fflush(stdout);
-            }
-
-            g_object_unref(videoSink);
-        }
-    }
-    */
+    printf("### %s: Method completed\n", __PRETTY_FUNCTION__); fflush(stdout);
 }
 
 bool MediaPlayerPrivateGStreamer::doSeek(gint64 position, float rate, GstSeekFlags seekType)
 {
-    printf("### %s: position=%" GST_TIME_FORMAT "\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(position)); fflush(stdout);
+    printf("### %s: We can finally seek to position=%" GST_TIME_FORMAT "\n", __PRETTY_FUNCTION__, GST_TIME_ARGS(position)); fflush(stdout);
 
     gint64 startTime, endTime;
 
     // TODO: Should do more than that, need to notify the media source
     // and probably flush the pipeline at least
+    /*
     if (isMediaSource()) {
-        adjustVideoSinkPositionIfNeeded(position);
         printf("### Returing because isMediaSource\n"); fflush(stdout);
         return true;
     }
+    */
 
     if (rate > 0) {
         startTime = position;
@@ -723,8 +707,25 @@ bool MediaPlayerPrivateGStreamer::doSeek(gint64 position, float rate, GstSeekFla
     if (!rate)
         rate = 1.0;
 
-    return gst_element_seek(m_playBin.get(), rate, GST_FORMAT_TIME, seekType,
-        GST_SEEK_TYPE_SET, startTime, GST_SEEK_TYPE_SET, endTime);
+    MediaTime time = MediaTime(double(static_cast<double>(position) / GST_SECOND));
+
+    if (isMediaSource()) {
+        webkit_media_src_set_seek_time(WEBKIT_MEDIA_SRC(m_source.get()), time);
+    }
+
+    if (!gst_element_seek(m_playBin.get(), rate, GST_FORMAT_TIME, seekType,
+        GST_SEEK_TYPE_SET, startTime, GST_SEEK_TYPE_SET, endTime)) {
+        printf("### %s: Finally seeking to %f (startTime=%" GST_TIME_FORMAT ", endTime=%" GST_TIME_FORMAT ") failed\n", __PRETTY_FUNCTION__, time.toDouble(), GST_TIME_ARGS(startTime), GST_TIME_ARGS(endTime)); fflush(stdout);
+        return false;
+    }
+
+    if (isMediaSource()) {
+        m_mediaSource->seekToTime(time);
+    }
+
+    printf("### %s: Method completed\n", __PRETTY_FUNCTION__); fflush(stdout);
+
+    return true;
 }
 
 void MediaPlayerPrivateGStreamer::updatePlaybackRate()
@@ -1817,8 +1818,6 @@ void MediaPlayerPrivateGStreamer::asyncStateChangeDone()
             LOG_MEDIA_MESSAGE("[Seek] seeked to %f", m_seekTime);
             m_seeking = false;
 
-            adjustVideoSinkPositionIfNeeded(toGstClockTime(m_seekTime));
-
             if (m_timeOfOverlappingSeek != m_seekTime && m_timeOfOverlappingSeek != -1) {
                 seek(m_timeOfOverlappingSeek);
                 m_timeOfOverlappingSeek = -1;
@@ -1983,6 +1982,7 @@ void MediaPlayerPrivateGStreamer::updateStates()
     if (getStateResult == GST_STATE_CHANGE_SUCCESS && state >= GST_STATE_PAUSED) {
         updatePlaybackRate();
         if (m_seekIsPending) {
+            printf("### %s: Committing pending seek to %f\n", __PRETTY_FUNCTION__, m_seekTime); fflush(stdout);
             LOG_MEDIA_MESSAGE("[Seek] committing pending seek to %f", m_seekTime);
             m_seekIsPending = false;
             m_seeking = doSeek(toGstClockTime(m_seekTime), m_player->rate(), static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE));

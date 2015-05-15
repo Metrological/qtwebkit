@@ -1888,9 +1888,11 @@ void webkit_media_src_segment_needed(WebKitMediaSrc* src, StreamType streamType)
     MediaTime seekTime = src->priv->seekTime;
     int flushAndReenqueueCount = src->priv->flushAndReenqueueCount;
     printf("### %s: flushAndReenqueueCount=%d\n", __PRETTY_FUNCTION__, src->priv->flushAndReenqueueCount); fflush(stdout);
+
     if (seekTime && flushAndReenqueueCount > 0) {
         src->priv->flushAndReenqueueCount--;
         printf("### %s: (decrementing) flushAndReenqueueCount=%d\n", __PRETTY_FUNCTION__, src->priv->flushAndReenqueueCount); fflush(stdout);
+
         if (src->priv->flushAndReenqueueCount == 0) {
             printf("### %s: Freeing stored seek event\n", __PRETTY_FUNCTION__); fflush(stdout);
             GstEvent* seekEvent = src->priv->seekEvent;
