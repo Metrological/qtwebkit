@@ -322,7 +322,9 @@ MediaPlayerPrivateGStreamer::~MediaPlayerPrivateGStreamer()
         g_signal_handlers_disconnect_by_func(m_playBin.get(), reinterpret_cast<gpointer>(mediaPlayerPrivateNewTextSampleCallback), this);
         g_signal_handlers_disconnect_by_func(m_playBin.get(), reinterpret_cast<gpointer>(mediaPlayerPrivateTextChangedCallback), this);
 #endif
+        printf("### %s: (A)\n", __PRETTY_FUNCTION__); fflush(stdout);
         gst_element_set_state(m_playBin.get(), GST_STATE_NULL);
+        printf("### %s: (B)\n", __PRETTY_FUNCTION__); fflush(stdout);
         m_playBin.clear();
     }
 

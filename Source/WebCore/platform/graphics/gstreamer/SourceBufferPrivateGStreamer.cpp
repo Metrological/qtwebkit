@@ -159,5 +159,13 @@ void SourceBufferPrivateGStreamer::didReceiveAllPendingSamples()
 }
 #endif
 
+double SourceBufferPrivateGStreamer::timestampOffset() const
+{
+    if (m_sourceBufferPrivateClient)
+        return m_sourceBufferPrivateClient->timestampOffset();
+    else
+        return 0.0;
+}
+
 }
 #endif

@@ -120,29 +120,43 @@ private:
         , m_dts(MediaTime::zeroTime())
         , m_duration(MediaTime::zeroTime())
         , m_trackID(trackID)
+        , m_size(0)
+        , m_buffer(0)
         , m_presentationSize(presentationSize)
         , m_flags(MediaSample::IsSync)
     {
-        if (GST_BUFFER_PTS_IS_VALID(buffer))
-            m_pts = MediaTime(GST_BUFFER_PTS(buffer), GST_SECOND);
-        if (GST_BUFFER_DTS_IS_VALID(buffer))
-            m_dts = MediaTime(GST_BUFFER_DTS(buffer), GST_SECOND);
-        if (GST_BUFFER_DURATION_IS_VALID(buffer))
-            m_duration = MediaTime(GST_BUFFER_DURATION(buffer), GST_SECOND);
-        m_size = gst_buffer_get_size(buffer);
-        m_buffer = gst_buffer_ref(buffer);
+        if (buffer) {
+            if (GST_BUFFER_PTS_IS_VALID(buffer))
+                m_pts = MediaTime(GST_BUFFER_PTS(buffer), GST_SECOND);
+            if (GST_BUFFER_DTS_IS_VALID(buffer))
+                m_dts = MediaTime(GST_BUFFER_DTS(buffer), GST_SECOND);
+            if (GST_BUFFER_DURATION_IS_VALID(buffer))
+                m_duration = MediaTime(GST_BUFFER_DURATION(buffer), GST_SECOND);
+            m_size = gst_buffer_get_size(buffer);
+            m_buffer = gst_buffer_ref(buffer);
 
-        if (GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT))
-            m_flags = MediaSample::None;
+            if (GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT))
+                m_flags = MediaSample::None;
 
-        if (GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DECODE_ONLY))
-            m_flags = (MediaSample::SampleFlags) (m_flags | MediaSample::NonDisplaying);
+            if (GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DECODE_ONLY))
+                m_flags = (MediaSample::SampleFlags) (m_flags | MediaSample::NonDisplaying);
+        }
     }
 
 public:
     static PassRefPtr<GStreamerMediaSample> create(GstBuffer* buffer, const FloatSize& presentationSize, const AtomicString& trackID)
     {
         return adoptRef(new GStreamerMediaSample(buffer, presentationSize, trackID));
+    }
+
+    static PassRefPtr<GStreamerMediaSample> createFakeSample(MediaTime pts, MediaTime dts, MediaTime duration, const FloatSize& presentationSize, const AtomicString& trackID)
+    {
+        GStreamerMediaSample* s = new GStreamerMediaSample(0, presentationSize, trackID);
+        s->m_pts = pts;
+        s->m_dts = dts;
+        s->m_duration = duration;
+        s->m_flags = MediaSample::NonDisplaying;
+        return adoptRef(s);
     }
 
     virtual ~GStreamerMediaSample()
@@ -667,6 +681,19 @@ static gboolean webKitWebSrcDidReceiveSample(gpointer userdata)
     ReceiveSample* sample = (ReceiveSample*)userdata;
 
     if (sample->stream->parent) {
+        MediaTime timestampOffset(sample->stream->parent->sourceBuffer->timestampOffset());
+
+        // Add a fake sample if a gap is detected before the first sample
+        if (sample->sample->presentationTime() >= timestampOffset &&
+            sample->sample->presentationTime() <= timestampOffset + MediaTime::createWithDouble(0.1)) {
+            printf("### %s: timestampOffset=%f\n", __PRETTY_FUNCTION__, timestampOffset.toDouble()); fflush(stdout);
+            RefPtr<WebCore::GStreamerMediaSample> fakeSample = WebCore::GStreamerMediaSample::createFakeSample(
+                    timestampOffset, sample->sample->decodeTime(), sample->sample->presentationTime() - timestampOffset, sample->sample->presentationSize(),
+                    sample->stream->audioTrack ? sample->stream->audioTrack->get()->id() : sample->stream->videoTrack->get()->id());
+            printf("### %s: Appending fake sample\n", __PRETTY_FUNCTION__); fflush(stdout);
+            sample->stream->parent->parent->priv->mediaSourceClient->didReceiveSample(sample->stream->parent->sourceBuffer, fakeSample);
+        }
+
         sample->stream->parent->parent->priv->mediaSourceClient->didReceiveSample(sample->stream->parent->sourceBuffer, sample->sample);
 
         GST_OBJECT_LOCK(sample->stream->parent->parent);
@@ -1155,10 +1182,25 @@ static gboolean webKitMediaSrcDidReceiveInitializationSegment(gpointer userdata)
         Stream* stream = (Stream*)l->data;
         if (stream->initSegmentAlreadyProcessed) continue;
 
+        MediaTime timestampOffset(source->sourceBuffer->timestampOffset());
+
         GList* m;
         for (m = stream->pendingReceiveSample; m; m = m->next) {
             PendingReceiveSample* pending = (PendingReceiveSample*)m->data;
             RefPtr<WebCore::GStreamerMediaSample> sample = WebCore::GStreamerMediaSample::create(pending->buffer, pending->presentationSize, stream->audioTrack ? stream->audioTrack->get()->id() : stream->videoTrack->get()->id());
+
+            // Add a fake sample if a gap is detected before the first sample
+            if (samples.size()==0 &&
+                    sample->presentationTime() >= timestampOffset &&
+                    sample->presentationTime() <= timestampOffset + MediaTime::createWithDouble(0.1)) {
+                printf("### %s: timestampOffset=%f\n", __PRETTY_FUNCTION__, timestampOffset.toDouble()); fflush(stdout);
+                RefPtr<WebCore::GStreamerMediaSample> fakeSample = WebCore::GStreamerMediaSample::createFakeSample(
+                        timestampOffset, sample->decodeTime(), sample->presentationTime() - timestampOffset, pending->presentationSize,
+                        stream->audioTrack ? stream->audioTrack->get()->id() : stream->videoTrack->get()->id());
+                printf("### %s: Appending fake sample\n", __PRETTY_FUNCTION__); fflush(stdout);
+                samples.append(fakeSample);
+            }
+
             samples.append(sample);
             gst_buffer_unref(pending->buffer);
             g_free(pending);

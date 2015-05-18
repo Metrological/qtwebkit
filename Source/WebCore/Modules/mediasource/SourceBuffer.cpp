@@ -1769,9 +1769,26 @@ void SourceBuffer::reenqueueMediaForTime(TrackBuffer& trackBuffer, AtomicString 
     // Find the sample which contains the current presentation time.
     PresentationOrderSampleMap::iterator currentSamplePTSIterator = trackBuffer.samples.presentationOrder().findSampleContainingPresentationTime(time);
 
+    // DEBUG
+    {
+        printf("### %s: Looking for samples with presentation time %f...\n", __PRETTY_FUNCTION__, time.toDouble()); fflush(stdout);
+        PresentationOrderSampleMap::iterator iter = trackBuffer.samples.presentationOrder().begin();
+        PresentationOrderSampleMap::iterator end = trackBuffer.samples.presentationOrder().end();
+        for (;iter!=end;++iter) {
+            //std::pair<const WTF::MediaTime, WTF::RefPtr<WebCore::MediaSample> >
+            PresentationOrderSampleMap::MapType::value_type item = *iter;
+            double t = item.first.toDouble();
+            RefPtr<MediaSample> s = item.second;
+            double pts = s->presentationTime().toDouble();
+            double dur = s->duration().toDouble();
+            printf("### %s: Sample: T=%f, PTS=%f, DUR=%f\n", __PRETTY_FUNCTION__, t, pts, dur); fflush(stdout);
+        }
+    }
+
     if (currentSamplePTSIterator == trackBuffer.samples.presentationOrder().end()) {
         trackBuffer.decodeQueue.clear();
         m_private->flushAndEnqueueNonDisplayingSamples(Vector<RefPtr<MediaSample> >(), trackID);
+        printf("### %s: No sample contains presentation time %f, returning\n", __PRETTY_FUNCTION__, time.toDouble()); fflush(stdout);
         return;
     }
 
