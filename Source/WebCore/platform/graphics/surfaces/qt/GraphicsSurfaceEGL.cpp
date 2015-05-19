@@ -129,7 +129,7 @@ ShaderProgram* ShaderProgram::m_instance = NULL;
 class GraphicsSurfacePaintDevice : public QOpenGLPaintDevice
 {
 public:
-    GraphicsSurfacePaintDevice(IntSize size, QOpenGLContext *context, QOffscreenSurface *surface, QOpenGLFramebufferObject *fbo)
+    GraphicsSurfacePaintDevice(IntSize size, QOpenGLContext *context, QSurface *surface, QOpenGLFramebufferObject *fbo)
     : QOpenGLPaintDevice(size)
     , m_context(context)
     , m_surface(surface)
@@ -148,7 +148,7 @@ public:
     }
 private:
     QOpenGLContext *m_context;
-    QOffscreenSurface *m_surface;
+    QSurface *m_surface;
     QOpenGLFramebufferObject *m_fbo;
 };
 
@@ -223,8 +223,9 @@ struct GraphicsSurfacePrivate {
 
         // for webgl we need to create a new gl context sharing with the webgl one
         if (m_flags & GraphicsSurface::IsWebGL) {
-            m_surface = new QOffscreenSurface;
-            m_surface->create();
+            QOffscreenSurface *surface = new QOffscreenSurface;
+            surface->create();
+            m_surface = static_cast<QSurface*>(surface);
 
             m_context = new QOpenGLContext;
             m_context->setShareContext(shareContext);
@@ -293,7 +294,7 @@ struct GraphicsSurfacePrivate {
 
             if (m_flags & GraphicsSurface::IsWebGL) {
                 delete m_context;
-                m_surface->destroy();
+                static_cast<QOffscreenSurface*>(m_surface)->destroy();
                 delete m_surface;
             }
         } else {
@@ -466,7 +467,7 @@ struct GraphicsSurfacePrivate {
 
     bool m_isReceiver;
     IntSize m_size;
-    QOffscreenSurface *m_surface;
+    QSurface *m_surface;
     QOpenGLContext *m_context;
     EGLImageKHR m_eglImage;
     EGLImageKHR m_foreignEglImage;

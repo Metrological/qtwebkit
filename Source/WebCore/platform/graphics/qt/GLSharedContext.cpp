@@ -4,27 +4,25 @@
 
 namespace WebCore {
 
-QOpenGLContext* GLSharedContext::context()
+void GLSharedContext::setContext(QOpenGLContext *context) {
+    m_context = context;
+    m_surface = m_context->surface();
+}
+
+QOpenGLContext* GLSharedContext::context(bool forceCreation)
 {
-    if (!m_context)
+    if (!m_context && forceCreation)
         initialize();
     return m_context;
 }
 
-QOffscreenSurface* GLSharedContext::surface()
+QSurface* GLSharedContext::surface()
 {
     if (!m_surface)
         initialize();
     return m_surface;
 }
 
-void GLSharedContext::setSharingContext(QOpenGLContext *sharing) {
-    m_sharing = sharing;
-}
-
-QOpenGLContext* GLSharedContext::sharingContext() {
-    return m_sharing;
-}
 
 void GLSharedContext::makeCurrent() {
     if (!m_context)
@@ -37,15 +35,14 @@ void GLSharedContext::makeCurrent() {
 
 void GLSharedContext::initialize()
 {
-    m_surface = new QOffscreenSurface();
-    m_surface->create();
+    QOffscreenSurface *surface = new QOffscreenSurface();
+    surface->create();
+    m_surface = static_cast<QSurface*>(surface);
     m_context = new QOpenGLContext();
-    m_context->setShareContext(m_sharing);
     m_context->create();
     makeCurrent();
 }
 
-QOffscreenSurface* GLSharedContext::m_surface = 0;
+QSurface* GLSharedContext::m_surface = 0;
 QOpenGLContext* GLSharedContext::m_context = 0;
-QOpenGLContext* GLSharedContext::m_sharing = 0;
 }

@@ -9,18 +9,16 @@ namespace WebCore {
 
 class GLSharedContext {
 public:
-    static QOpenGLContext* context();
-    static QOffscreenSurface* surface();
-    static void setSharingContext(QOpenGLContext *sharing);
-    static QOpenGLContext* sharingContext();
+    static void setContext(QOpenGLContext *context);
+    static QOpenGLContext* context(bool forceCreation = true);
+    static QSurface* surface();
     static void makeCurrent();
 
 private:
     static void initialize();
 
-    static QOffscreenSurface *m_surface;
+    static QSurface *m_surface;
     static QOpenGLContext *m_context;
-    static QOpenGLContext *m_sharing;
 };
 
 }

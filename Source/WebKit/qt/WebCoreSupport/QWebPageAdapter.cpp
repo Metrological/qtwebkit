@@ -304,8 +304,8 @@ void QWebPageAdapter::initializeWebCorePage()
 #ifndef QT_NO_OPENGL
 void QWebPageAdapter::saveGLContext()
 {
-    if (!GLSharedContext::sharingContext())
-        GLSharedContext::setSharingContext(client->openGLContextIfAvailable());
+    if (!GLSharedContext::context(false))
+        GLSharedContext::setContext(client->openGLContextIfAvailable());
 }
 #endif
 
