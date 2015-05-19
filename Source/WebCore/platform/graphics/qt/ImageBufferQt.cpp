@@ -199,10 +199,8 @@ void ImageBufferDataPrivateAccelerated::commitChanges() const
         return;
 
     // this will flush pending QPainter operations and force ensureActiveTarget() to be called on the next paint
-    QPainter* painter = m_pdev->paintEngine()->painter();
-    painter->beginNativePainting();
-    painter->endNativePainting();
-
+    QOpenGL2PaintEngineEx* acceleratedPaintEngine = static_cast<QOpenGL2PaintEngineEx*>(m_pdev->paintEngine());
+    acceleratedPaintEngine->invalidateState();
     m_fboDirty = false;
 }
 
