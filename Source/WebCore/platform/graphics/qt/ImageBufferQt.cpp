@@ -145,11 +145,8 @@ ImageBufferDataPrivateAccelerated::ImageBufferDataPrivateAccelerated(const IntSi
 
 QImage ImageBufferDataPrivateAccelerated::toQImage() const
 {
-    QOpenGLContext *previousContext = QOpenGLContext::currentContext();
-    GLSharedContext::makeCurrent();
     commitChanges();
     QImage image = m_fbo->toImage();
-    previousContext->makeCurrent(previousContext->surface());
     return image;
 }
 
@@ -167,12 +164,7 @@ IntSize ImageBufferDataPrivateAccelerated::platformLayerSize() const
 GraphicsSurfaceToken ImageBufferDataPrivateAccelerated::graphicsSurfaceToken() const
 {
     if (!m_graphicsSurface) {
-        QOpenGLContext *previousContext = QOpenGLContext::currentContext();
-        GLSharedContext::makeCurrent();
-
         m_graphicsSurface = GraphicsSurface::create(m_fbo->size(), graphicsSurfaceFlags(), QOpenGLContext::currentContext());
-
-        previousContext->makeCurrent(previousContext->surface());
     }
 
     return m_graphicsSurface->exportToken();
@@ -180,15 +172,12 @@ GraphicsSurfaceToken ImageBufferDataPrivateAccelerated::graphicsSurfaceToken() c
 
 uint32_t ImageBufferDataPrivateAccelerated::copyToGraphicsSurface()
 {
-    QOpenGLContext *previousContext = QOpenGLContext::currentContext();
-    GLSharedContext::makeCurrent();
     if (!m_graphicsSurface) {
         m_graphicsSurface = GraphicsSurface::create(m_fbo->size(), graphicsSurfaceFlags(), QOpenGLContext::currentContext());
     }
 
     commitChanges();
     m_graphicsSurface->copyFromTexture(m_fbo->texture(), IntRect(IntPoint(), m_fbo->size()));
-    previousContext->makeCurrent(previousContext->surface());
     return m_graphicsSurface->frontBuffer();
 }
 #endif
@@ -209,10 +198,7 @@ void ImageBufferDataPrivateAccelerated::draw(GraphicsContext* destContext, Color
                                              bool useLowQualityScale, bool ownContext)
 {
     if (destContext->isAcceleratedContext()) {
-        QOpenGLContext *previousContext = QOpenGLContext::currentContext();
-        GLSharedContext::makeCurrent();
         commitChanges();
-        previousContext->makeCurrent(previousContext->surface());
 
         QOpenGL2PaintEngineEx* acceleratedPaintEngine = static_cast<QOpenGL2PaintEngineEx*>(destContext->platformContext()->paintEngine());
         FloatRect flippedSrc = srcRect;
@@ -282,10 +268,7 @@ void ImageBufferDataPrivateAccelerated::paintToTextureMapper(TextureMapper* text
         return;
     }
 
-    QOpenGLContext *previousContext = QOpenGLContext::currentContext();
-    GLSharedContext::makeCurrent();
     commitChanges();
-    previousContext->makeCurrent(previousContext->surface());
 
     static_cast<TextureMapperGL*>(textureMapper)->drawTexture(m_fbo->texture(), TextureMapperGL::ShouldFlipTexture | TextureMapperGL::ShouldBlend, m_fbo->size(), targetRect, matrix, opacity);
 
