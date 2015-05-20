@@ -201,9 +201,33 @@ void ImageBufferDataPrivateAccelerated::draw(GraphicsContext* destContext, Color
         commitChanges();
 
         QOpenGL2PaintEngineEx* acceleratedPaintEngine = static_cast<QOpenGL2PaintEngineEx*>(destContext->platformContext()->paintEngine());
-        FloatRect flippedSrc = srcRect;
-        flippedSrc.setY(m_fbo->size().height() - flippedSrc.height() - flippedSrc.y());
-        acceleratedPaintEngine->drawTexture(destRect, m_fbo->texture(), m_fbo->size(), flippedSrc);
+        if (acceleratedPaintEngine) {
+            FloatRect flippedSrc = srcRect;
+            flippedSrc.setY(m_fbo->size().height() - flippedSrc.height() - flippedSrc.y());
+            QPaintDevice* targetPaintDevice = acceleratedPaintEngine->paintDevice();
+
+            if (m_pdev == targetPaintDevice) {
+                // painting to itself, use an intermediate buffer
+                GLSharedContext::makeCurrent();
+                QRect rect(QPoint(), m_fbo->size());
+
+                // create a temporal fbo and paint device
+                QOpenGLFramebufferObject fbo(m_fbo->size(), QOpenGLFramebufferObject::NoAttachment, GL_TEXTURE_2D, GL_RGBA);
+                fbo.bind();
+                QOpenGLPaintDevice pdev(m_fbo->size());
+
+                // create a painter for the device and draw the content of the current texture
+                QPainter painter(&pdev);
+                QOpenGL2PaintEngineEx* p = static_cast<QOpenGL2PaintEngineEx*>(painter.paintEngine());
+                p->drawTexture(rect, m_fbo->texture(), m_fbo->size(), rect);
+                painter.end();
+
+                acceleratedPaintEngine->drawTexture(destRect, fbo.texture(), rect.size(), flippedSrc);
+            } else {
+                // paint to a different buffer
+                acceleratedPaintEngine->drawTexture(destRect, m_fbo->texture(), m_fbo->size(), flippedSrc);
+            }
+        }
     } else {
         RefPtr<Image> image = StillImage::create(QPixmap::fromImage(toQImage()));
         destContext->drawImage(image.get(), styleColorSpace, destRect, srcRect, op, blendMode,
