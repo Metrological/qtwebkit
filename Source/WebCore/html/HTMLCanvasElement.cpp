@@ -556,8 +556,8 @@ bool HTMLCanvasElement::shouldAccelerate(const IntSize& size) const
         return false;
 
     // Do not use acceleration for small canvas.
-    // if (size.width() * size.height() < settings->minimumAccelerated2dCanvasSize())
-    //     return false;
+    if (size.width() * size.height() < settings->minimumAccelerated2dCanvasSize())
+        return false;
 
     return true;
 #else
