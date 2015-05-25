@@ -322,9 +322,48 @@ MediaPlayerPrivateGStreamer::~MediaPlayerPrivateGStreamer()
         g_signal_handlers_disconnect_by_func(m_playBin.get(), reinterpret_cast<gpointer>(mediaPlayerPrivateNewTextSampleCallback), this);
         g_signal_handlers_disconnect_by_func(m_playBin.get(), reinterpret_cast<gpointer>(mediaPlayerPrivateTextChangedCallback), this);
 #endif
-        printf("### %s: (A)\n", __PRETTY_FUNCTION__); fflush(stdout);
+
+        // printf("### %s: Getting current state...\n", __PRETTY_FUNCTION__); fflush(stdout);
+        // GstState state, pending;
+        // gst_element_get_state(m_playBin.get(), &state, &pending, GST_CLOCK_TIME_NONE);
+        // printf("### %s: state=%s, pending=%s\n", __PRETTY_FUNCTION__, gst_element_state_get_name(state), gst_element_state_get_name(pending)); fflush(stdout);
+
+        GST_DEBUG_BIN_TO_DOT_FILE_WITH_TS(GST_BIN(m_playBin.get()), GST_DEBUG_GRAPH_SHOW_ALL, "destructor");
+
+        printf("### %s: Changing state to NULL...\n", __PRETTY_FUNCTION__); fflush(stdout);
+
+        /*
+        {
+            GstIterator* iter = gst_bin_iterate_recurse(GST_BIN(m_pipeline));
+            GValue v = G_VALUE_INIT;
+            while (gst_iterator_next(iter, &v) == GST_ITERATOR_OK) {
+                GstElement* element = GST_ELEMENT(g_value_get_object(&v));
+                const gchar* elementName = G_OBJECT_CLASS_NAME(G_OBJECT_GET_CLASS(G_OBJECT(element)));
+                if (g_str_equal(elementName, "GstOMXH264Dec-omxh264dec")) {
+                    GstPad* sinkPad = gst_element_get_static_pad(element, "sink");
+                    GstPad* srcPad = NULL;
+                    if (sinkPad) {
+                        srcPad = gst_pad_get_peer(sinkPad);
+                        g_object_unref(sinkPad);
+                        sinkPad = NULL;
+                    }
+                    if (srcPad) {
+                        GstEvent* eos = gst_event_new_eos();
+                        printf("### %s: Pushing EOS to video decoder sink\n", __PRETTY_FUNCTION__); fflush(stdout);
+                        gst_pad_push_event(srcPad, eos);
+                        printf("### %s: Pushed EOS to video decoder sink\n", __PRETTY_FUNCTION__); fflush(stdout);
+                        g_object_unref(srcPad);
+                    }
+                }
+                g_value_reset(&v);
+            }
+            g_value_unset(&v);
+            gst_iterator_free(iter);
+        }
+        */
+
         gst_element_set_state(m_playBin.get(), GST_STATE_NULL);
-        printf("### %s: (B)\n", __PRETTY_FUNCTION__); fflush(stdout);
+        printf("### %s: State change to NULL completed\n", __PRETTY_FUNCTION__); fflush(stdout);
         m_playBin.clear();
     }
 

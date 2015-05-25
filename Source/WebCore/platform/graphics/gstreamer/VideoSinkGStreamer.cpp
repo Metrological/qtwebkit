@@ -55,6 +55,14 @@
 #endif
 #endif
 
+// DEBUG
+#include "wtf/Threading.h"
+#define g_mutex_lock(m) printf("### [GMLOCK] %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout); g_mutex_lock(m)
+#define g_mutex_unlock(m) printf("### [GMUNLOCK] %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout); g_mutex_unlock(m)
+#define g_cond_signal(c) printf("### [GCSIGNAL] %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout); g_cond_signal(c)
+#define g_cond_wait(c, m) printf("### [GCWAIT] %s [%d]\n", __PRETTY_FUNCTION__, WTF::currentThread()); fflush(stdout); g_cond_wait(c, m)
+
+
 // CAIRO_FORMAT_RGB24 used to render the video buffers is little/big endian dependant.
 #ifdef GST_API_VERSION_1
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
@@ -200,6 +208,7 @@ static void webkit_video_sink_init(WebKitVideoSink* sink)
 
 static gboolean webkitVideoSinkTimeoutCallback(gpointer data)
 {
+    printf("### %s: Begin\n", __PRETTY_FUNCTION__); fflush(stdout);
     WebKitVideoSink* sink = reinterpret_cast<WebKitVideoSink*>(data);
     WebKitVideoSinkPrivate* priv = sink->priv;
 
@@ -211,6 +220,7 @@ static gboolean webkitVideoSinkTimeoutCallback(gpointer data)
     if (!buffer || priv->unlocked || UNLIKELY(!GST_IS_BUFFER(buffer))) {
         g_cond_signal(priv->dataCondition);
         g_mutex_unlock(priv->bufferMutex);
+        printf("### %s: End (no buffer)\n", __PRETTY_FUNCTION__); fflush(stdout);
         return FALSE;
     }
 
@@ -221,7 +231,7 @@ static gboolean webkitVideoSinkTimeoutCallback(gpointer data)
     gst_buffer_unref(buffer);
     g_cond_signal(priv->dataCondition);
     g_mutex_unlock(priv->bufferMutex);
-
+    printf("### %s: End (ok)\n", __PRETTY_FUNCTION__); fflush(stdout);
     return FALSE;
 }
 
@@ -340,8 +350,25 @@ static GstFlowReturn webkitVideoSinkRender(GstBaseSink* baseSink, GstBuffer* buf
     priv->timeoutId = g_timeout_add_full(G_PRIORITY_DEFAULT, 0, webkitVideoSinkTimeoutCallback,
                                           gst_object_ref(sink), reinterpret_cast<GDestroyNotify>(gst_object_unref));
 
-    g_cond_wait(priv->dataCondition, priv->bufferMutex);
+    printf("### %s: (A)\n", __PRETTY_FUNCTION__); fflush(stdout);
+    // g_cond_wait(priv->dataCondition, priv->bufferMutex);
+
+    // !!! EXPERIMENTAL:
+    gint64 hardTimeout = g_get_monotonic_time() + 3 * G_TIME_SPAN_SECOND;
+    if (FALSE == g_cond_wait_until(priv->dataCondition, priv->bufferMutex, hardTimeout)) {
+        printf("### %s: The main thread is stalled, canceling buffer processing!!!\n", __PRETTY_FUNCTION__); fflush(stdout);
+        // Too much time has passed and webkitVideoSinkTimeoutCallback has not
+        // run in the main thread yet, we give up.
+        g_source_remove(priv->timeoutId);
+        priv->timeoutId = 0;
+        GstBuffer* b = priv->buffer;
+        priv->buffer = 0;
+        gst_buffer_unref(b);
+        g_cond_signal(priv->dataCondition);
+    }
+    printf("### %s: (B)\n", __PRETTY_FUNCTION__); fflush(stdout);
     g_mutex_unlock(priv->bufferMutex);
+    printf("### %s: (C)\n", __PRETTY_FUNCTION__); fflush(stdout);
     return GST_FLOW_OK;
 }
 
@@ -408,6 +435,7 @@ static void unlockBufferMutex(WebKitVideoSinkPrivate* priv)
 
 static gboolean webkitVideoSinkUnlock(GstBaseSink* baseSink)
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
     WebKitVideoSink* sink = WEBKIT_VIDEO_SINK(baseSink);
 
     unlockBufferMutex(sink->priv);
@@ -417,6 +445,7 @@ static gboolean webkitVideoSinkUnlock(GstBaseSink* baseSink)
 
 static gboolean webkitVideoSinkUnlockStop(GstBaseSink* baseSink)
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
     WebKitVideoSinkPrivate* priv = WEBKIT_VIDEO_SINK(baseSink)->priv;
 
     g_mutex_lock(priv->bufferMutex);
@@ -428,6 +457,7 @@ static gboolean webkitVideoSinkUnlockStop(GstBaseSink* baseSink)
 
 static gboolean webkitVideoSinkStop(GstBaseSink* baseSink)
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
     WebKitVideoSink* sink = reinterpret_cast_ptr<WebKitVideoSink*>(baseSink);
     WebKitVideoSinkPrivate* priv = sink->priv;
 
@@ -453,6 +483,7 @@ static gboolean webkitVideoSinkStop(GstBaseSink* baseSink)
 
 static gboolean webkitVideoSinkStart(GstBaseSink* baseSink)
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
     WebKitVideoSinkPrivate* priv = WEBKIT_VIDEO_SINK(baseSink)->priv;
 
     g_mutex_lock(priv->bufferMutex);
@@ -463,6 +494,7 @@ static gboolean webkitVideoSinkStart(GstBaseSink* baseSink)
 
 static gboolean webkitVideoSinkSetCaps(GstBaseSink* baseSink, GstCaps* caps)
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
     WebKitVideoSink* sink = WEBKIT_VIDEO_SINK(baseSink);
     WebKitVideoSinkPrivate* priv = sink->priv;
 
@@ -483,6 +515,7 @@ static gboolean webkitVideoSinkSetCaps(GstBaseSink* baseSink, GstCaps* caps)
 #ifdef GST_API_VERSION_1
 static gboolean webkitVideoSinkProposeAllocation(GstBaseSink* baseSink, GstQuery* query)
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
     WebKitVideoSink* sink = WEBKIT_VIDEO_SINK(baseSink);
     GstCaps* caps = NULL;
     gboolean need_pool;
@@ -572,19 +605,28 @@ static gboolean webkitVideoSinkProposeAllocation(GstBaseSink* baseSink, GstQuery
 
 static gboolean webkitVideoSinkQuery(GstBaseSink* baseSink, GstQuery* query)
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
     WebKitVideoSink* sink = WEBKIT_VIDEO_SINK(baseSink);
     WebKitVideoSinkPrivate* priv = sink->priv;
 
     switch (GST_QUERY_TYPE(query)) {
     case GST_QUERY_DRAIN:
     {
+        printf("### %s: Drain query (begin)\n", __PRETTY_FUNCTION__); fflush(stdout);
 #if USE(OPENGL_ES_2) && GST_CHECK_VERSION(1, 3, 0)
         GST_OBJECT_LOCK (sink);
-        if (priv->last_buffer)
+        printf("### %s: Drain query (A)\n", __PRETTY_FUNCTION__); fflush(stdout);
+        if (priv->last_buffer) {
+            printf("### %s: Drain query (B)\n", __PRETTY_FUNCTION__); fflush(stdout);
             gst_buffer_replace (&priv->last_buffer, NULL);
+        }
+        printf("### %s: Drain query (C)\n", __PRETTY_FUNCTION__); fflush(stdout);
         g_signal_emit(sink, webkitVideoSinkSignals[DRAIN], 0);
+        printf("### %s: Drain query (D)\n", __PRETTY_FUNCTION__); fflush(stdout);
         GST_OBJECT_UNLOCK (sink);
+        printf("### %s: Drain query (E)\n", __PRETTY_FUNCTION__); fflush(stdout);
 #endif
+        printf("### %s: Drain query (end)\n", __PRETTY_FUNCTION__); fflush(stdout);
         return TRUE;
     }
     case GST_QUERY_CONTEXT:
@@ -607,6 +649,7 @@ static gboolean webkitVideoSinkQuery(GstBaseSink* baseSink, GstQuery* query)
 static void
 webkitVideoSinkSetContext(GstElement* element, GstContext* context)
 {
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
     WebKitVideoSink* sink =  WEBKIT_VIDEO_SINK(element);
 
 #if GST_CHECK_VERSION(1, 5, 0)
