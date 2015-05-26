@@ -1758,12 +1758,14 @@ void MediaSourceClientGStreamer::flushAndEnqueueNonDisplayingSamples(Vector<RefP
     GstPad* multiqueuesinkpad = gst_pad_get_peer(demuxersrcpad);
     for (Vector<RefPtr<MediaSample> >::iterator it = samples.begin(); it != samples.end(); ++it) {
         GStreamerMediaSample* sample = static_cast<GStreamerMediaSample*>(it->get());
-        GstBuffer* buffer = gst_buffer_ref(sample->buffer());
+        if (sample->buffer()) {
+            GstBuffer* buffer = gst_buffer_ref(sample->buffer());
 
-        GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DECODE_ONLY);
+            GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DECODE_ONLY);
 
-        printf("### [REENQ] Sample: PTS=%f\n", sample->presentationTime().toDouble()); fflush(stdout);
-        gst_pad_chain(multiqueuesinkpad, buffer);
+            printf("### [REENQ] Sample: PTS=%f\n", sample->presentationTime().toDouble()); fflush(stdout);
+            gst_pad_chain(multiqueuesinkpad, buffer);
+        }
     }
     gst_object_unref(multiqueuesinkpad);
 }
@@ -1787,9 +1789,11 @@ void MediaSourceClientGStreamer::enqueueSample(PassRefPtr<MediaSample> prsample,
     GstPad* multiqueuesinkpad = gst_pad_get_peer(demuxersrcpad);
     RefPtr<MediaSample> rsample(prsample);
     GStreamerMediaSample* sample = static_cast<GStreamerMediaSample*>(rsample.get());
-    GstBuffer* buffer = gst_buffer_ref(sample->buffer());
-    printf("### [REENQ] Sample: PTS=%f\n", sample->presentationTime().toDouble()); fflush(stdout);
-    gst_pad_chain(multiqueuesinkpad, buffer);
+    if (sample->buffer()) {
+        GstBuffer* buffer = gst_buffer_ref(sample->buffer());
+        printf("### [REENQ] Sample: PTS=%f\n", sample->presentationTime().toDouble()); fflush(stdout);
+        gst_pad_chain(multiqueuesinkpad, buffer);
+    }
     gst_object_unref(multiqueuesinkpad);
 }
 
