@@ -263,7 +263,8 @@ GraphicsContext3DPrivate::~GraphicsContext3DPrivate()
 void GraphicsContext3DPrivate::paintToTextureMapper(TextureMapper* textureMapper, const FloatRect& targetRect, const TransformationMatrix& matrix, float opacity)
 {
     m_context->markLayerComposited();
-    blitMultisampleFramebufferAndRestoreContext();
+    if (m_context->m_attrs.antialias)
+        blitMultisampleFramebufferAndRestoreContext();
 
     if (textureMapper->accelerationMode() == TextureMapper::OpenGLMode) {
         TextureMapperGL* texmapGL = static_cast<TextureMapperGL*>(textureMapper);
