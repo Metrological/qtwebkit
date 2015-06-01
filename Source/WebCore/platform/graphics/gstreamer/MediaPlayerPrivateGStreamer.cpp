@@ -699,6 +699,7 @@ void MediaPlayerPrivateGStreamer::seek(float time)
         }
 
         // We can seek now.
+        printf("### %s: gst_element_seek()\n", __PRETTY_FUNCTION__); fflush(stdout);
         if (!gst_element_seek(m_playBin.get(), m_player->rate(), GST_FORMAT_TIME, static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
             GST_SEEK_TYPE_SET, startTime, GST_SEEK_TYPE_SET, endTime)) {
             LOG_MEDIA_MESSAGE("[Seek] seeking to %f failed", time);
@@ -754,6 +755,7 @@ bool MediaPlayerPrivateGStreamer::doSeek(gint64 position, float rate, GstSeekFla
         webkit_media_src_set_seek_time(WEBKIT_MEDIA_SRC(m_source.get()), time);
     }
 
+    printf("### %s: gst_element_seek()\n", __PRETTY_FUNCTION__); fflush(stdout);
     if (!gst_element_seek(m_playBin.get(), rate, GST_FORMAT_TIME, seekType,
         GST_SEEK_TYPE_SET, startTime, GST_SEEK_TYPE_SET, endTime)) {
         printf("### %s: Finally seeking to %f (startTime=%" GST_TIME_FORMAT ", endTime=%" GST_TIME_FORMAT ") failed\n", __PRETTY_FUNCTION__, time.toDouble(), GST_TIME_ARGS(startTime), GST_TIME_ARGS(endTime)); fflush(stdout);
