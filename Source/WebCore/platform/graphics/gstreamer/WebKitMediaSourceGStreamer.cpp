@@ -262,6 +262,7 @@ struct _WebKitMediaSrcPrivate
     int flushAndReenqueueCount;
     GstEvent* seekEvent;
     gboolean isAppending;
+    gboolean expectsSeekFlush;
 
     WebCore::MediaPlayerPrivateGStreamer* mediaPlayerPrivate;
     WebCore::MediaSourceClientGStreamer* mediaSourceClient;
@@ -305,6 +306,8 @@ static gboolean webKitMediaSrcSeekDataCb(GstAppSrc*, guint64 offset, gpointer us
 
 static Stream* getStreamByDemuxerPad(WebKitMediaSrc* src, const GstPad* demuxersrcpad);
 static GstClockTime toGstClockTime(float);
+
+static void webkit_media_src_set_appending(WebKitMediaSrc*, gboolean);
 
 static GstAppSrcCallbacks appsrcCallbacks = {
     0,
@@ -379,6 +382,7 @@ static void webkit_media_src_init(WebKitMediaSrc* src)
 {
     src->priv = WEBKIT_MEDIA_SRC_GET_PRIVATE(src);
     src->priv->seekTime = MediaTime::invalidTime();
+    src->priv->isAppending = FALSE;
 }
 
 static void webKitMediaSrcFinalize(GObject* object)
@@ -626,6 +630,8 @@ static gboolean webKitMediaSrcDemuxerSinkEventWithParent(GstPad* pad, GstObject*
 
                 if (source)
                     nextSamplePts = source->nextSamplePts;
+
+                src->priv->expectsSeekFlush = FALSE;
                 GST_OBJECT_UNLOCK(src);
             }
 
@@ -639,7 +645,7 @@ static gboolean webKitMediaSrcDemuxerSinkEventWithParent(GstPad* pad, GstObject*
             GstSegment* segment = gst_segment_new();
             gst_segment_init(segment, GST_FORMAT_TIME);
 
-            segment->start = toGstClockTime(nextSamplePts.toFloat());
+            segment->start =toGstClockTime(nextSamplePts.toFloat());
             segment->stop = GST_CLOCK_TIME_NONE;
 
             GstEvent* segmentEvent = gst_event_new_segment(segment);
@@ -805,11 +811,11 @@ static gboolean webKitMediaSrcLastSampleTimeout(Source* source)
     }
 
     if (callDidReceiveAllPendingSamples)
-        source->parent->priv->isAppending = FALSE;
+        webkit_media_src_set_appending(source->parent, FALSE);
     GST_OBJECT_UNLOCK(source->parent);
 
     if (callDidReceiveAllPendingSamples) {
-        printf("### %s: %s", __PRETTY_FUNCTION__, GST_ELEMENT_NAME(source->src)); fflush(stdout);
+        printf("### %s: %s\n", __PRETTY_FUNCTION__, GST_ELEMENT_NAME(source->src)); fflush(stdout);
         source->parent->priv->mediaSourceClient->didReceiveAllPendingSamples(source->sourceBuffer);
     }
     return result;
@@ -939,7 +945,7 @@ static gboolean webKitMediaSrcNoDataToDecodeTimeout(Source* source)
 {
     GST_OBJECT_LOCK(source->parent);
     source->noDataToDecodeTimeoutTag = 0;
-    source->parent->priv->isAppending = FALSE;
+    webkit_media_src_set_appending(source->parent, FALSE);
     GST_OBJECT_UNLOCK(source->parent);
 
     source->parent->priv->mediaSourceClient->didReceiveAllPendingSamples(source->sourceBuffer);
@@ -1220,7 +1226,7 @@ static gboolean webKitMediaSrcDidReceiveInitializationSegment(gpointer userdata)
         }
     }
     if (noData)
-        source->parent->priv->isAppending = FALSE;
+        webkit_media_src_set_appending(source->parent, FALSE);
     GST_OBJECT_UNLOCK(source->parent);
 
     if (noData) {
@@ -1621,6 +1627,10 @@ bool MediaSourceClientGStreamer::append(PassRefPtr<SourceBufferPrivateGStreamer>
     bool aborted;
 
     GST_OBJECT_LOCK(m_src.get());
+    if (priv->expectsSeekFlush) {
+        printf("!!! %s: MediaPlayer expects seek flush, bad things will happen\n", __PRETTY_FUNCTION__);
+    }
+
     for (l = priv->sources; l; l = l->next) {
         Source *tmp = static_cast<Source*>(l->data);
         if (tmp->sourceBuffer == sourceBufferPrivate.get()) {
@@ -1637,7 +1647,7 @@ bool MediaSourceClientGStreamer::append(PassRefPtr<SourceBufferPrivateGStreamer>
         }
     }
     if (source && source->src)
-        m_src.get()->priv->isAppending = TRUE;
+        webkit_media_src_set_appending(m_src.get(), TRUE);
     GST_OBJECT_UNLOCK(m_src.get());
 
     if (!source || !source->src)
@@ -2114,6 +2124,56 @@ gboolean webkit_media_src_is_appending(WebKitMediaSrc* src)
     GST_OBJECT_UNLOCK(src);
 
     return isAppending;
+}
+
+static gboolean webKitMediaSrcNotifyAppendCompleteToPlayer(WebKitMediaSrc* src)
+{
+    printf("### %s\n", __PRETTY_FUNCTION__); fflush(stdout);
+    WebCore::MediaPlayerPrivateGStreamer* mediaPlayerPrivate = 0;
+
+    GST_OBJECT_LOCK(src);
+    mediaPlayerPrivate = src->priv->mediaPlayerPrivate;
+    GST_OBJECT_UNLOCK(src);
+
+    if (mediaPlayerPrivate)
+        mediaPlayerPrivate->notifyAppendComplete();
+
+    gst_object_unref(src);
+    return G_SOURCE_REMOVE;
+}
+
+static void webkit_media_src_set_appending(WebKitMediaSrc* src, gboolean isAppending)
+{
+    // WebKitMediaSrc should be locked at this point.
+    if (src->priv) {
+        gboolean wasAppending = src->priv->isAppending;
+        src->priv->isAppending = isAppending;
+
+        printf("### %s: %s->%s\n", __PRETTY_FUNCTION__, wasAppending?"true":"false", isAppending?"true":"false"); fflush(stdout);
+
+        if (wasAppending && !isAppending)
+            g_timeout_add(0, GSourceFunc(webKitMediaSrcNotifyAppendCompleteToPlayer), gst_object_ref(src));
+    }
+}
+
+gboolean webkit_media_src_expects_seek_flush(WebKitMediaSrc* src)
+{
+    gboolean expectsSeekFlush = FALSE;
+
+    GST_OBJECT_LOCK(src);
+    if (src->priv)
+        expectsSeekFlush = src->priv->expectsSeekFlush;
+    GST_OBJECT_UNLOCK(src);
+
+    return expectsSeekFlush;
+}
+
+void webkit_media_src_set_expects_seek_flush(WebKitMediaSrc* src, gboolean expectsSeekFlush)
+{
+    GST_OBJECT_LOCK(src);
+    if (src->priv)
+        src->priv->expectsSeekFlush = expectsSeekFlush;
+    GST_OBJECT_UNLOCK(src);
 }
 
 namespace WTF {

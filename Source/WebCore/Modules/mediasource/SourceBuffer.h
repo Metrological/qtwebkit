@@ -130,6 +130,8 @@ public:
 
     void invalidateBuffered();
 
+    String name();
+
 protected:
     // EventTarget interface
     virtual void refEventTarget() OVERRIDE { ref(); }

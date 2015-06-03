@@ -1299,6 +1299,27 @@ public:
     }
 };
 
+String SourceBuffer::name()
+{
+    String sbName;
+    bool first = true;
+    for (HashMap<AtomicString, TrackBuffer>::const_iterator::Keys trackBuffer = m_trackBufferMap.keys().begin();
+            trackBuffer != HashMap<AtomicString, TrackBuffer>::const_iterator::Keys(m_trackBufferMap.keys().end());
+            ++trackBuffer) {
+        const AtomicString *name = trackBuffer.get();
+        if (!first)
+            sbName.append(" ");
+        else
+            first = false;
+        sbName.append(name->string());
+    }
+
+    if (sbName.length() == 0)
+        sbName = String("(unknown)");
+
+    return sbName;
+}
+
 #if ENABLE(VIDEO_TRACK)
 void SourceBuffer::sourceBufferPrivateDidReceiveSample(SourceBufferPrivate*, PassRefPtr<MediaSample> prpSample)
 {
@@ -1307,7 +1328,7 @@ void SourceBuffer::sourceBufferPrivateDidReceiveSample(SourceBufferPrivate*, Pas
 
     RefPtr<MediaSample> sample = prpSample;
 
-    printf("### [APPEND] Sample: PTS=%f\n", sample->presentationTime().toDouble()); fflush(stdout);
+    printf("### [APPEND] %s Sample: PTS=%f, DUR=%f, BYTES=%zu\n", name().utf8().data(), sample->presentationTime().toDouble(), sample->duration().toDouble(), sample->sizeInBytes()); fflush(stdout);
 
     // 3.5.8 Coded Frame Processing
     // When complete coded frames have been parsed by the segment parser loop then the following steps

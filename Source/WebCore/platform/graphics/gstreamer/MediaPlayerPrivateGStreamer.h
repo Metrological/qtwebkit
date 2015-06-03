@@ -137,6 +137,7 @@ public:
 
     static void notifyDurationChanged(MediaPlayerPrivateGStreamer* instance);
     virtual bool isLiveStream() const { return m_isStreaming; }
+    void notifyAppendComplete();
 
 private:
     MediaPlayerPrivateGStreamer(MediaPlayer*);

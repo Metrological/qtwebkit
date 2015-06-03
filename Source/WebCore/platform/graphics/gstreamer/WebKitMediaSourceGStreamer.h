@@ -73,6 +73,8 @@ void webkit_media_src_track_added(WebKitMediaSrc*, GstPad* pad, GstEvent* event)
 void webkit_media_src_set_seek_time(WebKitMediaSrc*, const MediaTime&);
 void webkit_media_src_segment_needed(WebKitMediaSrc*, StreamType);
 gboolean webkit_media_src_is_appending(WebKitMediaSrc*);
+gboolean webkit_media_src_expects_seek_flush(WebKitMediaSrc*);
+void webkit_media_src_set_expects_seek_flush(WebKitMediaSrc*, gboolean);
 
 G_END_DECLS
 
