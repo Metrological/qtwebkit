@@ -136,6 +136,10 @@ public:
 #endif
 
     static void notifyDurationChanged(MediaPlayerPrivateGStreamer* instance);
+    virtual bool isLiveStream() const { return m_isStreaming; }
+#if ENABLE(MEDIA_SOURCE)
+    void notifyAppendComplete();
+#endif
 
 private:
     MediaPlayerPrivateGStreamer(MediaPlayer*);
@@ -182,7 +186,6 @@ private:
     void updatePlaybackRate();
 
     virtual String engineDescription() const { return "GStreamer"; }
-    virtual bool isLiveStream() const { return m_isStreaming; }
     virtual bool didPassCORSAccessCheck() const;
 
 #if ENABLE(ENCRYPTED_MEDIA_V2)
