@@ -129,6 +129,7 @@ public:
 
 #if ENABLE(ENCRYPTED_MEDIA_V2)
     void needKey(RefPtr<Uint8Array>);
+    void keyAdded();
 #endif
 
 #if ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)
@@ -190,6 +191,7 @@ private:
 
 #if ENABLE(ENCRYPTED_MEDIA_V2)
     PassOwnPtr<CDMSession> createSession(const String&);
+    CDMSession* m_cdmSession;
 #endif
 
 #if ENABLE(MEDIA_SOURCE)

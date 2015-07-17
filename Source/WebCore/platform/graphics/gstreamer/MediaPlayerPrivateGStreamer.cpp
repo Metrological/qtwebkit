@@ -83,6 +83,8 @@ GST_DEBUG_CATEGORY_EXTERN(webkit_media_player_debug);
 
 using namespace std;
 
+//GType webkit_media_playready_decrypt_get_type(void);
+
 namespace WebCore {
 
 static void mediaPlayerPrivateSyncMessageCallback(GstBus*, GstMessage* message, MediaPlayerPrivateGStreamer* player)
@@ -200,6 +202,9 @@ void MediaPlayerPrivateGStreamer::registerMediaEngine(MediaEngineRegistrar regis
 #endif
 }
 
+#define WEBKIT_TYPE_MEDIA_PLAYREADY_DECRYPT          (webkit_media_playready_decrypt_get_type())
+
+
 bool initializeGStreamerAndRegisterWebKitElements()
 {
     if (!initializeGStreamer())
@@ -210,6 +215,16 @@ bool initializeGStreamerAndRegisterWebKitElements()
         GST_DEBUG_CATEGORY_INIT(webkit_media_player_debug, "webkitmediaplayer", 0, "WebKit media player");
         gst_element_register(0, "webkitwebsrc", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_WEB_SRC);
     }
+
+#if USE(DXDRM)
+    GRefPtr<GstElementFactory> playReadyDecryptorFactory = gst_element_factory_find("webkitplayreadydec");
+    if (!playReadyDecryptorFactory)
+        //gst_element_register(0, "webkitplayreadydec", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_PLAYREADY_DECRYPT);
+        // Debug, Sander: no idea where "webkit_media_playready_decrypt_get_type()" would have to come from
+	gst_element_register(0, "webkitplayreadydec", GST_RANK_PRIMARY + 100, 0);
+
+#endif
+
 
 #if ENABLE(MEDIA_SOURCE)
     GRefPtr<GstElementFactory> WebKitMediaSrcFactory = gst_element_factory_find("webkitmediasrc");
@@ -2488,6 +2503,20 @@ bool MediaPlayerPrivateGStreamer::didPassCORSAccessCheck() const
         return webKitSrcPassedCORSAccessCheck(WEBKIT_WEB_SRC(m_source.get()));
     return false;
 }
+
+void MediaPlayerPrivateGStreamer::keyAdded()
+{
+#if USE(DXDRM)
+    if (!m_cdmSession)
+        return;
+
+    CDMSessionGStreamer* cdm = reinterpret_cast<CDMSessionGStreamer*>(m_cdmSession);
+    if (cdm && cdm->prepareForPlayback())
+        gst_element_send_event(m_pipeline, gst_event_new_custom(GST_EVENT_CUSTOM_DOWNSTREAM_OOB,
+            gst_structure_new("drm-cipher", "stream", G_TYPE_POINTER, cdm->drmStream(), nullptr)));
+#endif
+}
+
 
 }
 

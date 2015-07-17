@@ -51,6 +51,9 @@ public:
     virtual void releaseKeys() OVERRIDE;
     virtual bool update(Uint8Array*, RefPtr<Uint8Array>& nextMessage, unsigned short& errorCode, unsigned long& systemCode) OVERRIDE;
 
+    bool prepareForPlayback();
+    void* drmStream() const { return reinterpret_cast<void*>(m_DxDrmStream); }
+
 protected:
     MediaPlayerPrivateGStreamer* m_parent;
     CDMSessionClient* m_client;
