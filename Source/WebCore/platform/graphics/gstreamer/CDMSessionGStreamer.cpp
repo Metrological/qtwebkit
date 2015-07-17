@@ -37,6 +37,8 @@
 
 #include "dxdrm/DxDrmDebugApi.h"
 
+#include <gst/base/gstbytereader.h>
+
 GST_DEBUG_CATEGORY_EXTERN(webkit_media_player_debug);
 #define GST_CAT_DEFAULT webkit_media_player_debug
 
@@ -50,6 +52,17 @@ CDMSessionGStreamer::CDMSessionGStreamer(MediaPlayerPrivateGStreamer* parent)
     , m_sessionId(createCanonicalUUIDString())
     , m_DxDrmStream(NULL)
 {
+    DxStatus loaded = DxLoadConfigFile("/etc/dxdrm/dxdrm.config");
+    if (loaded != DX_SUCCESS)
+        GST_WARNING("DX: ERROR - Discretix configuration file not found");
+
+    EDxDrmStatus status = DxDrmClient_Init();
+    if (status != DX_SUCCESS) {
+        GST_WARNING("failed to initialize the DxDrmClient (error: %d)", status);
+        //printError(status);
+//        errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
+//        return nullptr;
+    }
 }
 
 CDMSessionGStreamer::~CDMSessionGStreamer ()
@@ -58,6 +71,34 @@ CDMSessionGStreamer::~CDMSessionGStreamer ()
     DxDrmStream_Close (&m_DxDrmStream);
     m_DxDrmStream = NULL;
   }
+
+  DxDrmClient_Terminate();
+}
+
+static const guint8* extractWrmHeader(Uint8Array* initData, guint16* recordLength)
+{
+    GstByteReader reader;
+    guint32 length;
+    guint16 recordCount;
+    const guint8* data;
+
+    gst_byte_reader_init(&reader, initData->data(), initData->byteLength());
+
+    gst_byte_reader_get_uint32_le(&reader, &length);
+    gst_byte_reader_get_uint16_le(&reader, &recordCount);
+
+    for (int i = 0; i < recordCount; i++) {
+        guint16 type;
+        gst_byte_reader_get_uint16_le(&reader, &type);
+        gst_byte_reader_get_uint16_le(&reader, recordLength);
+
+        gst_byte_reader_get_data(&reader, *recordLength, &data);
+        // 0x1 => rights management header
+        if (type == 0x1)
+            return data;
+    }
+
+    return nullptr;
 }
 
 PassRefPtr<Uint8Array> CDMSessionGStreamer::generateKeyRequest(const String& mimeType, Uint8Array* initData, String& destinationURL, unsigned short& errorCode, unsigned long& systemCode)
@@ -67,7 +108,9 @@ PassRefPtr<Uint8Array> CDMSessionGStreamer::generateKeyRequest(const String& mim
     UNUSED_PARAM(systemCode);
     
     // Instantiate Discretix DRM client from init data. This could be the WRMHEADER or a complete ASF header..
-    EDxDrmStatus status = DxDrmClient_OpenDrmStreamFromData (&m_DxDrmStream, initData->data (), initData->byteLength());
+    guint16 recordLength;
+    const guint8* data = extractWrmHeader(initData, &recordLength);
+    EDxDrmStatus status = DxDrmClient_OpenDrmStreamFromData (&m_DxDrmStream, data, recordLength);
     if (status != DX_SUCCESS) {
       GST_WARNING ("failed creating DxDrmClient from initData (%d)", status);
       errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
@@ -75,13 +118,13 @@ PassRefPtr<Uint8Array> CDMSessionGStreamer::generateKeyRequest(const String& mim
     }
     
     // Set Secure Clock
-    status = DxDrmStream_AdjustClock (m_DxDrmStream, DX_AUTO_NO_UI);
+/*    status = DxDrmStream_AdjustClock (m_DxDrmStream, DX_AUTO_NO_UI);
     if (status != DX_SUCCESS) {
       GST_WARNING ("failed setting secure clock (%d)", status);
       errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
       systemCode = status;
       return NULL;
-    }
+    }*/
     
     guint32 challenge_length = MAX_CHALLENGE_LEN;
     gpointer challenge = g_malloc0 (challenge_length);
@@ -102,9 +145,9 @@ PassRefPtr<Uint8Array> CDMSessionGStreamer::generateKeyRequest(const String& mim
     GST_DEBUG ("destination URL : %s", destinationURL.utf8 ().data ());
     GST_MEMDUMP ("generated license request :", (const guint8 *) challenge, challenge_length);
     
-    PassRefPtr<Uint8Array> result = Uint8Array::create(reinterpret_cast<const unsigned char *> (challenge), challenge_length);
+    RefPtr<Uint8Array> result = Uint8Array::create(reinterpret_cast<const unsigned char *> (challenge), challenge_length);
     
-    g_free (challenge);
+    //g_free (challenge);
     
     // This is the first stage of license aquisition
     m_waitAck = false;
@@ -177,6 +220,31 @@ error:
     m_parent->signalDRM ();
     
     return ret;
+}
+
+bool CDMSessionGStreamer::prepareForPlayback()
+{
+    EDxDrmStatus result;
+
+    result = DxDrmStream_SetIntent(m_DxDrmStream, DX_INTENT_AUTO_PLAY, DX_AUTO_NO_UI);
+    if (result != DX_SUCCESS) {
+        GST_WARNING("DX: ERROR - opening stream failed because there are no rights (license) to play the content");
+        DxDrmStream_Close(&(m_DxDrmStream));
+        return false;
+    }
+
+    GST_INFO("DX: playback rights found");
+
+    /*starting consumption of the file - notifying the drm that the file is being used*/
+    result = DxDrmFile_HandleConsumptionEvent(m_DxDrmStream, DX_EVENT_START);
+    if (result != DX_SUCCESS) {
+        GST_WARNING("DX: Content consumption failed");
+        DxDrmStream_Close(&(m_DxDrmStream));
+        return false;
+    }
+
+    GST_INFO("DX: Stream was opened and is ready for playback");
+    return true;
 }
 
 }
