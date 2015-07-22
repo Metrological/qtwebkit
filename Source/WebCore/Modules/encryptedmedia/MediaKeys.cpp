@@ -37,6 +37,7 @@
 #include <wtf/HashSet.h>
 
 namespace WebCore {
+// Extra line, just to see if it shows up in the built sources. (3)
 
 PassRefPtr<MediaKeys> MediaKeys::create(const String& keySystem, ExceptionCode& ec)
 {
