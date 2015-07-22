@@ -5,6 +5,8 @@
 # See 'Tools/qmake/README' for an overview of the build system
 # -------------------------------------------------------------------
 
+QMAKE_CXXFLAGS = -O0
+
 TEMPLATE = subdirs
 CONFIG += ordered
 

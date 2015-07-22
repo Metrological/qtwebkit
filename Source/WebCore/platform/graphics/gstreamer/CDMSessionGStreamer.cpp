@@ -39,6 +39,9 @@
 
 #include <gst/base/gstbytereader.h>
 
+#include <iostream>
+using namespace std;
+
 GST_DEBUG_CATEGORY_EXTERN(webkit_media_player_debug);
 #define GST_CAT_DEFAULT webkit_media_player_debug
 
@@ -77,6 +80,8 @@ CDMSessionGStreamer::~CDMSessionGStreamer ()
 
 static const guint8* extractWrmHeader(Uint8Array* initData, guint16* recordLength)
 {
+    cerr << "(CDMSessionGStreamer::)extractWrmHeader entered" << endl;
+
     GstByteReader reader;
     guint32 length;
     guint16 recordCount;
@@ -94,10 +99,13 @@ static const guint8* extractWrmHeader(Uint8Array* initData, guint16* recordLengt
 
         gst_byte_reader_get_data(&reader, *recordLength, &data);
         // 0x1 => rights management header
-        if (type == 0x1)
+        if (type == 0x1) {
+            cerr << "(CDMSessionGStreamer::)extractWrmHeader returning data" << endl;
             return data;
+        }
     }
 
+    cerr << "(CDMSessionGStreamer::)extractWrmHeader returning nullprt" << endl;
     return nullptr;
 }
 
@@ -106,12 +114,15 @@ PassRefPtr<Uint8Array> CDMSessionGStreamer::generateKeyRequest(const String& mim
     UNUSED_PARAM(mimeType);
     UNUSED_PARAM(errorCode);
     UNUSED_PARAM(systemCode);
+
+    cerr << "CDMSessionGStreamer::generateKeyRequest entered" << endl;
     
     // Instantiate Discretix DRM client from init data. This could be the WRMHEADER or a complete ASF header..
     guint16 recordLength;
     const guint8* data = extractWrmHeader(initData, &recordLength);
     EDxDrmStatus status = DxDrmClient_OpenDrmStreamFromData (&m_DxDrmStream, data, recordLength);
     if (status != DX_SUCCESS) {
+      cerr << "CDMSessionGStreamer::generateKeyRequest OpenDrmStreamFromData isn't a success: " << status << endl;
       GST_WARNING ("failed creating DxDrmClient from initData (%d)", status);
       errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
       return NULL;
@@ -132,6 +143,7 @@ PassRefPtr<Uint8Array> CDMSessionGStreamer::generateKeyRequest(const String& mim
     // Get challenge
     status = DxDrmStream_GetLicenseChallenge (m_DxDrmStream, challenge, (DxUint32 *) &challenge_length);
     if (status != DX_SUCCESS) {
+      cerr << "CDMSessionGStreamer::generateKeyRequest DxDrmStream_GetLicenseChallenge failed" << endl;
       GST_WARNING ("failed to generate challenge request (%d)", status);
       g_free (challenge);
       errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
@@ -141,17 +153,20 @@ PassRefPtr<Uint8Array> CDMSessionGStreamer::generateKeyRequest(const String& mim
     
     // Get License URL
     destinationURL = (const char *) DxDrmStream_GetTextAttribute (m_DxDrmStream, DX_ATTR_SILENT_URL, DX_ACTIVE_CONTENT);
+    cerr << "CDMSessionGStreamer::generateKeyRequest Set destination url" << endl;
     
     GST_DEBUG ("destination URL : %s", destinationURL.utf8 ().data ());
     GST_MEMDUMP ("generated license request :", (const guint8 *) challenge, challenge_length);
     
     RefPtr<Uint8Array> result = Uint8Array::create(reinterpret_cast<const unsigned char *> (challenge), challenge_length);
+    cerr << "CDMSessionGStreamer::generateKeyRequest Created result" << endl;
     
     //g_free (challenge);
     
     // This is the first stage of license aquisition
     m_waitAck = false;
     
+    cerr << "CDMSessionGStreamer::generateKeyRequest leaving" << endl;
     return result;
 }
 
