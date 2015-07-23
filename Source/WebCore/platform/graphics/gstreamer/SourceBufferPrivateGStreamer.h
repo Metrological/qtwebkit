@@ -44,7 +44,7 @@ namespace WebCore {
 
 class MediaSourceGStreamer;
 
-class SourceBufferPrivateGStreamer FINAL : public SourceBufferPrivate {
+class SourceBufferPrivateGStreamer final : public SourceBufferPrivate {
 
 public:
     static PassRefPtr<SourceBufferPrivateGStreamer> create(MediaSourceGStreamer*, PassRefPtr<MediaSourceClientGStreamer>, const ContentType&);
@@ -52,19 +52,19 @@ public:
 
     void clearMediaSource() { m_mediaSource = 0; }
 
-    virtual void setClient(SourceBufferPrivateClient*) OVERRIDE;
-    virtual void append(const unsigned char* data, unsigned length) OVERRIDE;
-    virtual void abort() OVERRIDE;
-    virtual void removedFromMediaSource() OVERRIDE;
-    virtual MediaPlayer::ReadyState readyState() const OVERRIDE;
-    virtual void setReadyState(MediaPlayer::ReadyState) OVERRIDE;
+    virtual void setClient(SourceBufferPrivateClient*) override;
+    virtual void append(const unsigned char* data, unsigned length) override;
+    virtual void abort() override;
+    virtual void removedFromMediaSource() override;
+    virtual MediaPlayer::ReadyState readyState() const override;
+    virtual void setReadyState(MediaPlayer::ReadyState) override;
 
-    virtual void flushAndEnqueueNonDisplayingSamples(Vector<RefPtr<MediaSample> >, AtomicString) OVERRIDE;
-    virtual void enqueueSample(PassRefPtr<MediaSample>, AtomicString) OVERRIDE;
-    virtual bool isReadyForMoreSamples(AtomicString) OVERRIDE;
-    virtual void setActive(bool) OVERRIDE;
-    virtual void stopAskingForMoreSamples(AtomicString) OVERRIDE;
-    virtual void notifyClientWhenReadyForMoreSamples(AtomicString) OVERRIDE;
+    virtual void flushAndEnqueueNonDisplayingSamples(Vector<RefPtr<MediaSample> >, AtomicString) override;
+    virtual void enqueueSample(PassRefPtr<MediaSample>, AtomicString) override;
+    virtual bool isReadyForMoreSamples(AtomicString) override;
+    virtual void setActive(bool) override;
+    virtual void stopAskingForMoreSamples(AtomicString) override;
+    virtual void notifyClientWhenReadyForMoreSamples(AtomicString) override;
     virtual bool isAborted() { return m_aborted; }
     virtual void resetAborted() { m_aborted = false; }
     virtual double timestampOffset() const;
