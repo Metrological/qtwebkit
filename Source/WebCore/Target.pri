@@ -2252,6 +2252,8 @@ HEADERS += \
     platform/graphics/surfaces/GraphicsSurfaceToken.h \
     platform/graphics/SurrogatePairAwareTextIterator.h \
     platform/graphics/texmap/GraphicsLayerTextureMapper.h \
+    platform/graphics/texmap/GraphicsLayerTextureMapper.h \
+    platform/graphics/texmap/TextureMapper.h \
     platform/graphics/texmap/TextureMapper.h \
     platform/graphics/texmap/TextureMapperBackingStore.h \
     platform/graphics/texmap/TextureMapperFPSCounter.h \
@@ -2911,6 +2913,8 @@ SOURCES += \
     platform/graphics/texmap/TextureMapperSurfaceBackingStore.cpp \
     platform/graphics/texmap/TextureMapperTile.cpp \
     platform/graphics/texmap/TextureMapperTiledBackingStore.cpp \
+#    platform/graphics/texmap/BitmapTexture.cpp \
+    platform/network/DNSResolveQueue.cpp \
     platform/network/DNSResolveQueue.cpp \
     platform/network/MIMESniffing.cpp \
     platform/Cursor.cpp \
@@ -3241,10 +3245,10 @@ enable?(MEDIA_SOURCE) {
             platform/graphics/gstreamer/WebKitMediaSourceGStreamer.h \
             platform/graphics/gstreamer/SourceBufferPrivateGStreamer.h \ 
             platform/graphics/gstreamer/MediaSourceGStreamer.h
-        SOURCES += \
-            platform/graphics/gstreamer/WebKitMediaSourceGStreamer.cpp \
-            platform/graphics/gstreamer/SourceBufferPrivateGStreamer.cpp \ 
-            platform/graphics/gstreamer/MediaSourceGStreamer.cpp
+       # SOURCES += \
+            #platform/graphics/gstreamer/WebKitMediaSourceGStreamer.cpp \
+            #platform/graphics/gstreamer/SourceBufferPrivateGStreamer.cpp \ 
+            #platform/graphics/gstreamer/MediaSourceGStreamer.cpp
     }
 }
 
@@ -3370,14 +3374,14 @@ enable?(ENCRYPTED_MEDIA_V2) {
 
     use?(GSTREAMER) {
         HEADERS += \
-#            platform/graphics/gstreamer/CDMSessionGStreamer.h \
+            platform/graphics/gstreamer/CDMSessionGStreamer.h \
             platform/graphics/gstreamer/CDMPRSessionGStreamer.h \
             platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.h
 
-        SOURCES += \
+#        SOURCES += \
 #            platform/graphics/gstreamer/CDMSessionGStreamer.cpp \
-            platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp \
-            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp
+#            platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp \
+#            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp
     }
 }
 
@@ -3388,10 +3392,10 @@ use?(GSTREAMER) {
             platform/graphics/gstreamer/GStreamerUtilities.h \
             platform/graphics/gstreamer/GStreamerVersioning.h
 
-    SOURCES += \
-            platform/graphics/gstreamer/GRefPtrGStreamer.cpp \
-            platform/graphics/gstreamer/GStreamerUtilities.cpp \
-            platform/graphics/gstreamer/GStreamerVersioning.cpp
+#    SOURCES += \
+#            platform/graphics/gstreamer/GRefPtrGStreamer.cpp \
+#            platform/graphics/gstreamer/GStreamerUtilities.cpp \
+#            platform/graphics/gstreamer/GStreamerVersioning.cpp
 }
 
 enable?(VIDEO) {
@@ -3421,21 +3425,21 @@ enable?(VIDEO) {
             platform/graphics/gstreamer/WebKitWebSourceGStreamer.h \
             platform/graphics/gstreamer/ImageGStreamer.h
         SOURCES += \
-            platform/graphics/gstreamer/GStreamerGWorld.cpp \
-            platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp \
-            platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp \
-            platform/graphics/gstreamer/VideoSinkGStreamer.cpp \
-            platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp \
-            platform/graphics/gstreamer/ImageGStreamerQt.cpp
+#            platform/graphics/gstreamer/GStreamerGWorld.cpp \
+            platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp 
+#            platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp \
+#            platform/graphics/gstreamer/VideoSinkGStreamer.cpp \
+#            platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp \
+#            platform/graphics/gstreamer/ImageGStreamerQt.cpp
 
         use?(NATIVE_FULLSCREEN_VIDEO) {
             HEADERS += \
                 platform/graphics/gstreamer/FullscreenVideoControllerGStreamer.h \
                 platform/graphics/gstreamer/PlatformVideoWindow.h \
                 platform/graphics/gstreamer/PlatformVideoWindowPrivate.h
-            SOURCES += \
-                platform/graphics/gstreamer/FullscreenVideoControllerGStreamer.cpp \
-                platform/graphics/gstreamer/PlatformVideoWindowQt.cpp
+#            SOURCES += \
+#                platform/graphics/gstreamer/FullscreenVideoControllerGStreamer.cpp \
+#                platform/graphics/gstreamer/PlatformVideoWindowQt.cpp
         }
 
     } else:use?(QT_MULTIMEDIA) {
@@ -4097,13 +4101,13 @@ enable?(VIDEO_TRACK) {
             platform/graphics/gstreamer/TextCombinerGStreamer.h \
             platform/graphics/gstreamer/TextSinkGStreamer.h
 
-        SOURCES += \
-            platform/graphics/gstreamer/TrackPrivateBaseGStreamer.cpp \
-            platform/graphics/gstreamer/VideoTrackPrivateGStreamer.cpp \
-            platform/graphics/gstreamer/AudioTrackPrivateGStreamer.cpp \
-            platform/graphics/gstreamer/InbandTextTrackPrivateGStreamer.cpp \
-            platform/graphics/gstreamer/TextCombinerGStreamer.cpp \
-            platform/graphics/gstreamer/TextSinkGStreamer.cpp
+#        SOURCES += \
+#            platform/graphics/gstreamer/TrackPrivateBaseGStreamer.cpp \
+#            platform/graphics/gstreamer/VideoTrackPrivateGStreamer.cpp \
+#            platform/graphics/gstreamer/AudioTrackPrivateGStreamer.cpp \
+#            platform/graphics/gstreamer/InbandTextTrackPrivateGStreamer.cpp \
+#            platform/graphics/gstreamer/TextCombinerGStreamer.cpp \
+#            platform/graphics/gstreamer/TextSinkGStreamer.cpp
     }
 }
 
