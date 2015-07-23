@@ -44,6 +44,7 @@
 #include <wtf/MediaTime.h>
 //#include <wtf/glib/GUniquePtr.h>
 #include <wtf/text/CString.h>
+//#include "../texmap/BitmapTexture.h"
 
 #if ENABLE(VIDEO_TRACK)
 #include "AudioTrackPrivateGStreamer.h"
