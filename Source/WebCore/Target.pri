@@ -3370,10 +3370,12 @@ enable?(ENCRYPTED_MEDIA_V2) {
 
     use?(GSTREAMER) {
         HEADERS += \
-            platform/graphics/gstreamer/CDMSessionGStreamer.h
+            platform/graphics/gstreamer/CDMSessionGStreamer.h \
+            platform/graphics/gstreamer/CDMPRSessionGStreamer.h
 
         SOURCES += \
-            platform/graphics/gstreamer/CDMSessionGStreamer.cpp
+            platform/graphics/gstreamer/CDMSessionGStreamer.cpp \
+            platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp
     }
 }
 
