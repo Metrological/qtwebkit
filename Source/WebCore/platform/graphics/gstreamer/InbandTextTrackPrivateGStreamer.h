@@ -31,6 +31,7 @@
 #include "GRefPtrGStreamer.h"
 #include "InbandTextTrackPrivate.h"
 #include "TrackPrivateBaseGStreamer.h"
+//#include <wtf/glib/GSourceWrap.h>
 
 namespace WebCore {
 
@@ -44,12 +45,12 @@ public:
         return adoptRef(new InbandTextTrackPrivateGStreamer(index, pad));
     }
 
-    virtual void disconnect() OVERRIDE;
+    virtual void disconnect() override;
 
-    virtual AtomicString label() const OVERRIDE { return m_label; }
-    virtual AtomicString language() const OVERRIDE { return m_language; }
+    virtual AtomicString label() const override { return m_label; }
+    virtual AtomicString language() const override { return m_language; }
 
-    virtual int trackIndex() const OVERRIDE { return m_index; }
+    virtual int trackIndex() const override { return m_index; }
     String streamId() const { return m_streamId; }
 
     void handleSample(GRefPtr<GstSample>);
@@ -61,8 +62,8 @@ public:
 private:
     InbandTextTrackPrivateGStreamer(gint index, GRefPtr<GstPad>);
 
-    guint m_sampleTimerHandler;
-    guint m_streamTimerHandler;
+    GSourceWrap::Static m_sampleTimerHandler;
+    GSourceWrap::Static m_streamTimerHandler;
     gulong m_eventProbe;
     Vector<GRefPtr<GstSample> > m_pendingSamples;
     String m_streamId;

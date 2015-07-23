@@ -16,7 +16,10 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "Logging.h"
+
 #include <gst/gst.h>
+#include <gst/video/video-format.h>
 
 #define LOG_MEDIA_MESSAGE(...) do { \
     GST_DEBUG(__VA_ARGS__); \
@@ -35,6 +38,31 @@
     LOG_VERBOSE(Media, __VA_ARGS__); } while (0)
 
 namespace WebCore {
+
+class IntSize;
+
+class GstObjectRef {
+public:
+    GstObjectRef(GstObject* object)
+        : m_object(GST_OBJECT(gst_object_ref(object)))
+    {
+    }
+
+    ~GstObjectRef()
+    {
+        gst_object_unref(m_object);
+    }
+
+    GstObjectRef(const GstObjectRef& other)
+        : m_object(GST_OBJECT(gst_object_ref(other.m_object)))
+    {
+    }
+
+    GstObject* get() const { return m_object; }
+
+private:
+    GstObject* m_object;
+};
 
 inline bool webkitGstCheckVersion(guint major, guint minor, guint micro)
 {
@@ -57,6 +85,17 @@ inline bool webkitGstCheckVersion(guint major, guint minor, guint micro)
     return true;
 }
 
+GstPad* webkitGstGhostPadFromStaticTemplate(GstStaticPadTemplate*, const gchar* name, GstPad* target);
+#if ENABLE(VIDEO)
+bool getVideoSizeAndFormatFromCaps(GstCaps*, WebCore::IntSize&, GstVideoFormat&, int& pixelAspectRatioNumerator, int& pixelAspectRatioDenominator, int& stride);
+#endif
+GstBuffer* createGstBuffer(GstBuffer*);
+GstBuffer* createGstBufferForData(const char* data, int length);
+char* getGstBufferDataPointer(GstBuffer*);
+void mapGstBuffer(GstBuffer*);
+void unmapGstBuffer(GstBuffer*);
 bool initializeGStreamer();
-unsigned getGstPlaysFlag(const char* nick);
+unsigned getGstPlayFlag(const char* nick);
+GstClockTime toGstClockTime(float time);
+
 }
