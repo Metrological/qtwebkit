@@ -3392,8 +3392,8 @@ use?(GSTREAMER) {
             platform/graphics/gstreamer/GStreamerUtilities.h \
             platform/graphics/gstreamer/GStreamerVersioning.h
 
-#    SOURCES += \
-#            platform/graphics/gstreamer/GRefPtrGStreamer.cpp \
+    SOURCES += \
+            platform/graphics/gstreamer/GRefPtrGStreamer.cpp 
 #            platform/graphics/gstreamer/GStreamerUtilities.cpp \
 #            platform/graphics/gstreamer/GStreamerVersioning.cpp
 }
@@ -3426,7 +3426,7 @@ enable?(VIDEO) {
             platform/graphics/gstreamer/ImageGStreamer.h
         SOURCES += \
 #            platform/graphics/gstreamer/GStreamerGWorld.cpp \
-#            platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp 
+            platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp 
 #            platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp \
 #            platform/graphics/gstreamer/VideoSinkGStreamer.cpp \
 #            platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp \
