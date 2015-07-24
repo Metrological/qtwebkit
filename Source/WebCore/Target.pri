@@ -3246,7 +3246,7 @@ enable?(MEDIA_SOURCE) {
             platform/graphics/gstreamer/WebKitMediaSourceGStreamer.h \
             platform/graphics/gstreamer/SourceBufferPrivateGStreamer.h \ 
             platform/graphics/gstreamer/MediaSourceGStreamer.h
-       # SOURCES += \
+       SOURCES += \
             #platform/graphics/gstreamer/WebKitMediaSourceGStreamer.cpp \
             #platform/graphics/gstreamer/SourceBufferPrivateGStreamer.cpp \ 
             #platform/graphics/gstreamer/MediaSourceGStreamer.cpp
@@ -3379,10 +3379,10 @@ enable?(ENCRYPTED_MEDIA_V2) {
             platform/graphics/gstreamer/CDMPRSessionGStreamer.h \
             platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.h
 
-#        SOURCES += \
+        SOURCES += \
 #            platform/graphics/gstreamer/CDMSessionGStreamer.cpp \
-#            platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp \
-#            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp
+            platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp \ 
+            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp
     }
 }
 
