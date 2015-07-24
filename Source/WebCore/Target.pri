@@ -3426,7 +3426,7 @@ enable?(VIDEO) {
             platform/graphics/gstreamer/ImageGStreamer.h
         SOURCES += \
 #            platform/graphics/gstreamer/GStreamerGWorld.cpp \
-            platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp 
+#            platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp 
 #            platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp \
 #            platform/graphics/gstreamer/VideoSinkGStreamer.cpp \
 #            platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp \

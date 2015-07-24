@@ -117,6 +117,30 @@ private:
     TimerFiredFunction m_function;
 };
 
+// Added this class to be able to compile wpe imported DxDrm code.
+class TimerNew : public TimerBase {
+    WTF_MAKE_FAST_ALLOCATED;
+public:
+    template <typename TimerFiredClass, typename TimerFiredBaseClass>
+    TimerNew(TimerFiredClass& object, void (TimerFiredBaseClass::*function)())
+        : m_function(std::bind(function, &object))
+    {
+    }
+
+    TimerNew(std::function<void ()> function)
+        : m_function(std::move(function))
+    {
+    }
+
+private:
+    virtual void fired() override
+    {
+        m_function();
+    }
+
+    std::function<void ()> m_function;
+};
+
 inline bool TimerBase::isActive() const
 {
     ASSERT(m_thread == currentThread());

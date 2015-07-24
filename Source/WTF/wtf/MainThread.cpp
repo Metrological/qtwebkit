@@ -84,7 +84,6 @@ static FunctionQueue& functionQueue()
     return staticFunctionQueue;
 }
 
-
 #if !PLATFORM(MAC)
 
 void initializeMainThread()
