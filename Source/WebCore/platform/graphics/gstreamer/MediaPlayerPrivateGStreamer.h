@@ -160,14 +160,14 @@ public:
     AudioSourceProvider* audioSourceProvider() override { return reinterpret_cast<AudioSourceProvider*>(m_audioSourceProvider.get()); }
 #endif
 
-#if ENABLE(ENCRYPTED_MEDIA)
+//#if ENABLE(ENCRYPTED_MEDIA)
     MediaPlayer::MediaKeyException addKey(const String&, const unsigned char*, unsigned, const unsigned char*, unsigned, const String&);
     MediaPlayer::MediaKeyException generateKeyRequest(const String&, const unsigned char*, unsigned);
     MediaPlayer::MediaKeyException cancelKeyRequest(const String&, const String&);
     void needKey(const String&, const String&, const unsigned char*, unsigned);
 
     void signalDRM();
-#endif
+//#endif
 
     bool isLiveStream() const override { return m_isStreaming; }
 #if ENABLE(MEDIA_SOURCE)
