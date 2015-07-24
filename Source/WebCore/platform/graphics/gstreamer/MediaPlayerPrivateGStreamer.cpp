@@ -42,7 +42,7 @@
 #include <wtf/CurrentTime.h>
 #include <wtf/HexNumber.h>
 #include <wtf/MediaTime.h>
-//#include <wtf/glib/GUniquePtr.h>
+#include <wtf/glib/GUniquePtr.h>
 #include <wtf/text/CString.h>
 //#include "../texmap/BitmapTexture.h"
 
@@ -219,8 +219,10 @@ void MediaPlayerPrivateGStreamer::registerMediaEngine(MediaEngineRegistrar regis
 {
     if (isAvailable())
 #if ENABLE(ENCRYPTED_MEDIA_V2)
-        registrar([](MediaPlayer* player) { return std::make_unique<MediaPlayerPrivateGStreamer>(player); },
-            getSupportedTypes, extendedSupportsType, 0, 0, 0, supportsKeySystem);
+//        registrar([](MediaPlayer* player) { return std::make_unique<MediaPlayerPrivateGStreamer>(player); },
+//            getSupportedTypes, extendedSupportsType, 0, 0, 0, supportsKeySystem);
+    registrar([](MediaPlayer* player) { return std::unique_ptr<MediaPlayerPrivateGStreamer>(new MediaPlayerPrivateGStreamer(player)); },
+        getSupportedTypes, extendedSupportsType, 0, 0, 0, supportsKeySystem);
 #else
          registrar([](MediaPlayer* player) { return std::make_unique<MediaPlayerPrivateGStreamer>(player); },
             getSupportedTypes, supportsType, 0, 0, 0, supportsKeySystem);
