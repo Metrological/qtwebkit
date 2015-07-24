@@ -171,7 +171,7 @@ protected:
     unsigned long m_volumeSignalHandler;
     unsigned long m_muteSignalHandler;
     unsigned long m_drainHandler;
-    mutable FloatSize m_videoSize;
+    mutable IntSize m_videoSize;
     bool m_usingFallbackVideoSink;
 #if USE(TEXTURE_MAPPER_GL) && !USE(COORDINATED_GRAPHICS_MULTIPROCESS)
     PassRefPtr<BitmapTexture> updateTexture(TextureMapper*);
