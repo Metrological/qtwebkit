@@ -28,7 +28,6 @@
 #if ENABLE(VIDEO) && USE(GSTREAMER)
 
 #include "GStreamerUtilities.h"
-//#include "URL.h"
 #include "MIMETypeRegistry.h"
 #include "MediaPlayer.h"
 #include "NotImplemented.h"
@@ -72,7 +71,7 @@
 #endif
 
 #if ENABLE(WEB_AUDIO)
-//#include "AudioSourceProviderGStreamer.h"
+#include "AudioSourceProviderGStreamer.h"
 #endif
 
 #if ENABLE(ENCRYPTED_MEDIA_V2) && USE(DXDRM)
@@ -221,8 +220,10 @@ void MediaPlayerPrivateGStreamer::registerMediaEngine(MediaEngineRegistrar regis
 #if ENABLE(ENCRYPTED_MEDIA_V2)
 //        registrar([](MediaPlayer* player) { return std::make_unique<MediaPlayerPrivateGStreamer>(player); },
 //            getSupportedTypes, extendedSupportsType, 0, 0, 0, supportsKeySystem);
-    registrar([](MediaPlayer* player) { return std::unique_ptr<MediaPlayerPrivateGStreamer>(new MediaPlayerPrivateGStreamer(player)); },
-        getSupportedTypes, extendedSupportsType, 0, 0, 0, supportsKeySystem);
+    // TODO: figure this one out (already a modified version of line above ^^^)
+        //registrar([](MediaPlayer* player) { return std::unique_ptr<MediaPlayerPrivateGStreamer>(new MediaPlayerPrivateGStreamer(player)); },
+      //  getSupportedTypes, extendedSupportsType, 0, 0, 0, supportsKeySystem);
+    {;}
 #else
          registrar([](MediaPlayer* player) { return std::make_unique<MediaPlayerPrivateGStreamer>(player); },
             getSupportedTypes, supportsType, 0, 0, 0, supportsKeySystem);
@@ -311,7 +312,7 @@ MediaPlayerPrivateGStreamer::MediaPlayerPrivateGStreamer(MediaPlayer* player)
     , m_cachedPosition(-1)
     , m_lastQuery(-1)
 #if ENABLE(WEB_AUDIO)
-    , m_audioSourceProvider(std::make_unique<AudioSourceProviderGStreamer>())
+    , m_audioSourceProvider(unique_ptr<AudioSourceProviderGStreamer>(new AudioSourceProviderGStreamer))
 #endif
     , m_requestedState(GST_STATE_VOID_PENDING)
     , m_missingPlugins(false)
@@ -396,7 +397,7 @@ void MediaPlayerPrivateGStreamer::load(const String& urlString)
     if (!initializeGStreamerAndRegisterWebKitElements())
         return;
 
-    URL url(URL(), urlString);
+    KURL url(KURL(), urlString);
     if (url.isBlankURL())
         return;
 
@@ -415,7 +416,7 @@ void MediaPlayerPrivateGStreamer::load(const String& urlString)
     m_drmKeySemaphore.signal();
 #endif
 
-    m_url = URL(URL(), cleanURL);
+    m_url = KURL(KURL(), cleanURL);
     g_object_set(m_pipeline.get(), "uri", cleanURL.utf8().data(), nullptr);
 
     INFO_MEDIA_MESSAGE("Load %s", cleanURL.utf8().data());
@@ -607,7 +608,8 @@ float MediaPlayerPrivateGStreamer::duration() const
 
 #if ENABLE(MEDIA_SOURCE)
     if (failure && m_mediaSource)
-        return m_mediaSource->duration().toFloat();
+        //return m_mediaSource->duration().toFloat();
+        return (float)m_mediaSource->duration();
 #endif
 
     if (failure) {
@@ -1111,14 +1113,16 @@ void MediaPlayerPrivateGStreamer::setPreservesPitch(bool preservesPitch)
     m_preservesPitch = preservesPitch;
 }
 
-std::unique_ptr<PlatformTimeRanges> MediaPlayerPrivateGStreamer::buffered() const
+PassOwnPtr<PlatformTimeRanges> MediaPlayerPrivateGStreamer::buffered() const
 {
 #if ENABLE(MEDIA_SOURCE)
     if (isMediaSource())
         return m_mediaSource->buffered();
 #endif
 
-    auto timeRanges = std::make_unique<PlatformTimeRanges>();
+    //auto timeRanges = std::make_unique<PlatformTimeRanges>();
+    //auto timeRanges = unique_ptr<PlatformTimeRanges>(new PlatformTimeRanges());
+    PassOwnPtr<PlatformTimeRanges> timeRanges = adoptPtr(new PlatformTimeRanges());
     if (m_errorOccured || isLiveStream())
         return timeRanges;
 
@@ -1712,7 +1716,7 @@ unsigned long long MediaPlayerPrivateGStreamer::totalBytes() const
             gst_iterator_resync(iter);
             break;
         case GST_ITERATOR_ERROR:
-            FALLTHROUGH;
+            //FALLTHROUGH;
         case GST_ITERATOR_DONE:
             done = true;
             break;
@@ -2023,8 +2027,8 @@ bool MediaPlayerPrivateGStreamer::loadNextLocation()
         // Found a candidate. new-location is not always an absolute url
         // though. We need to take the base of the current url and
         // append the value of new-location to it.
-        URL baseUrl = gst_uri_is_valid(newLocation) ? URL() : m_url;
-        URL newUrl = URL(baseUrl, newLocation);
+        KURL baseUrl = gst_uri_is_valid(newLocation) ? KURL() : m_url;
+        KURL newUrl = KURL(baseUrl, newLocation);
 
         RefPtr<SecurityOrigin> securityOrigin = SecurityOrigin::create(m_url);
         if (securityOrigin->canRequest(newUrl)) {
@@ -2175,7 +2179,8 @@ static HashSet<String> mimeTypeCache()
 {
     initializeGStreamerAndRegisterWebKitElements();
 
-    DEPRECATED_DEFINE_STATIC_LOCAL(HashSet<String>, cache, ());
+    //DEPRECATED_DEFINE_STATIC_LOCAL(HashSet<String>, cache, ());
+    static HashSet<String> cache;
     static bool typeListInitialized = false;
 
     if (typeListInitialized)
@@ -2316,7 +2321,7 @@ MediaPlayer::MediaKeyException MediaPlayerPrivateGStreamer::addKey(const String&
 MediaPlayer::MediaKeyException MediaPlayerPrivateGStreamer::generateKeyRequest(const String& keySystem, const unsigned char* initDataPtr, unsigned initDataLength)
 {
     LOG_MEDIA_MESSAGE("generateKeyRequest");
-    m_player->keyMessage(keySystem, createCanonicalUUIDString(), initDataPtr, initDataLength, URL());
+    m_player->keyMessage(keySystem, createCanonicalUUIDString(), initDataPtr, initDataLength, KURL());
     return MediaPlayer::NoError;
 }
 
@@ -2373,15 +2378,18 @@ void MediaPlayerPrivateGStreamer::needKey(RefPtr<Uint8Array> initData)
     }
 }
 
-std::unique_ptr<CDMSession> MediaPlayerPrivateGStreamer::createSession(const String& keySystem)
+PassOwnPtr<CDMSession> MediaPlayerPrivateGStreamer::createSession(const String& keySystem)
 {
     if (!supportsKeySystem(keySystem, emptyString()))
         return nullptr;
 
 #if USE(DXDRM)
     if (equalIgnoringCase(keySystem, "com.microsoft.playready")
-        || equalIgnoringCase(keySystem, "com.youtube.playready"))
-        return std::make_unique<CDMPRSessionGStreamer>(this);
+        || equalIgnoringCase(keySystem, "com.youtube.playready")) {
+        //return std::make_unique<CDMPRSessionGStreamer>(this);
+        //return std::unique_ptr<CDMPRSessionGStreamer>(new CDMPRSessionGStreamer(this));
+        return adoptPtr(new CDMPRSessionGStreamer(this));
+    }
 #endif
 
     return nullptr;
