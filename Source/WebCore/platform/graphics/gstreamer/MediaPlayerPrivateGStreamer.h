@@ -44,9 +44,9 @@
 #include "MediaSourceGStreamer.h"
 #endif
 
-#if ENABLE(ENCRYPTED_MEDIA)
+//#if ENABLE(ENCRYPTED_MEDIA)
 #include <wtf/threads/BinarySemaphore.h>
-#endif
+//#endif
 
 #include "MediaPlayer.h"
 
@@ -67,6 +67,8 @@ class InbandMetadataTextTrackPrivateGStreamer;
 class InbandTextTrackPrivateGStreamer;
 class VideoTrackPrivateGStreamer;
 
+enum SupportsType { IsNotSupported, IsSupported, MayBeSupported };
+
 class MediaPlayerPrivateGStreamer : public MediaPlayerPrivateGStreamerBase {
 public:
     explicit MediaPlayerPrivateGStreamer(MediaPlayer*);
@@ -76,6 +78,10 @@ public:
     void handleSyncMessage(GstMessage*);
     gboolean handleMessage(GstMessage*);
     void handlePluginInstallerResult(GstInstallPluginsReturn);
+
+    // TODO: implement
+    virtual void paint(GraphicsContext*, const IntRect&);
+
 
     bool hasVideo() const override { return m_hasVideo; }
     bool hasAudio() const override { return m_hasAudio; }
@@ -176,7 +182,7 @@ public:
 
 private:
     static void getSupportedTypes(HashSet<String>&);
-    //static MediaPlayer::SupportsType supportsType(const MediaEngineSupportParameters&);
+    static MediaPlayer::SupportsType supportsType(const MediaEngineSupportParameters&);
 
     static bool isAvailable();
     static bool supportsKeySystem(const String& keySystem, const String& mimeType);
@@ -184,7 +190,7 @@ private:
     GstElement* createAudioSink() override;
 
 #if ENABLE(ENCRYPTED_MEDIA_V2)
-    //static MediaPlayer::SupportsType extendedSupportsType(const MediaEngineSupportParameters&);
+    static MediaPlayer::SupportsType extendedSupportsType(const MediaEngineSupportParameters&);
     PassOwnPtr<CDMSession> createSession(const String&);
     CDMSession* m_cdmSession;
 #endif
@@ -301,9 +307,9 @@ private:
     GstGLContext* m_glContext;
     GstGLDisplay* m_glDisplay;
 #endif
-#if ENABLE(ENCRYPTED_MEDIA)
+//#if ENABLE(ENCRYPTED_MEDIA)
     BinarySemaphore m_drmKeySemaphore;
-#endif
+//#endif
     Mutex m_pendingAsyncOperationsLock;
     GList* m_pendingAsyncOperations;
 };

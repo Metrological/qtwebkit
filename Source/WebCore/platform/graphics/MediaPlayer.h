@@ -103,6 +103,31 @@ struct PlatformMedia {
     } media;
 };
 
+struct MediaEngineSupportParameters {
+    String type;
+    String codecs;
+    KURL url;
+//#if ENABLE(ENCRYPTED_MEDIA)
+    String keySystem;
+//#endif
+#if ENABLE(MEDIA_SOURCE)
+    bool isMediaSource;
+#endif
+#if ENABLE(MEDIA_STREAM)
+    bool isMediaStream;
+#endif
+
+    MediaEngineSupportParameters()
+#if ENABLE(MEDIA_SOURCE)
+        : isMediaSource(false)
+#endif
+    {
+#if ENABLE(MEDIA_STREAM)
+        isMediaStream = false;
+#endif
+    }
+};
+
 extern const PlatformMedia NoPlatformMedia;
 
 class CachedResourceLoader;
@@ -393,6 +418,7 @@ public:
     void repaint();
 
     MediaPlayerClient* mediaPlayerClient() const { return m_mediaPlayerClient; }
+    MediaPlayerClient& client() const { return *m_mediaPlayerClient; }
     void clearMediaPlayerClient() { m_mediaPlayerClient = 0; }
 
     bool hasAvailableVideoFrame() const;
