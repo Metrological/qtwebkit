@@ -28,6 +28,7 @@
 #include "GRefPtrGStreamer.h"
 #include "MediaPlayerPrivateGStreamerBase.h"
 #include "Timer.h"
+#include "KURL.h"
 
 #include <glib.h>
 #include <gst/gst.h>
@@ -271,7 +272,7 @@ private:
     GSourceWrap::Static m_videoCapsTimerHandler;
     GSourceWrap::Static m_readyTimerHandler;
     mutable unsigned long long m_totalBytes;
-    //URL m_url;
+    KURL m_url;
     bool m_preservesPitch;
     mutable float m_cachedPosition;
     mutable double m_lastQuery;
