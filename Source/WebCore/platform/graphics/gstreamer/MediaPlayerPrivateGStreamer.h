@@ -47,6 +47,8 @@
 #include <wtf/threads/BinarySemaphore.h>
 #endif
 
+#include "MediaPlayer.h"
+
 typedef struct _GstBuffer GstBuffer;
 typedef struct _GstMessage GstMessage;
 typedef struct _GstElement GstElement;
@@ -101,13 +103,15 @@ public:
     void setReadyState(MediaPlayer::ReadyState state);
 
     void setRate(float) override;
-    double rate() const override;
+    //double rate() const override;
+    double rate() const;
     void setPreservesPitch(bool) override;
 
     void setPreload(MediaPlayer::Preload) override;
     void fillTimerFired();
 
-    std::unique_ptr<PlatformTimeRanges> buffered() const override;
+    //std::unique_ptr<PlatformTimeRanges> buffered() const override;
+    PassOwnPtr<PlatformTimeRanges> buffered() const override;
     float maxTimeSeekable() const override;
     bool didLoadingProgress() const override;
     unsigned long long totalBytes() const override;
@@ -171,7 +175,7 @@ public:
 
 private:
     static void getSupportedTypes(HashSet<String>&);
-    static MediaPlayer::SupportsType supportsType(const MediaEngineSupportParameters&);
+    //static MediaPlayer::SupportsType supportsType(const MediaEngineSupportParameters&);
 
     static bool isAvailable();
     static bool supportsKeySystem(const String& keySystem, const String& mimeType);
@@ -179,8 +183,8 @@ private:
     GstElement* createAudioSink() override;
 
 #if ENABLE(ENCRYPTED_MEDIA_V2)
-    static MediaPlayer::SupportsType extendedSupportsType(const MediaEngineSupportParameters&);
-    std::unique_ptr<CDMSession> createSession(const String&);
+    //static MediaPlayer::SupportsType extendedSupportsType(const MediaEngineSupportParameters&);
+    PassOwnPtr<CDMSession> createSession(const String&);
     CDMSession* m_cdmSession;
 #endif
 
@@ -210,14 +214,19 @@ private:
 
     String engineDescription() const override { return "GStreamer"; }
     bool didPassCORSAccessCheck() const override;
-    bool canSaveMediaData() const override;
+    //bool canSaveMediaData() const override;
+    bool canSaveMediaData() const;
 
 #if ENABLE(MEDIA_SOURCE)
     // TODO: Implement
-    unsigned long totalVideoFrames() override { return 0; }
-    unsigned long droppedVideoFrames() override { return 0; }
-    unsigned long corruptedVideoFrames() override { return 0; }
-    MediaTime totalFrameDelay() override { return MediaTime::zeroTime(); }
+    //unsigned long totalVideoFrames() override { return 0; }
+    unsigned long totalVideoFrames() { return 0; }
+    //unsigned long droppedVideoFrames() override { return 0; }
+    unsigned long droppedVideoFrames() { return 0; }
+    //unsigned long corruptedVideoFrames() override { return 0; }
+    unsigned long corruptedVideoFrames() { return 0; }
+    //MediaTime totalFrameDelay() override { return MediaTime::zeroTime(); }
+    MediaTime totalFrameDelay() { return MediaTime::zeroTime(); }
     GRefPtr<GstCaps> currentDemuxerCaps() const override;
 #endif
 
@@ -246,7 +255,7 @@ private:
     bool m_errorOccured;
     mutable gfloat m_mediaDuration;
     bool m_downloadFinished;
-    Timer m_fillTimer;
+    TimerNew m_fillTimer;
     float m_maxTimeLoaded;
     int m_bufferingPercentage;
     MediaPlayer::Preload m_preload;
@@ -262,7 +271,7 @@ private:
     GSourceWrap::Static m_videoCapsTimerHandler;
     GSourceWrap::Static m_readyTimerHandler;
     mutable unsigned long long m_totalBytes;
-    URL m_url;
+    //URL m_url;
     bool m_preservesPitch;
     mutable float m_cachedPosition;
     mutable double m_lastQuery;

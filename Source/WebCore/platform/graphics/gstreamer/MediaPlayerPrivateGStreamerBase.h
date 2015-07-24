@@ -75,7 +75,7 @@ class MediaPlayerPrivateGStreamerBase : public MediaPlayerPrivateInterface
 public:
     virtual ~MediaPlayerPrivateGStreamerBase();
 
-    FloatSize naturalSize() const;
+    IntSize naturalSize() const;
 
     void setVolume(float);
     float volume() const;
