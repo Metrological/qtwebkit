@@ -31,6 +31,9 @@
 #include <libsoup/soup.h>
 #include <wtf/gobject/GRefPtr.h>
 
+// HTTPHeaderNames. TODO: move to network.
+#include "../../graphics/gstreamer/HTTPHeaderNames.h"
+
 namespace WebCore {
 
 class ResourceResponse : public ResourceResponseBase {
@@ -74,6 +77,9 @@ public:
     void setSoupMessageTLSErrors(GTlsCertificateFlags tlsErrors) { m_tlsErrors = tlsErrors; }
 
     bool platformResponseIsUpToDate() const { return false; }
+
+    String httpHeaderField(HTTPHeaderName) const;
+    String httpHeaderField(const String& name) const;
 
 private:
     friend class ResourceResponseBase;

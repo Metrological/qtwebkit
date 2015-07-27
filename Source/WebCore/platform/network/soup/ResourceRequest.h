@@ -30,6 +30,9 @@
 #include "ResourceRequestBase.h"
 #include <libsoup/soup.h>
 
+// HTTPHeaderNames. TODO: move to network.
+#include "../../graphics/gstreamer/HTTPHeaderNames.h"
+
 namespace WebCore {
 
     class ResourceRequest : public ResourceRequestBase {
@@ -77,11 +80,20 @@ namespace WebCore {
         SoupMessageFlags soupMessageFlags() const { return m_soupFlags; }
         void setSoupMessageFlags(SoupMessageFlags soupFlags) { m_soupFlags = soupFlags; }
 
+        bool acceptEncoding() const { return m_acceptEncoding; }
+        void setAcceptEncoding(bool acceptEncoding) { m_acceptEncoding = acceptEncoding; }
+        void setHTTPHeaderField(const String& name, const String& value);
+        void setHTTPHeaderField(HTTPHeaderName, const String& value);
+
+        String httpHeaderField(HTTPHeaderName) const;
+        String httpHeaderField(const String& name) const;
+
         SoupURI* soupURI() const;
 
     private:
         friend class ResourceRequestBase;
 
+        bool m_acceptEncoding : 1;
         SoupMessageFlags m_soupFlags;
 
         void doUpdatePlatformRequest() { }
