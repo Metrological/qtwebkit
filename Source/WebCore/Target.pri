@@ -3382,7 +3382,8 @@ enable?(ENCRYPTED_MEDIA_V2) {
         SOURCES += \
 #            platform/graphics/gstreamer/CDMSessionGStreamer.cpp \
             platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp \ 
-            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp
+            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp \
+            platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp
     }
 }
 
