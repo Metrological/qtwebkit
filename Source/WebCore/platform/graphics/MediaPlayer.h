@@ -47,6 +47,7 @@
 #include <wtf/Noncopyable.h>
 #include <wtf/PassOwnPtr.h>
 #include <wtf/text/StringHash.h>
+#include "PlatformMediaResourceLoader.h"
 
 #if USE(ACCELERATED_COMPOSITING)
 #include "PlatformLayer.h"
@@ -516,6 +517,8 @@ public:
     String languageOfPrimaryAudioTrack() const;
 
     size_t extraMemoryCost() const;
+
+    PassRefPtr<PlatformMediaResourceLoader> createResourceLoader(std::unique_ptr<PlatformMediaResourceLoaderClient>);
 
 private:
     MediaPlayer(MediaPlayerClient*);

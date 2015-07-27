@@ -32,6 +32,7 @@
 #include <glib.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/glib/GRefPtr.h>
+#include <chrono>
 
 typedef struct _GSocket GSocket;
 

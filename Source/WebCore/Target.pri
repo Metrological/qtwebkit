@@ -3429,11 +3429,10 @@ enable?(VIDEO) {
         SOURCES += \
 #            platform/graphics/gstreamer/GStreamerGWorld.cpp \
             platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp  \
-            platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp 
-
+            platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp \
+            platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp
 #            platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp \
 #            platform/graphics/gstreamer/VideoSinkGStreamer.cpp \
-#            platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp \
 #            platform/graphics/gstreamer/ImageGStreamerQt.cpp
 
         use?(NATIVE_FULLSCREEN_VIDEO) {
