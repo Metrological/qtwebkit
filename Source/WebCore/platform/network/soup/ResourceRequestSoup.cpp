@@ -32,6 +32,16 @@ using namespace std;
 
 namespace WebCore {
 
+void ResourceRequest::setHTTPHeaderField(const String& name, const String& value)
+{
+    updateResourceRequest();
+
+    m_httpHeaderFields.set(name, value);
+
+    if (url().protocolIsInHTTPFamily())
+        m_platformRequestUpdated = false;
+}
+
 void ResourceRequest::updateSoupMessageHeaders(SoupMessageHeaders* soupHeaders) const
 {
     const HTTPHeaderMap& headers = httpHeaderFields();

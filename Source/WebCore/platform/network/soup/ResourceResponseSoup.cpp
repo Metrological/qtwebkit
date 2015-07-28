@@ -33,6 +33,39 @@ using namespace std;
 
 namespace WebCore {
 
+// Defined in "HTTPHeaderNames.cpp"
+String httpHeaderNameString(HTTPHeaderName headerName);
+
+String ResourceResponse::httpHeaderField(const String& name) const
+{
+    lazyInit(CommonFieldsOnly);
+
+    // If we already have the header, just return it instead of consuming memory by grabing all headers.
+    String value = m_httpHeaderFields.get(name);
+    if (!value.isEmpty())
+        return value;
+
+    lazyInit(AllFields);
+
+    return m_httpHeaderFields.get(name);
+}
+
+String ResourceResponse::httpHeaderField(HTTPHeaderName name) const
+{
+    lazyInit(CommonFieldsOnly);
+
+    String nameString = httpHeaderNameString(name);
+
+    // If we already have the header, just return it instead of consuming memory by grabing all headers.
+    String value = m_httpHeaderFields.get(nameString);
+    if (!value.isEmpty())
+        return value;
+
+    lazyInit(AllFields);
+
+    return m_httpHeaderFields.get(nameString);
+}
+
 SoupMessage* ResourceResponse::toSoupMessage() const
 {
     // This GET here is just because SoupMessage wants it, we dn't really know.

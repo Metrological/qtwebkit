@@ -3383,7 +3383,8 @@ enable?(ENCRYPTED_MEDIA_V2) {
 #            platform/graphics/gstreamer/CDMSessionGStreamer.cpp \
             platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp \ 
             platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp \
-            platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp
+            platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp \
+            platform/graphics/gstreamer/HTTPHeaderNames.cpp
     }
 }
 
@@ -3395,9 +3396,9 @@ use?(GSTREAMER) {
             platform/graphics/gstreamer/GStreamerVersioning.h
 
     SOURCES += \
-            platform/graphics/gstreamer/GRefPtrGStreamer.cpp 
-#            platform/graphics/gstreamer/GStreamerUtilities.cpp \
-#            platform/graphics/gstreamer/GStreamerVersioning.cpp
+            platform/graphics/gstreamer/GRefPtrGStreamer.cpp \
+            platform/graphics/gstreamer/GStreamerUtilities.cpp \
+            platform/graphics/gstreamer/GStreamerVersioning.cpp
 }
 
 enable?(VIDEO) {
