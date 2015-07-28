@@ -26,6 +26,8 @@
 
 namespace WebCore {
 
+const char* webkitGstMapInfoQuarkString = "webkit-gst-map-info";
+
 bool initializeGStreamer()
 {
 #if GST_CHECK_VERSION(0, 10, 31)
@@ -50,6 +52,62 @@ unsigned getGstPlaysFlag(const char* nick)
         return 0;
 
     return flag->value;
+}
+
+GstBuffer* createGstBufferForData(const char* data, int length)
+{
+    GstBuffer* buffer = gst_buffer_new_and_alloc(length);
+
+    gst_buffer_fill(buffer, 0, data, length);
+
+    return buffer;
+}
+
+char* getGstBufferDataPointer(GstBuffer* buffer)
+{
+    GstMiniObject* miniObject = reinterpret_cast<GstMiniObject*>(buffer);
+    GstMapInfo* mapInfo = static_cast<GstMapInfo*>(gst_mini_object_get_qdata(miniObject, g_quark_from_static_string(webkitGstMapInfoQuarkString)));
+    return reinterpret_cast<char*>(mapInfo->data);
+}
+
+void mapGstBuffer(GstBuffer* buffer)
+{
+    GstMapInfo* mapInfo = g_slice_new(GstMapInfo);
+    if (!gst_buffer_map(buffer, mapInfo, GST_MAP_WRITE)) {
+        g_slice_free(GstMapInfo, mapInfo);
+        gst_buffer_unref(buffer);
+        return;
+    }
+
+    GstMiniObject* miniObject = reinterpret_cast<GstMiniObject*>(buffer);
+    gst_mini_object_set_qdata(miniObject, g_quark_from_static_string(webkitGstMapInfoQuarkString), mapInfo, 0);
+}
+
+void unmapGstBuffer(GstBuffer* buffer)
+{
+    GstMiniObject* miniObject = reinterpret_cast<GstMiniObject*>(buffer);
+    GstMapInfo* mapInfo = static_cast<GstMapInfo*>(gst_mini_object_steal_qdata(miniObject, g_quark_from_static_string(webkitGstMapInfoQuarkString)));
+
+    if (!mapInfo)
+        return;
+
+    gst_buffer_unmap(buffer, mapInfo);
+    g_slice_free(GstMapInfo, mapInfo);
+}
+
+GstPad* webkitGstGhostPadFromStaticTemplate(GstStaticPadTemplate* staticPadTemplate, const gchar* name, GstPad* target)
+{
+    GstPad* pad;
+    GstPadTemplate* padTemplate = gst_static_pad_template_get(staticPadTemplate);
+
+    if (target)
+        pad = gst_ghost_pad_new_from_template(name, target, padTemplate);
+    else
+        pad = gst_ghost_pad_new_no_target_from_template(name, padTemplate);
+
+    gst_object_unref(padTemplate);
+
+    return pad;
 }
 
 }
