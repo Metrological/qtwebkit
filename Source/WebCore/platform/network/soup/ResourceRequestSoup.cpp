@@ -165,4 +165,21 @@ SoupURI* ResourceRequest::soupURI() const
     return uri;
 }
 
+String ResourceRequest::httpHeaderField(const String& name) const
+{
+    updateResourceRequest();
+
+    return m_httpHeaderFields.get(name);
+}
+
+void ResourceRequest::setHTTPHeaderField(HTTPHeaderName name, const String& value)
+{
+    updateResourceRequest();
+
+    m_httpHeaderFields.set(name, value);
+
+    if (url().protocolIsInHTTPFamily())
+        m_platformRequestUpdated = false;
+}
+
 }

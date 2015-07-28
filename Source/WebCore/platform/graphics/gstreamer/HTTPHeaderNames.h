@@ -122,8 +122,8 @@ const unsigned numHTTPHeaderNames = 82;
 const size_t minHTTPHeaderNameLength = 2;
 const size_t maxHTTPHeaderNameLength = 35;
 
-//bool findHTTPHeaderName(StringView, HTTPHeaderName&);
-//WEBCORE_EXPORT StringView httpHeaderNameString(HTTPHeaderName);
+bool findHTTPHeaderName(String, HTTPHeaderName&);
+String httpHeaderNameString(HTTPHeaderName);
 
 } // namespace WebCore
 

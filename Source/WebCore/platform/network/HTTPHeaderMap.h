@@ -34,6 +34,7 @@
 #include <wtf/text/AtomicString.h>
 #include <wtf/text/AtomicStringHash.h>
 #include <wtf/text/StringHash.h>
+#include "WebCore/platform/graphics/gstreamer/HTTPHeaderNames.h"
 
 namespace WebCore {
 
@@ -58,7 +59,9 @@ namespace WebCore {
         bool contains(const char*) const;
         String get(const char*) const;
         AddResult add(const char* name, const String& value);
-        
+
+        void set(HTTPHeaderName, const String& value);
+        void set(const String& key, const String& value) { HashMap<AtomicString, String, CaseFoldingHash>::set(key, value); }
     };
 
 } // namespace WebCore
