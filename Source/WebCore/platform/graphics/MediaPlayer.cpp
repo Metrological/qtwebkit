@@ -1157,6 +1157,11 @@ void MediaPlayer::removeTextTrack(PassRefPtr<InbandTextTrackPrivate> track)
     m_mediaPlayerClient->mediaPlayerDidRemoveTextTrack(track);
 }
 
+PassRefPtr<PlatformMediaResourceLoader> MediaPlayer::createResourceLoader(std::unique_ptr<PlatformMediaResourceLoaderClient> client)
+{
+    return m_mediaPlayerClient->mediaPlayerCreateResourceLoader(std::move(client));
+}
+
 void MediaPlayer::addVideoTrack(PassRefPtr<VideoTrackPrivate> track)
 {
     if (!m_mediaPlayerClient)

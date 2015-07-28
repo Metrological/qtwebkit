@@ -3247,7 +3247,7 @@ enable?(MEDIA_SOURCE) {
             platform/graphics/gstreamer/SourceBufferPrivateGStreamer.h \ 
             platform/graphics/gstreamer/MediaSourceGStreamer.h
        SOURCES += \
-            #platform/graphics/gstreamer/WebKitMediaSourceGStreamer.cpp \
+            platform/graphics/gstreamer/WebKitMediaSourceGStreamer.cpp
             #platform/graphics/gstreamer/SourceBufferPrivateGStreamer.cpp \ 
             #platform/graphics/gstreamer/MediaSourceGStreamer.cpp
     }

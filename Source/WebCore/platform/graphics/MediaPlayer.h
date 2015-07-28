@@ -248,6 +248,7 @@ public:
     virtual HostWindow* mediaPlayerHostWindow() { return 0; }
     virtual IntRect mediaPlayerWindowClipRect() { return IntRect(); }
     virtual CachedResourceLoader* mediaPlayerCachedResourceLoader() { return 0; }
+    virtual RefPtr<PlatformMediaResourceLoader> mediaPlayerCreateResourceLoader(std::unique_ptr<PlatformMediaResourceLoaderClient>) { return nullptr; }
 
 #if ENABLE(VIDEO_TRACK)
     virtual void mediaPlayerDidAddAudioTrack(PassRefPtr<AudioTrackPrivate>) { }

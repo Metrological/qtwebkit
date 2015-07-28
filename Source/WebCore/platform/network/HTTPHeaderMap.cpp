@@ -113,4 +113,10 @@ HTTPHeaderMap::AddResult HTTPHeaderMap::add(const char* name, const String& valu
     return HashMap<AtomicString, String, CaseFoldingHash>::add<CaseFoldingCStringTranslator>(name, value);
 }
 
+void HTTPHeaderMap::set(HTTPHeaderName name, const String& value)
+{
+    String nameString = httpHeaderNameString(name);
+    set(nameString, value);
+}
+
 } // namespace WebCore
