@@ -24,6 +24,10 @@
 #include <gst/gst.h>
 #include <wtf/gobject/GOwnPtr.h>
 
+// TODO: can this one be made a bit less specific ("video.info.h", for example)?
+#include <gstreamer-1.0/gst/video/video-info.h>
+#include "IntSize.h"
+
 namespace WebCore {
 
 const char* webkitGstMapInfoQuarkString = "webkit-gst-map-info";
@@ -41,6 +45,26 @@ bool initializeGStreamer()
     ASSERT_WITH_MESSAGE(gstInitialized, "GStreamer initialization failed: %s", error ? error->message : "unknown error occurred");
     return gstInitialized;
 }
+
+#if ENABLE(VIDEO)
+bool getVideoSizeAndFormatFromCaps(GstCaps* caps, WebCore::IntSize& size, GstVideoFormat& format, int& pixelAspectRatioNumerator, int& pixelAspectRatioDenominator, int& stride)
+{
+    GstVideoInfo info;
+
+    gst_video_info_init(&info);
+    if (!gst_video_info_from_caps(&info, caps))
+        return false;
+
+    format = GST_VIDEO_INFO_FORMAT(&info);
+    size.setWidth(GST_VIDEO_INFO_WIDTH(&info));
+    size.setHeight(GST_VIDEO_INFO_HEIGHT(&info));
+    pixelAspectRatioNumerator = GST_VIDEO_INFO_PAR_N(&info);
+    pixelAspectRatioDenominator = GST_VIDEO_INFO_PAR_D(&info);
+    stride = GST_VIDEO_INFO_PLANE_STRIDE(&info, 0);
+
+    return true;
+}
+#endif
 
 unsigned getGstPlaysFlag(const char* nick)
 {
