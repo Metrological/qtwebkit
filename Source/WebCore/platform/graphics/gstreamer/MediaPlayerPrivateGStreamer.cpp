@@ -104,8 +104,10 @@
 #include <condition_variable>
 #include <mutex>
 #include <wtf/MainThread.h>
+#include <wtf/Functional.h>
 
-static void callOnMainThreadAndWait(std::function<void ()> function)
+//static void callOnMainThreadAndWait(std::function<void ()> function)
+static void callOnMainThreadAndWait(const Function<void ()> &function)
 {
     if (isMainThread()) {
         function();
@@ -117,13 +119,15 @@ static void callOnMainThreadAndWait(std::function<void ()> function)
 
     bool isFinished = false;
 
-    callOnMainThread([&] {
-        function();
+//    callOnMainThread([&] {
+//        function();
 
-        std::lock_guard<std::mutex> lock(mutex);
-        isFinished = true;
-        conditionVariable.notify_one();
-    });
+//        std::lock_guard<std::mutex> lock(mutex);
+//        isFinished = true;
+//        conditionVariable.notify_one();
+//    });
+
+    callOnMainThread(function);
 
     std::unique_lock<std::mutex> lock(mutex);
     conditionVariable.wait(lock, [&] { return isFinished; });
@@ -1206,6 +1210,10 @@ static StreamType getStreamType(GstElement* element)
 }
 #endif
 
+void MediaPlayerPrivateGStreamer::callNeedKey(MediaPlayerPrivateGStreamer* pInstance, const char* keySystemId, const unsigned char * data, unsigned size) {
+    pInstance->needKey(keySystemId, "sessionId", data, size);
+}
+
 void MediaPlayerPrivateGStreamer::handleSyncMessage(GstMessage* message)
 {
     // FIXME: Use proper formatting across USE(GSTREAMER_GL) and ENABLE(ENCRYPTED_MEDIA_V2).
@@ -1280,10 +1288,11 @@ void MediaPlayerPrivateGStreamer::handleSyncMessage(GstMessage* message)
                 m_drmKeySemaphore.signal();
                 m_drmKeySemaphore.wait();
                 // Fire the need key event from main thread
-                callOnMainThreadAndWait([&] {
-                    // FIXME: Provide a somehow valid sessionId.
-                    needKey(keySystemId, "sessionId", reinterpret_cast<const unsigned char *>(mapInfo.data), mapInfo.size);
-                });
+//                callOnMainThreadAndWait([&] {
+//                    // FIXME: Provide a somehow valid sessionId.
+//                    needKey(keySystemId, "sessionId", reinterpret_cast<const unsigned char *>(mapInfo.data), mapInfo.size);
+//                });
+                callOnMainThreadAndWait(callNeedKey, this, keySystemId, reinterpret_cast<const unsigned char *>(mapInfo.data), mapInfo.size);
                 // Wait for a potential license
                 GST_DEBUG("waiting for a license");
                 m_drmKeySemaphore.wait();

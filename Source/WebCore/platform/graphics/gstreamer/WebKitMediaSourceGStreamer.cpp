@@ -299,7 +299,17 @@ static gboolean webKitMediaSrcDemuxerEventWithParent(GstPad*, GstObject*, GstEve
 static gboolean webKitMediaSrcSeekDataCb(GstAppSrc*, guint64 offset, gpointer userData);
 
 static Stream* getStreamByDemuxerPad(WebKitMediaSrc* src, const GstPad* demuxersrcpad);
-static GstClockTime toGstClockTime(float);
+static GstClockTime toGstClockTime(float time)
+{
+    // Extract the integer part of the time (seconds) and the fractional part (microseconds). Attempt to
+    // round the microseconds so no floating point precision is lost and we can perform an accurate seek.
+    float seconds;
+    float microSeconds = std::modf(time, &seconds) * 1000000;
+    GTimeVal timeValue;
+    timeValue.tv_sec = static_cast<glong>(seconds);
+    timeValue.tv_usec = static_cast<glong>(roundf(microSeconds / 10000) * 10000);
+    return GST_TIMEVAL_TO_TIME(timeValue);
+}
 
 static void webkit_media_src_set_appending(WebKitMediaSrc*, gboolean);
 
@@ -1916,18 +1926,6 @@ void webkit_media_src_set_seek_time(WebKitMediaSrc* src, const MediaTime& time)
 {
     src->priv->seekTime = time;
     src->priv->flushAndReenqueueCount = 0;
-}
-
-static GstClockTime toGstClockTime(float time)
-{
-    // Extract the integer part of the time (seconds) and the fractional part (microseconds). Attempt to
-    // round the microseconds so no floating point precision is lost and we can perform an accurate seek.
-    float seconds;
-    float microSeconds = std::modf(time, &seconds) * 1000000;
-    GTimeVal timeValue;
-    timeValue.tv_sec = static_cast<glong>(seconds);
-    timeValue.tv_usec = static_cast<glong>(roundf(microSeconds / 10000) * 10000);
-    return GST_TIMEVAL_TO_TIME(timeValue);
 }
 
 void webkit_media_src_segment_needed(WebKitMediaSrc* src, StreamType streamType)
