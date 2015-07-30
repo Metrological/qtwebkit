@@ -43,6 +43,7 @@
 #include <gst/video/video.h>
 #include <wtf/text/CString.h>
 #include <wtf/gobject/GOwnPtr.h>
+#include "GStreamerUtilities.h"
 
 namespace WebCore
 {
@@ -299,17 +300,17 @@ static gboolean webKitMediaSrcDemuxerEventWithParent(GstPad*, GstObject*, GstEve
 static gboolean webKitMediaSrcSeekDataCb(GstAppSrc*, guint64 offset, gpointer userData);
 
 static Stream* getStreamByDemuxerPad(WebKitMediaSrc* src, const GstPad* demuxersrcpad);
-static GstClockTime toGstClockTime(float time)
-{
-    // Extract the integer part of the time (seconds) and the fractional part (microseconds). Attempt to
-    // round the microseconds so no floating point precision is lost and we can perform an accurate seek.
-    float seconds;
-    float microSeconds = std::modf(time, &seconds) * 1000000;
-    GTimeVal timeValue;
-    timeValue.tv_sec = static_cast<glong>(seconds);
-    timeValue.tv_usec = static_cast<glong>(roundf(microSeconds / 10000) * 10000);
-    return GST_TIMEVAL_TO_TIME(timeValue);
-}
+//static GstClockTime toGstClockTime(float time)
+//{
+//    // Extract the integer part of the time (seconds) and the fractional part (microseconds). Attempt to
+//    // round the microseconds so no floating point precision is lost and we can perform an accurate seek.
+//    float seconds;
+//    float microSeconds = std::modf(time, &seconds) * 1000000;
+//    GTimeVal timeValue;
+//    timeValue.tv_sec = static_cast<glong>(seconds);
+//    timeValue.tv_usec = static_cast<glong>(roundf(microSeconds / 10000) * 10000);
+//    return GST_TIMEVAL_TO_TIME(timeValue);
+//}
 
 static void webkit_media_src_set_appending(WebKitMediaSrc*, gboolean);
 
@@ -639,7 +640,7 @@ static gboolean webKitMediaSrcDemuxerSinkEventWithParent(GstPad* pad, GstObject*
         GstSegment* segment = gst_segment_new();
         gst_segment_init(segment, GST_FORMAT_TIME);
 
-        segment->start =toGstClockTime(nextSamplePts.toFloat());
+        segment->start = WebCore::toGstClockTime(nextSamplePts.toFloat());
         segment->stop = GST_CLOCK_TIME_NONE;
 
         gst_element_send_event(GST_ELEMENT(parent), gst_event_new_segment(segment));
@@ -1975,7 +1976,7 @@ void webkit_media_src_segment_needed(WebKitMediaSrc* src, StreamType streamType)
         GstSegment* segment = gst_segment_new();
 
         gst_segment_init(segment, GST_FORMAT_TIME);
-        segment->start = toGstClockTime(seekTime.toFloat());
+        segment->start = WebCore::toGstClockTime(seekTime.toFloat());
         segment->stop = GST_CLOCK_TIME_NONE;
 
         gst_pad_push_event(demuxersrcpad, gst_event_new_segment(segment));

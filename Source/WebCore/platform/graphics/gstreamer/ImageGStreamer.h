@@ -64,8 +64,9 @@ class ImageGStreamer : public RefCounted<ImageGStreamer> {
         RefPtr<BitmapImage> m_image;
         FloatRect m_cropRect;
 
-#if USE(CAIRO)
-        GstVideoFrame m_videoFrame;
+#if defined(GST_API_VERSION_1)
+        GRefPtr<GstBuffer> m_buffer;
+        GstMapInfo m_mapInfo;
 #endif
     };
 }

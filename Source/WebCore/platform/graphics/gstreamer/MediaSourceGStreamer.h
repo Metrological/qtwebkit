@@ -70,7 +70,7 @@ public:
 
     void sourceBufferPrivateDidChangeActiveState(SourceBufferPrivateGStreamer*, bool isActive);
 
-    std::unique_ptr<PlatformTimeRanges> buffered();
+    PassOwnPtr<PlatformTimeRanges> buffered();
 
 private:
     MediaSourceGStreamer(MediaSourcePrivateClient*, WebKitMediaSrc*);

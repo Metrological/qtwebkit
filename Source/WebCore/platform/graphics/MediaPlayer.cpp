@@ -1046,18 +1046,18 @@ AudioSourceProvider* MediaPlayer::audioSourceProvider()
 }
 #endif // WEB_AUDIO
 
-#if ENABLE(ENCRYPTED_MEDIA)
+//#if ENABLE(ENCRYPTED_MEDIA)
 void MediaPlayer::keyAdded(const String& keySystem, const String& sessionId)
 {
     if (m_mediaPlayerClient)
         m_mediaPlayerClient->mediaPlayerKeyAdded(this, keySystem, sessionId);
 }
 
-void MediaPlayer::keyError(const String& keySystem, const String& sessionId, MediaPlayerClient::MediaKeyErrorCode errorCode, unsigned short systemCode)
-{
-    if (m_mediaPlayerClient)
-        m_mediaPlayerClient->mediaPlayerKeyError(this, keySystem, sessionId, errorCode, systemCode);
-}
+//void MediaPlayer::keyError(const String& keySystem, const String& sessionId, MediaPlayerClient::MediaKeyErrorCode errorCode, unsigned short systemCode)
+//{
+//    if (m_mediaPlayerClient)
+//        m_mediaPlayerClient->mediaPlayerKeyError(this, keySystem, sessionId, errorCode, systemCode);
+//}
 
 void MediaPlayer::keyMessage(const String& keySystem, const String& sessionId, const unsigned char* message, unsigned messageLength, const KURL& defaultURL)
 {
@@ -1071,7 +1071,7 @@ bool MediaPlayer::keyNeeded(const String& keySystem, const String& sessionId, co
         return m_mediaPlayerClient->mediaPlayerKeyNeeded(this, keySystem, sessionId, initData, initDataLength);
     return false;
 }
-#endif
+//#endif
 
 #if ENABLE(ENCRYPTED_MEDIA_V2)
 bool MediaPlayer::keyNeeded(Uint8Array* initData)
