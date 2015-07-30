@@ -3249,7 +3249,8 @@ enable?(MEDIA_SOURCE) {
             platform/graphics/gstreamer/AudioSourceProviderGStreamer.h
        SOURCES += \
             platform/graphics/gstreamer/WebKitMediaSourceGStreamer.cpp \
-            platform/graphics/gstreamer/AudioSourceProviderGStreamer.cpp
+            platform/graphics/gstreamer/AudioSourceProviderGStreamer.cpp \
+            platform/graphics/gstreamer/WebKitMediaAesCtr.c
             #platform/graphics/gstreamer/SourceBufferPrivateGStreamer.cpp \ 
             #platform/graphics/gstreamer/MediaSourceGStreamer.cpp
     }
@@ -3435,7 +3436,7 @@ enable?(VIDEO) {
             platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp \
             platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp \
 #            platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp \
-#            platform/graphics/gstreamer/VideoSinkGStreamer.cpp \
+            platform/graphics/gstreamer/VideoSinkGStreamer.cpp \
             platform/graphics/gstreamer/ImageGStreamerQt.cpp
 
         use?(NATIVE_FULLSCREEN_VIDEO) {
@@ -4109,11 +4110,11 @@ enable?(VIDEO_TRACK) {
 
         SOURCES += \
             platform/graphics/gstreamer/TrackPrivateBaseGStreamer.cpp \
-#            platform/graphics/gstreamer/VideoTrackPrivateGStreamer.cpp \
+            platform/graphics/gstreamer/VideoTrackPrivateGStreamer.cpp \
             platform/graphics/gstreamer/AudioTrackPrivateGStreamer.cpp \
-            platform/graphics/gstreamer/InbandTextTrackPrivateGStreamer.cpp 
+            platform/graphics/gstreamer/InbandTextTrackPrivateGStreamer.cpp \
 #            platform/graphics/gstreamer/TextCombinerGStreamer.cpp \
-#            platform/graphics/gstreamer/TextSinkGStreamer.cpp
+            platform/graphics/gstreamer/TextSinkGStreamer.cpp
     }
 }
 

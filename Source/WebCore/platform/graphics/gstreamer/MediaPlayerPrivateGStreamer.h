@@ -238,6 +238,8 @@ private:
 #endif
 
 private:
+    static void callNeedKey(MediaPlayerPrivateGStreamer* pInstance, const char* keySystemId, const unsigned char * data, unsigned size);
+
     GRefPtr<GstElement> m_source;
 #if ENABLE(VIDEO_TRACK)
     GRefPtr<GstElement> m_textAppSink;

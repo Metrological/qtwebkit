@@ -131,6 +131,8 @@ enable?(DISCOVERY) {
     PKGCONFIG += gupnp-1.0 gssdp-1.0 avahi-client avahi-glib avahi-gobject
 }
 
+LIBS += -lssl
+
 enable?(XSLT) {
     use?(LIBXML2) {
         mac {

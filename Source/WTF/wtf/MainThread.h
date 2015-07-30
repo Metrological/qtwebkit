@@ -46,7 +46,7 @@ WTF_EXPORT_PRIVATE void cancelCallOnMainThread(MainThreadFunction*, void* contex
 
 template<typename> class Function;
 WTF_EXPORT_PRIVATE void callOnMainThread(const Function<void ()>&);
-WTF_EXPORT_PRIVATE void callOnMainThread(std::function<void ()>);
+//WTF_EXPORT_PRIVATE void callOnMainThread(std::function<void ()>);
     
 WTF_EXPORT_PRIVATE void setMainThreadCallbacksPaused(bool paused);
 
