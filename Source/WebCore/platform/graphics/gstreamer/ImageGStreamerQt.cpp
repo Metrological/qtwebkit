@@ -30,41 +30,57 @@
 
 #include <wtf/gobject/GOwnPtr.h>
 
+#include "GStreamerUtilities.h"
+
+// TODO, Sander: less specific header path.
+#include <gstreamer-1.0/gst/gstbuffer.h>
+
 using namespace WebCore;
 
-//ImageGStreamer::ImageGStreamer(GstBuffer* buffer, GstCaps* caps)
-//#ifdef GST_API_VERSION_1
-//    : m_buffer(buffer)
-//#endif
-//{
-//    GstVideoFormat format;
-//    IntSize size;
-//    int pixelAspectRatioNumerator, pixelAspectRatioDenominator, stride;
-//    getVideoSizeAndFormatFromCaps(caps, size, format, pixelAspectRatioNumerator, pixelAspectRatioDenominator, stride);
+ImageGStreamer::ImageGStreamer(GstSample* sample)
+{
+    GstCaps* caps = gst_sample_get_caps(sample);
+    GstVideoInfo videoInfo;
+    gst_video_info_init(&videoInfo);
+    if (!gst_video_info_from_caps(&videoInfo, caps))
+        return;
 
-//#ifdef GST_API_VERSION_1
-//    gst_buffer_map(buffer, &m_mapInfo, GST_MAP_READ);
-//    uchar* bufferData = reinterpret_cast<uchar*>(m_mapInfo.data);
-//#else
-//    uchar* bufferData = reinterpret_cast<uchar*>(GST_BUFFER_DATA(buffer));
-//#endif
-//    QImage::Format imageFormat;
-//#if G_BYTE_ORDER == G_LITTLE_ENDIAN
-//    imageFormat = (format == GST_VIDEO_FORMAT_BGRA) ? QImage::Format_ARGB32_Premultiplied : QImage::Format_RGB32;
-//#else
-//    imageFormat = (format == GST_VIDEO_FORMAT_ARGB) ? QImage::Format_ARGB32_Premultiplied : QImage::Format_RGB32;
-//#endif
+    // Right now the TextureMapper only supports chromas with one plane
+    ASSERT(GST_VIDEO_INFO_N_PLANES(&videoInfo) == 1);
 
-//    QImage image(bufferData, size.width(), size.height(), imageFormat);
+    GstBuffer* buffer = gst_sample_get_buffer(sample);
 
-//    QPixmap *surface = new QPixmap(QPixmap::fromImage(qMove(image), Qt::NoFormatConversion));
-//    m_image = BitmapImage::create(surface);
 
-//#ifdef GST_API_VERSION_1
-//    if (GstVideoCropMeta* cropMeta = gst_buffer_get_video_crop_meta(buffer))
-//        setCropRect(FloatRect(cropMeta->x, cropMeta->y, cropMeta->width, cropMeta->height));
-//#endif
-//}
+    GstVideoFormat format;
+    IntSize size;
+    int pixelAspectRatioNumerator, pixelAspectRatioDenominator, stride;
+    getVideoSizeAndFormatFromCaps(caps, size, format, pixelAspectRatioNumerator, pixelAspectRatioDenominator, stride);
+
+    // TODO, Sander: GST_API_VERSION_1 seems to be set, but m_mapInfo doesn't exist.
+#ifdef GST_API_VERSION_1
+    gst_buffer_map(buffer, &m_mapInfo, GST_MAP_READ);
+    uchar* bufferData = reinterpret_cast<uchar*>(m_mapInfo.data);
+#else
+    uchar* bufferData = reinterpret_cast<uchar*>(GST_BUFFER_DATA(buffer));
+#endif
+
+    QImage::Format imageFormat;
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+    imageFormat = (format == GST_VIDEO_FORMAT_BGRA) ? QImage::Format_ARGB32_Premultiplied : QImage::Format_RGB32;
+#else
+    imageFormat = (format == GST_VIDEO_FORMAT_ARGB) ? QImage::Format_ARGB32_Premultiplied : QImage::Format_RGB32;
+#endif
+
+    QImage image(bufferData, size.width(), size.height(), imageFormat);
+
+    QPixmap *surface = new QPixmap(QPixmap::fromImage(qMove(image), Qt::NoFormatConversion));
+    m_image = BitmapImage::create(surface);
+
+#ifdef GST_API_VERSION_1
+    if (GstVideoCropMeta* cropMeta = gst_buffer_get_video_crop_meta(buffer))
+        setCropRect(FloatRect(cropMeta->x, cropMeta->y, cropMeta->width, cropMeta->height));
+#endif
+}
 
 ImageGStreamer::~ImageGStreamer()
 {
@@ -78,7 +94,7 @@ ImageGStreamer::~ImageGStreamer()
     // QImage/QPixmap was created using the buffer data directly.
 
     // TODO: Sander: m_buffer is not declared in this scope.
-    //gst_buffer_unmap(m_buffer.get(), &m_mapInfo);
+    gst_buffer_unmap(m_buffer.get(), &m_mapInfo);
 #endif
 }
 #endif // USE(GSTREAMER)

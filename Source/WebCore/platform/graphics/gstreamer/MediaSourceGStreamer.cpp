@@ -47,7 +47,8 @@
 
 namespace WebCore {
 
-void MediaSourceGStreamer::open(MediaSourcePrivateClient* mediaSource, WebKitMediaSrc* src, PassRefPtr<MediaPlayerPrivateGStreamer> playerPrivate)
+//void MediaSourceGStreamer::open(MediaSourcePrivateClient* mediaSource, WebKitMediaSrc* src, MediaPlayerPrivateGStreamer* playerPrivate)
+void MediaSourceGStreamer::open(MediaSourcePrivateClient* mediaSource, WebKitMediaSrc* src, MediaPlayerPrivateGStreamer* playerPrivate)
 {
     ASSERT(mediaSource);
     RefPtr<MediaSourceGStreamer> mediaSourcePrivate = adoptRef(new MediaSourceGStreamer(mediaSource, src));
@@ -137,6 +138,7 @@ void MediaSourceGStreamer::sourceBufferPrivateDidChangeActiveState(SourceBufferP
         m_activeSourceBuffers.remove(buffer);
 }
 
+//PassOwnPtr<PlatformTimeRanges> MediaSourceGStreamer::buffered()
 PassOwnPtr<PlatformTimeRanges> MediaSourceGStreamer::buffered()
 {
     return m_mediaSource->buffered();

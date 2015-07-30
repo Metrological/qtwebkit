@@ -106,6 +106,9 @@
 #include <wtf/MainThread.h>
 #include <wtf/Functional.h>
 
+#include "ImageGStreamer.h"
+#include <wtf/gobject/GMutexLocker.h>
+
 //static void callOnMainThreadAndWait(std::function<void ()> function)
 static void callOnMainThreadAndWait(const Function<void ()> &function)
 {
@@ -2315,7 +2318,7 @@ bool MediaPlayerPrivateGStreamer::supportsKeySystem(const String& keySystem, con
     return false;
 }
 
-#if ENABLE(ENCRYPTED_MEDIA)
+//#if ENABLE(ENCRYPTED_MEDIA)
 MediaPlayer::MediaKeyException MediaPlayerPrivateGStreamer::addKey(const String& keySystem, const unsigned char* keyData, unsigned keyLength, const unsigned char* /* initData */, unsigned /* initDataLength */ , const String& sessionID)
 {
     LOG_MEDIA_MESSAGE("addKey system: %s, length: %u, session: %s", keySystem.utf8().data(), keyLength, sessionID.utf8().data());
@@ -2354,7 +2357,7 @@ void MediaPlayerPrivateGStreamer::signalDRM()
     // Wake up a potential waiter blocked in the GStreamer thread
     m_drmKeySemaphore.signal();
 }
-#endif
+//#endif
 
 
 #if ENABLE(ENCRYPTED_MEDIA_V2)
@@ -2660,6 +2663,35 @@ bool MediaPlayerPrivateGStreamer::canSaveMediaData() const
 
     return false;
 }
+
+//void MediaPlayerPrivateGStreamer::paint(GraphicsContext* context, const FloatRect& rect)
+void MediaPlayerPrivateGStreamer::paint(GraphicsContext* context, const IntRect& rect)
+{
+#if USE(COORDINATED_GRAPHICS_THREADED)
+        return;
+#elif USE(TEXTURE_MAPPER_GL) && !USE(COORDINATED_GRAPHICS)
+    if (client())
+        return;
+#endif
+
+    if (context->paintingDisabled())
+        return;
+
+    if (!m_player->visible())
+        return;
+
+    WebCore::GMutexLocker lock(&m_sampleMutex);
+    if (!GST_IS_SAMPLE(m_sample.get()))
+        return;
+
+    RefPtr<ImageGStreamer> gstImage = ImageGStreamer::createImage(m_sample.get());
+    if (!gstImage)
+        return;
+
+    context->drawImage(reinterpret_cast<Image*>(gstImage->image().get()), ColorSpaceSRGB,
+        rect, gstImage->rect(), CompositeCopy);
+}
+
 
 }
 

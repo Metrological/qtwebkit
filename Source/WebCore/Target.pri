@@ -3250,9 +3250,9 @@ enable?(MEDIA_SOURCE) {
        SOURCES += \
             platform/graphics/gstreamer/WebKitMediaSourceGStreamer.cpp \
             platform/graphics/gstreamer/AudioSourceProviderGStreamer.cpp \
-            platform/graphics/gstreamer/WebKitMediaAesCtr.c
-            #platform/graphics/gstreamer/SourceBufferPrivateGStreamer.cpp \ 
-            #platform/graphics/gstreamer/MediaSourceGStreamer.cpp
+            platform/graphics/gstreamer/WebKitMediaAesCtr.c \
+            platform/graphics/gstreamer/SourceBufferPrivateGStreamer.cpp \
+            platform/graphics/gstreamer/MediaSourceGStreamer.cpp
     }
 }
 
@@ -4113,7 +4113,7 @@ enable?(VIDEO_TRACK) {
             platform/graphics/gstreamer/VideoTrackPrivateGStreamer.cpp \
             platform/graphics/gstreamer/AudioTrackPrivateGStreamer.cpp \
             platform/graphics/gstreamer/InbandTextTrackPrivateGStreamer.cpp \
-#            platform/graphics/gstreamer/TextCombinerGStreamer.cpp \
+            platform/graphics/gstreamer/TextCombinerGStreamer.cpp \
             platform/graphics/gstreamer/TextSinkGStreamer.cpp
     }
 }

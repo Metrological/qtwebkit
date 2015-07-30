@@ -83,6 +83,18 @@ gboolean GMainLoopSource::Simple::simpleSourceCallback(GMainLoopSource::Simple* 
     return G_SOURCE_CONTINUE;
 }
 
+GMainLoopSource::Simple::Simple(const char* name, std::function<void ()> function)
+    : m_source(g_source_new(&m_sourceFunctions, sizeof(GSource)))
+    , m_function(std::move(function))
+    , m_status(Ready)
+{
+    ASSERT(m_function);
+    g_source_set_name(m_source.get(), name);
+    g_source_set_callback(m_source.get(), reinterpret_cast<GSourceFunc>(simpleSourceCallback), this, nullptr);
+
+    g_source_attach(m_source.get(), g_main_context_get_thread_default());
+}
+
 } // namespace WTF
 
 #endif // USE(GLIB)
