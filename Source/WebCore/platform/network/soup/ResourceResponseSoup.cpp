@@ -29,12 +29,11 @@
 #include <wtf/text/StringBuilder.h>
 #include <wtf/text/WTFString.h>
 
+#include "../../graphics/gstreamer/HTTPHeaderNames.h"
+
 using namespace std;
 
 namespace WebCore {
-
-// Defined in "HTTPHeaderNames.cpp"
-String httpHeaderNameString(HTTPHeaderName headerName);
 
 String ResourceResponse::httpHeaderField(const String& name) const
 {

@@ -131,8 +131,6 @@ enable?(DISCOVERY) {
     PKGCONFIG += gupnp-1.0 gssdp-1.0 avahi-client avahi-glib avahi-gobject
 }
 
-LIBS += -lssl -lcrypto
-
 enable?(XSLT) {
     use?(LIBXML2) {
         mac {
@@ -213,6 +211,8 @@ use?(GLIB) {
 }
 
 use?(GSTREAMER) {
+    LIBS += -lssl -lcrypto
+
     use?(GSTREAMER010) {
         PKGCONFIG += gstreamer-0.10 gstreamer-app-0.10 gstreamer-base-0.10 gstreamer-interfaces-0.10 gstreamer-pbutils-0.10 gstreamer-plugins-base-0.10 gstreamer-video-0.10 gstreamer-egl-0.10
     } else {

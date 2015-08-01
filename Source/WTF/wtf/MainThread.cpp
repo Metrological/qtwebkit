@@ -84,6 +84,7 @@ static FunctionQueue& functionQueue()
     return staticFunctionQueue;
 }
 
+
 #if !PLATFORM(MAC)
 
 void initializeMainThread()
@@ -181,13 +182,6 @@ void callOnMainThread(MainThreadFunction* function, void* context)
         scheduleDispatchFunctionsOnMainThread();
 }
 
-static void callFunctionObject(void* context)
-{
-    Function<void ()>* function = static_cast<Function<void ()>*>(context);
-    (*function)();
-    delete function;
-}
-
 void callOnMainThreadAndWait(MainThreadFunction* function, void* context)
 {
     ASSERT(function);
@@ -224,22 +218,17 @@ void cancelCallOnMainThread(MainThreadFunction* function, void* context)
     }
 }
 
-//static void callFunctionObject(void* context)
-//{
-//    Function<void ()>* function = static_cast<Function<void ()>*>(context);
-//    (*function)();
-//    delete function;
-//}
+static void callFunctionObject(void* context)
+{
+    Function<void ()>* function = static_cast<Function<void ()>*>(context);
+    (*function)();
+    delete function;
+}
 
 void callOnMainThread(const Function<void ()>& function)
 {
     callOnMainThread(callFunctionObject, new Function<void ()>(function));
 }
-
-//void callOnMainThread(std::function<void ()> function)
-//{
-//    callOnMainThread(callFunctionObject, std::make_unique<std::function<void ()>>(std::move(function)).release());
-//}
 
 void setMainThreadCallbacksPaused(bool paused)
 {
