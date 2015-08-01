@@ -1053,11 +1053,12 @@ void MediaPlayer::keyAdded(const String& keySystem, const String& sessionId)
         m_mediaPlayerClient->mediaPlayerKeyAdded(this, keySystem, sessionId);
 }
 
-//void MediaPlayer::keyError(const String& keySystem, const String& sessionId, MediaPlayerClient::MediaKeyErrorCode errorCode, unsigned short systemCode)
-//{
-//    if (m_mediaPlayerClient)
-//        m_mediaPlayerClient->mediaPlayerKeyError(this, keySystem, sessionId, errorCode, systemCode);
-//}
+// This method can be commented out without problem, but would like to keep it in.
+void MediaPlayer::keyError(const String& keySystem, const String& sessionId, MediaPlayerClient::MediaKeyErrorCode errorCode, unsigned short systemCode)
+{
+    if (m_mediaPlayerClient)
+        m_mediaPlayerClient->mediaPlayerKeyError(this, keySystem, sessionId, errorCode, systemCode);
+}
 
 void MediaPlayer::keyMessage(const String& keySystem, const String& sessionId, const unsigned char* message, unsigned messageLength, const KURL& defaultURL)
 {

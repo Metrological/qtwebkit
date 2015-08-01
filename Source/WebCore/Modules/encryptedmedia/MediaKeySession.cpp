@@ -36,9 +36,6 @@
 #include "MediaKeyMessageEvent.h"
 #include "MediaKeys.h"
 
-#include <iostream>
-using namespace std;
-
 namespace WebCore {
 
 PassRefPtr<MediaKeySession> MediaKeySession::create(ScriptExecutionContext* context, MediaKeys* keys, const String& keySystem)
@@ -84,21 +81,17 @@ const String& MediaKeySession::sessionId() const
 
 void MediaKeySession::generateKeyRequest(const String& mimeType, Uint8Array* initData)
 {
-    cerr << "MediaKeySession::generateKeyRequest entered, adding request to queue, and firing key request timer" << endl;
     m_pendingKeyRequests.append(PendingKeyRequest(mimeType, initData));
     m_keyRequestTimer.startOneShot(0);
 }
 
 void MediaKeySession::keyRequestTimerFired(Timer<MediaKeySession>*)
 {
-    cerr << "MediaKeySession::keyRequestTimerFired entered" << endl;
-
     ASSERT(m_pendingKeyRequests.size());
     if (!m_session)
         return;
 
     while (!m_pendingKeyRequests.isEmpty()) {
-        cerr << "MediaKeySession::keyRequestTimerFired begin of while" << endl;
         PendingKeyRequest request = m_pendingKeyRequests.takeFirst();
 
         // NOTE: Continued from step 5 in MediaKeys::createSession().
@@ -116,7 +109,6 @@ void MediaKeySession::keyRequestTimerFired(Timer<MediaKeySession>*)
 
         // Otherwise [if a request is not successfully generated]:
         if (!keyRequest) {
-            cerr << "MediaKeySession::keyRequestTimerFired failed to get keyrequest" << endl;
             // 3.1. Create a new MediaKeyError object with the following attributes:
             //      code = the appropriate MediaKeyError code
             //      systemCode = a Key System-specific value, if provided, and 0 otherwise
@@ -131,40 +123,33 @@ void MediaKeySession::keyRequestTimerFired(Timer<MediaKeySession>*)
         //    The event is of type MediaKeyMessageEvent and has:
         //    message = key request
         //    destinationURL = destinationURL
-        cerr << "MediaKeySession::keyRequestTimerFired sending keyRequest get, with destination URL" << endl;
         sendMessage(keyRequest.get(), destinationURL);
     }
 }
 
 void MediaKeySession::update(Uint8Array* key, ExceptionCode& ec)
 {
-    cerr << "MediaKeySession::update entered" << endl;
-
     // From <http://dvcs.w3.org/hg/html-media/raw-file/tip/encrypted-media/encrypted-media.html#dom-addkey>:
     // The addKey(key) method must run the following steps:
     // 1. If the first or second argument [sic] is null or an empty array, throw an INVALID_ACCESS_ERR.
     // NOTE: the reference to a "second argument" is a spec bug.
     if (!key || !key->length()) {
-        cerr << "MediaKeySession::update no key or no length" << endl;
         ec = INVALID_ACCESS_ERR;
         return;
     }
 
     // 2. Schedule a task to handle the call, providing key.
-    cerr << "MediaKeySession::update added key to pending key queue and firing timer" << endl;
     m_pendingKeys.append(key);
     m_addKeyTimer.startOneShot(0);
 }
 
 void MediaKeySession::addKeyTimerFired(Timer<MediaKeySession>*)
 {
-    cerr << "MediaKeySession::addKeyTimerFired entered" << endl;
     ASSERT(m_pendingKeys.size());
     if (!m_session)
         return;
 
     while (!m_pendingKeys.isEmpty()) {
-        cerr << "MediaKeySession::addKeyTimerFired at beginning of while" << endl;
         RefPtr<Uint8Array> pendingKey = m_pendingKeys.takeFirst();
         unsigned short errorCode = 0;
         unsigned long systemCode = 0;
@@ -185,14 +170,11 @@ void MediaKeySession::addKeyTimerFired(Timer<MediaKeySession>*)
         //      The event is of type MediaKeyMessageEvent and has:
         //      message = next message
         //      destinationURL = null
-        if (nextMessage) {
-            cerr << "MediaKeySession::addKeyTimerFired is nextMessage" << endl;
+        if (nextMessage)
             sendMessage(nextMessage.get(), emptyString());
-        }
 
         // 2.7. If did store key is true, queue a task to fire a simple event named keyadded at the MediaKeySession object.
         if (didStoreKey) {
-            cerr << "MediaKeySession::addKeyTimerFired didStoreKey" << endl;
             RefPtr<Event> keyaddedEvent = Event::create(eventNames().webkitkeyaddedEvent, false, false);
             keyaddedEvent->setTarget(this);
             m_asyncEventQueue->enqueueEvent(keyaddedEvent.release());
@@ -200,7 +182,6 @@ void MediaKeySession::addKeyTimerFired(Timer<MediaKeySession>*)
 
         // 2.8. If any of the preceding steps in the task failed
         if (errorCode) {
-            cerr << "MediaKeySession::addKeyTimerFired is errorCode" << endl;
             // 2.8.1. Create a new MediaKeyError object with the following attributes:
             //        code = the appropriate MediaKeyError code
             //        systemCode = a Key System-specific value, if provided, and 0 otherwise
@@ -225,7 +206,6 @@ const AtomicString& MediaKeySession::interfaceName() const
 
 void MediaKeySession::sendMessage(Uint8Array* message, String destinationURL)
 {
-    cerr << "MediaKeySession::sendMessage entered" << endl;
     MediaKeyMessageEventInit init;
     init.bubbles = false;
     init.cancelable = false;
@@ -238,15 +218,12 @@ void MediaKeySession::sendMessage(Uint8Array* message, String destinationURL)
 
 void MediaKeySession::sendError(CDMSessionClient::MediaKeyErrorCode errorCode, unsigned long systemCode)
 {
-    cerr << "MediaKeySession::sendError entered" << endl;
     RefPtr<MediaKeyError> error = MediaKeyError::create(errorCode, systemCode).get();
     setError(error.get());
 
     RefPtr<Event> keyerrorEvent = Event::create(eventNames().webkitkeyerrorEvent, false, false);
     keyerrorEvent->setTarget(this);
     m_asyncEventQueue->enqueueEvent(keyerrorEvent.release());
-
-    cerr << "MediaKeySession::sendError left" << endl;
 }
 
 }

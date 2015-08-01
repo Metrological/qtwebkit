@@ -27,7 +27,6 @@ CONFIG += staticlib
 }
 
 SOURCES += \
-    #platform/URL.cpp \
     Modules/geolocation/Coordinates.cpp \
     Modules/geolocation/Geolocation.cpp \
     Modules/geolocation/GeolocationController.cpp \
