@@ -31,8 +31,7 @@
 #include <libsoup/soup.h>
 #include <wtf/gobject/GRefPtr.h>
 
-// HTTPHeaderNames. TODO: move to network.
-#include "../../graphics/gstreamer/HTTPHeaderNames.h"
+#include <HTTPHeaderNames.h>
 
 namespace WebCore {
 

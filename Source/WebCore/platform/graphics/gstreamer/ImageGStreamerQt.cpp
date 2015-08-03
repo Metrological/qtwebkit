@@ -56,14 +56,12 @@ ImageGStreamer::ImageGStreamer(GstSample* sample)
     int pixelAspectRatioNumerator, pixelAspectRatioDenominator, stride;
     getVideoSizeAndFormatFromCaps(caps, size, format, pixelAspectRatioNumerator, pixelAspectRatioDenominator, stride);
 
-    // TODO, Sander: GST_API_VERSION_1 seems to be set, but m_mapInfo doesn't exist.
 #ifdef GST_API_VERSION_1
     gst_buffer_map(buffer, &m_mapInfo, GST_MAP_READ);
     uchar* bufferData = reinterpret_cast<uchar*>(m_mapInfo.data);
 #else
     uchar* bufferData = reinterpret_cast<uchar*>(GST_BUFFER_DATA(buffer));
 #endif
-
     QImage::Format imageFormat;
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
     imageFormat = (format == GST_VIDEO_FORMAT_BGRA) ? QImage::Format_ARGB32_Premultiplied : QImage::Format_RGB32;
@@ -92,8 +90,6 @@ ImageGStreamer::~ImageGStreamer()
 #ifdef GST_API_VERSION_1
     // We keep the buffer memory mapped until the image is destroyed because the internal
     // QImage/QPixmap was created using the buffer data directly.
-
-    // TODO: Sander: m_buffer is not declared in this scope.
     gst_buffer_unmap(m_buffer.get(), &m_mapInfo);
 #endif
 }

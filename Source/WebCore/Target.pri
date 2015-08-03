@@ -2913,7 +2913,6 @@ SOURCES += \
     platform/graphics/texmap/TextureMapperSurfaceBackingStore.cpp \
     platform/graphics/texmap/TextureMapperTile.cpp \
     platform/graphics/texmap/TextureMapperTiledBackingStore.cpp \
-#    platform/graphics/texmap/BitmapTexture.cpp \
     platform/network/DNSResolveQueue.cpp \
     platform/network/DNSResolveQueue.cpp \
     platform/network/MIMESniffing.cpp \
@@ -3377,16 +3376,15 @@ enable?(ENCRYPTED_MEDIA_V2) {
 
     use?(GSTREAMER) {
         HEADERS += \
-            platform/graphics/gstreamer/CDMSessionGStreamer.h \
             platform/graphics/gstreamer/CDMPRSessionGStreamer.h \
-            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.h
+            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.h \
+            platform/network/HTTPHeaderNames.h
 
         SOURCES += \
-#            platform/graphics/gstreamer/CDMSessionGStreamer.cpp \
             platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp \ 
             platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp \
             platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp \
-            platform/graphics/gstreamer/HTTPHeaderNames.cpp
+            platform/network/HTTPHeaderNames.cpp
     }
 }
 
@@ -3430,12 +3428,11 @@ enable?(VIDEO) {
             platform/graphics/gstreamer/WebKitWebSourceGStreamer.h \
             platform/graphics/gstreamer/ImageGStreamer.h
         SOURCES += \
-#            platform/graphics/gstreamer/GStreamerGWorld.cpp \
-            platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp  \
+            platform/graphics/gstreamer/GStreamerGWorld.cpp \
+            platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp \
             platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp \
-            platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp \
-#            platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp \
             platform/graphics/gstreamer/VideoSinkGStreamer.cpp \
+            platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp \
             platform/graphics/gstreamer/ImageGStreamerQt.cpp
 
         use?(NATIVE_FULLSCREEN_VIDEO) {
@@ -3443,9 +3440,9 @@ enable?(VIDEO) {
                 platform/graphics/gstreamer/FullscreenVideoControllerGStreamer.h \
                 platform/graphics/gstreamer/PlatformVideoWindow.h \
                 platform/graphics/gstreamer/PlatformVideoWindowPrivate.h
-#            SOURCES += \
-#                platform/graphics/gstreamer/FullscreenVideoControllerGStreamer.cpp \
-#                platform/graphics/gstreamer/PlatformVideoWindowQt.cpp
+            SOURCES += \
+                platform/graphics/gstreamer/FullscreenVideoControllerGStreamer.cpp \
+                platform/graphics/gstreamer/PlatformVideoWindowQt.cpp
         }
 
     } else:use?(QT_MULTIMEDIA) {
