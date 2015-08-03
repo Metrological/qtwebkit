@@ -31,6 +31,17 @@
 #include <gio/gio.h>
 
 namespace WTF {
+GMainLoopSource::Simple::Simple(const char* name, std::function<void ()> function)
+    : m_source(g_source_new(&m_sourceFunctions, sizeof(GSource)))
+    , m_function(std::move(function))
+    , m_status(Ready)
+{
+    ASSERT(m_function);
+    g_source_set_name(m_source.get(), name);
+    g_source_set_callback(m_source.get(), reinterpret_cast<GSourceFunc>(simpleSourceCallback), this, nullptr);
+
+    g_source_attach(m_source.get(), g_main_context_get_thread_default());
+}
 
 GMainLoopSource::Simple::Simple(const char* name)
     : m_source(g_source_new(&m_sourceFunctions, sizeof(GSource)))
@@ -43,12 +54,7 @@ GMainLoopSource::Simple::Simple(const char* name)
     g_source_attach(m_source.get(), g_main_context_get_thread_default());
 }
 
-void GMainLoopSource::Simple::cancel()
-{
-    ASSERT(m_source);
-    g_source_set_ready_time(m_source.get(), -1);
-    m_status = Ready;
-}
+
 
 void GMainLoopSource::Simple::schedule(std::chrono::microseconds delay, std::function<void ()> function)
 {
@@ -57,6 +63,13 @@ void GMainLoopSource::Simple::schedule(std::chrono::microseconds delay, std::fun
 
     g_source_set_ready_time(m_source.get(), g_get_monotonic_time() + delay.count());
     m_status = Scheduled;
+}
+
+void GMainLoopSource::Simple::cancel()
+{
+    ASSERT(m_source);
+    g_source_set_ready_time(m_source.get(), -1);
+    m_status = Ready;
 }
 
 GSourceFuncs GMainLoopSource::Simple::m_sourceFunctions = {
@@ -83,17 +96,7 @@ gboolean GMainLoopSource::Simple::simpleSourceCallback(GMainLoopSource::Simple* 
     return G_SOURCE_CONTINUE;
 }
 
-GMainLoopSource::Simple::Simple(const char* name, std::function<void ()> function)
-    : m_source(g_source_new(&m_sourceFunctions, sizeof(GSource)))
-    , m_function(std::move(function))
-    , m_status(Ready)
-{
-    ASSERT(m_function);
-    g_source_set_name(m_source.get(), name);
-    g_source_set_callback(m_source.get(), reinterpret_cast<GSourceFunc>(simpleSourceCallback), this, nullptr);
 
-    g_source_attach(m_source.get(), g_main_context_get_thread_default());
-}
 
 } // namespace WTF
 

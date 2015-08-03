@@ -28,6 +28,7 @@
 #if ENABLE(VIDEO) && USE(GSTREAMER)
 
 #include "GStreamerUtilities.h"
+#include "KURL.h"
 #include "MIMETypeRegistry.h"
 #include "MediaPlayer.h"
 #include "NotImplemented.h"
@@ -43,7 +44,6 @@
 #include <wtf/MediaTime.h>
 #include <wtf/glib/GUniquePtr.h>
 #include <wtf/text/CString.h>
-//#include "../texmap/BitmapTexture.h"
 
 #if ENABLE(VIDEO_TRACK)
 #include "AudioTrackPrivateGStreamer.h"
@@ -109,7 +109,6 @@
 #include "ImageGStreamer.h"
 #include <wtf/gobject/GMutexLocker.h>
 
-//static void callOnMainThreadAndWait(std::function<void ()> function)
 static void callOnMainThreadAndWait(const Function<void ()> &function)
 {
     if (isMainThread()) {
@@ -221,16 +220,22 @@ void MediaPlayerPrivateGStreamer::setAudioStreamProperties(GObject* object)
     LOG_MEDIA_MESSAGE("Set media.role as %s at %s", role, elementName.get());
 }
 
+static PassRefPtr<MediaPlayerPrivateInterface> createPrivateGStreamer(MediaPlayer* player)
+{
+    MediaPlayerPrivateGStreamer * privateGStreamer = new MediaPlayerPrivateGStreamer(player);
+    PassRefPtr<MediaPlayerPrivateInterface> outPointer = PassRefPtr<MediaPlayerPrivateInterface>(privateGStreamer);
+    return outPointer;
+}
+
 void MediaPlayerPrivateGStreamer::registerMediaEngine(MediaEngineRegistrar registrar)
 {
+    // Original code:
+    //   registrar([](MediaPlayer* player) { return std::make_unique<MediaPlayerPrivateGStreamer>(player); },
+    //       getSupportedTypes, extendedSupportsType, 0, 0, 0, supportsKeySystem);
+
     if (isAvailable())
 #if ENABLE(ENCRYPTED_MEDIA_V2)
-//        registrar([](MediaPlayer* player) { return std::make_unique<MediaPlayerPrivateGStreamer>(player); },
-//            getSupportedTypes, extendedSupportsType, 0, 0, 0, supportsKeySystem);
-    // TODO: figure this one out (already a modified version of line above ^^^)
-        //registrar([](MediaPlayer* player) { return std::unique_ptr<MediaPlayerPrivateGStreamer>(new MediaPlayerPrivateGStreamer(player)); },
-      //  getSupportedTypes, extendedSupportsType, 0, 0, 0, supportsKeySystem);
-    {;}
+        registrar(createPrivateGStreamer, getSupportedTypes, extendedSupportsTypeWrapper, 0, 0, 0, supportsKeySystem);
 #else
          registrar([](MediaPlayer* player) { return std::make_unique<MediaPlayerPrivateGStreamer>(player); },
             getSupportedTypes, supportsType, 0, 0, 0, supportsKeySystem);
@@ -615,8 +620,7 @@ float MediaPlayerPrivateGStreamer::duration() const
 
 #if ENABLE(MEDIA_SOURCE)
     if (failure && m_mediaSource)
-        //return m_mediaSource->duration().toFloat();
-        return (float)m_mediaSource->duration();
+        return static_cast<float>(m_mediaSource->duration());
 #endif
 
     if (failure) {
@@ -1127,9 +1131,7 @@ PassOwnPtr<PlatformTimeRanges> MediaPlayerPrivateGStreamer::buffered() const
         return m_mediaSource->buffered();
 #endif
 
-    //auto timeRanges = std::make_unique<PlatformTimeRanges>();
-    //auto timeRanges = unique_ptr<PlatformTimeRanges>(new PlatformTimeRanges());
-    PassOwnPtr<PlatformTimeRanges> timeRanges = adoptPtr(new PlatformTimeRanges());
+    auto timeRanges = adoptPtr(new PlatformTimeRanges());
     if (m_errorOccured || isLiveStream())
         return timeRanges;
 
@@ -1291,10 +1293,6 @@ void MediaPlayerPrivateGStreamer::handleSyncMessage(GstMessage* message)
                 m_drmKeySemaphore.signal();
                 m_drmKeySemaphore.wait();
                 // Fire the need key event from main thread
-//                callOnMainThreadAndWait([&] {
-//                    // FIXME: Provide a somehow valid sessionId.
-//                    needKey(keySystemId, "sessionId", reinterpret_cast<const unsigned char *>(mapInfo.data), mapInfo.size);
-//                });
                 callOnMainThreadAndWait(callNeedKey, this, keySystemId, reinterpret_cast<const unsigned char *>(mapInfo.data), mapInfo.size);
                 // Wait for a potential license
                 GST_DEBUG("waiting for a license");
@@ -2191,7 +2189,6 @@ static HashSet<String> mimeTypeCache()
 {
     initializeGStreamerAndRegisterWebKitElements();
 
-    //DEPRECATED_DEFINE_STATIC_LOCAL(HashSet<String>, cache, ());
     static HashSet<String> cache;
     static bool typeListInitialized = false;
 
@@ -2361,6 +2358,19 @@ void MediaPlayerPrivateGStreamer::signalDRM()
 
 
 #if ENABLE(ENCRYPTED_MEDIA_V2)
+
+// Wrapper method to get new extendedSupportsType working with QT style MediaPlayer.
+MediaPlayer::SupportsType MediaPlayerPrivateGStreamer::extendedSupportsTypeWrapper(const String& type, const String& codecs, const String& keySystem, const KURL& url)
+{
+    MediaEngineSupportParameters parameters;
+    parameters.type = type;
+    parameters.codecs = codecs;
+    parameters.keySystem = keySystem;
+    parameters.url = url;
+
+    return extendedSupportsType(parameters);
+}
+
 MediaPlayer::SupportsType MediaPlayerPrivateGStreamer::extendedSupportsType(const MediaEngineSupportParameters& parameters)
 {
     // From: <http://dvcs.w3.org/hg/html-media/raw-file/eme-v0.1b/encrypted-media/encrypted-media.html#dom-canplaytype>
@@ -2398,8 +2408,6 @@ PassOwnPtr<CDMSession> MediaPlayerPrivateGStreamer::createSession(const String& 
 #if USE(DXDRM)
     if (equalIgnoringCase(keySystem, "com.microsoft.playready")
         || equalIgnoringCase(keySystem, "com.youtube.playready")) {
-        //return std::make_unique<CDMPRSessionGStreamer>(this);
-        //return std::unique_ptr<CDMPRSessionGStreamer>(new CDMPRSessionGStreamer(this));
         return adoptPtr(new CDMPRSessionGStreamer(this));
     }
 #endif
@@ -2664,7 +2672,6 @@ bool MediaPlayerPrivateGStreamer::canSaveMediaData() const
     return false;
 }
 
-//void MediaPlayerPrivateGStreamer::paint(GraphicsContext* context, const FloatRect& rect)
 void MediaPlayerPrivateGStreamer::paint(GraphicsContext* context, const IntRect& rect)
 {
 #if USE(COORDINATED_GRAPHICS_THREADED)

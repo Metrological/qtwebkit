@@ -51,8 +51,6 @@
 #endif
 
 #if GST_CHECK_VERSION(1, 1, 0) && USE(TEXTURE_MAPPER_GL)
-//#include "BitmapTextureGL.h"
-//#include "BitmapTexturePool.h"
 #include "TextureMapperGL.h"
 #endif
 
@@ -483,7 +481,7 @@ PassRefPtr<BitmapTexture> MediaPlayerPrivateGStreamerBase::updateTexture(Texture
         return nullptr;
 
     IntSize size = IntSize(GST_VIDEO_INFO_WIDTH(&videoInfo), GST_VIDEO_INFO_HEIGHT(&videoInfo));
-    //RefPtr<BitmapTexture> texture = textureMapper->acquireTextureFromPool(size, GST_VIDEO_INFO_HAS_ALPHA(&videoInfo));
+	// TODO, sander: should we be worried about lacking alpha channel?
     RefPtr<BitmapTexture> texture = textureMapper->acquireTextureFromPool(size/*, GST_VIDEO_INFO_HAS_ALPHA(&videoInfo)*/);
     GstBuffer* buffer = gst_sample_get_buffer(m_sample.get());
 
@@ -865,6 +863,7 @@ GstElement* MediaPlayerPrivateGStreamerBase::createVideoSink()
 #if LOG_DISABLED
         g_object_set(m_fpsSink.get(), "text-overlay", FALSE , nullptr);
 #else
+		// TODO, sander: restore logging.
         //if (!isLogChannelEnabled("Media"))
         //    g_object_set(m_fpsSink.get(), "text-overlay", FALSE , nullptr);
 #endif // LOG_DISABLED

@@ -22,7 +22,7 @@
 #include "GStreamerVersioning.h"
 
 #if USE(GSTREAMER)
-#include <gst/gstelement.h>
+#include <gst/gst.h>
 
 namespace WTF {
 

@@ -52,18 +52,6 @@ static GstPadProbeReturn textTrackPrivateEventCallback(GstPad*, GstPadProbeInfo*
     return GST_PAD_PROBE_OK;
 }
 
-static gboolean textTrackPrivateSampleTimeoutCallback(InbandTextTrackPrivateGStreamer* track)
-{
-    track->notifyTrackOfSample();
-    return FALSE;
-}
-
-static gboolean textTrackPrivateStreamTimeoutCallback(InbandTextTrackPrivateGStreamer* track)
-{
-    track->notifyTrackOfStreamChanged();
-    return FALSE;
-}
-
 InbandTextTrackPrivateGStreamer::InbandTextTrackPrivateGStreamer(gint index, GRefPtr<GstPad> pad)
     : InbandTextTrackPrivate(WebVTT), TrackPrivateBaseGStreamer(this, index, pad)
     , m_sampleTimerHandler("[WebKit] InbandTextTrackPrivateGStreamer::notifyTrackOfSample", std::bind(&InbandTextTrackPrivateGStreamer::notifyTrackOfSample, this))
