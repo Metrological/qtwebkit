@@ -3244,10 +3244,10 @@ enable?(MEDIA_SOURCE) {
             platform/graphics/gstreamer/WebKitMediaSourceGStreamer.h \
             platform/graphics/gstreamer/SourceBufferPrivateGStreamer.h \ 
             platform/graphics/gstreamer/MediaSourceGStreamer.h \
-            platform/graphics/gstreamer/AudioSourceProviderGStreamer.h
+            platform/audio/gstreamer/AudioSourceProviderGStreamer.h
        SOURCES += \
             platform/graphics/gstreamer/WebKitMediaSourceGStreamer.cpp \
-            platform/graphics/gstreamer/AudioSourceProviderGStreamer.cpp \
+            platform/audio/gstreamer/AudioSourceProviderGStreamer.cpp \
             platform/graphics/gstreamer/WebKitMediaAesCtr.c \
             platform/graphics/gstreamer/SourceBufferPrivateGStreamer.cpp \
             platform/graphics/gstreamer/MediaSourceGStreamer.cpp

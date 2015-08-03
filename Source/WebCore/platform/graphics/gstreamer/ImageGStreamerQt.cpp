@@ -32,8 +32,7 @@
 
 #include "GStreamerUtilities.h"
 
-// TODO, Sander: less specific header path.
-#include <gstreamer-1.0/gst/gstbuffer.h>
+#include <gst/gstbuffer.h>
 
 using namespace WebCore;
 

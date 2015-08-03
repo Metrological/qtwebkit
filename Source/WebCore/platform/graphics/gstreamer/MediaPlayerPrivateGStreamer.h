@@ -79,9 +79,7 @@ public:
     gboolean handleMessage(GstMessage*);
     void handlePluginInstallerResult(GstInstallPluginsReturn);
 
-    // TODO: implement
     virtual void paint(GraphicsContext*, const IntRect&);
-
 
     bool hasVideo() const override { return m_hasVideo; }
     bool hasAudio() const override { return m_hasAudio; }
@@ -110,6 +108,7 @@ public:
     void setReadyState(MediaPlayer::ReadyState state);
 
     void setRate(float) override;
+    // TODO, sander: this one was tagged as override
     //double rate() const override;
     double rate() const;
     void setPreservesPitch(bool) override;
@@ -117,7 +116,6 @@ public:
     void setPreload(MediaPlayer::Preload) override;
     void fillTimerFired();
 
-    //std::unique_ptr<PlatformTimeRanges> buffered() const override;
     PassOwnPtr<PlatformTimeRanges> buffered() const override;
     float maxTimeSeekable() const override;
     bool didLoadingProgress() const override;
@@ -186,6 +184,7 @@ private:
 
     static bool isAvailable();
     static bool supportsKeySystem(const String& keySystem, const String& mimeType);
+    static MediaPlayer::SupportsType extendedSupportsTypeWrapper(const String& type, const String& codecs, const String& keySystem, const KURL& url);
 
     GstElement* createAudioSink() override;
 
@@ -221,6 +220,7 @@ private:
 
     String engineDescription() const override { return "GStreamer"; }
     bool didPassCORSAccessCheck() const override;
+    // TODO, sander: this one should be marked as overridden.
     //bool canSaveMediaData() const override;
     bool canSaveMediaData() const;
 
