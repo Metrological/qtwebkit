@@ -109,6 +109,26 @@
 #include "ImageGStreamer.h"
 #include <wtf/gobject/GMutexLocker.h>
 
+struct FunctionWrapperParms
+{
+    const Function<void ()>* function;
+    std::mutex* mutex;
+    std::condition_variable* conditionVariable;
+    volatile bool* isFinished;
+};
+
+static void mutexedFunctionWrapper(void* parmsPtr)
+{
+    FunctionWrapperParms* parms = static_cast<FunctionWrapperParms*>(parmsPtr);
+
+    const Function<void ()>& function = *(parms->function);
+    function();
+
+    std::lock_guard<std::mutex> lock(*parms->mutex);
+    *(parms->isFinished) = true;
+    parms->conditionVariable->notify_one();
+}
+
 static void callOnMainThreadAndWait(const Function<void ()> &function)
 {
     if (isMainThread()) {
@@ -119,7 +139,7 @@ static void callOnMainThreadAndWait(const Function<void ()> &function)
     std::mutex mutex;
     std::condition_variable conditionVariable;
 
-    bool isFinished = false;
+    volatile bool isFinished = false;
 
 //    callOnMainThread([&] {
 //        function();
@@ -129,7 +149,12 @@ static void callOnMainThreadAndWait(const Function<void ()> &function)
 //        conditionVariable.notify_one();
 //    });
 
-    callOnMainThread(function);
+    FunctionWrapperParms parms;
+    parms.function = &function;
+    parms.mutex = &mutex;
+    parms.conditionVariable = &conditionVariable;
+    parms.isFinished = &isFinished;
+    callOnMainThread(mutexedFunctionWrapper, static_cast<void*>(&parms));
 
     std::unique_lock<std::mutex> lock(mutex);
     conditionVariable.wait(lock, [&] { return isFinished; });
@@ -240,31 +265,48 @@ void MediaPlayerPrivateGStreamer::registerMediaEngine(MediaEngineRegistrar regis
 
 bool initializeGStreamerAndRegisterWebKitElements()
 {
+    cerr << "initializeGStreamerAndRegisterWebKitElements entered" << endl;
+
     if (!initializeGStreamer())
         return false;
 
     GRefPtr<GstElementFactory> srcFactory = gst_element_factory_find("webkitwebsrc");
     if (!srcFactory) {
+        cerr << "initializeGStreamerAndRegisterWebKitElements no found element factory webkitwebsrc" << endl;
         GST_DEBUG_CATEGORY_INIT(webkit_media_player_debug, "webkitmediaplayer", 0, "WebKit media player");
         gst_element_register(0, "webkitwebsrc", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_WEB_SRC);
+    } else {
+        cerr << "initializeGStreamerAndRegisterWebKitElements did find element factory webkitwebsrc" << endl;
     }
 
 #if ENABLE(ENCRYPTED_MEDIA)
     GRefPtr<GstElementFactory> cencDecryptorFactory = gst_element_factory_find("webkitcencdec");
-    if (!cencDecryptorFactory)
+    if (!cencDecryptorFactory) {
+        cerr << "initializeGStreamerAndRegisterWebKitElements no found element factory webkitcencdec" << endl;
         gst_element_register(0, "webkitcencdec", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_CENC_DECRYPT);
+    } else {
+        cerr << "initializeGStreamerAndRegisterWebKitElements did find element factory webkitcencdec" << endl;
+    }
 #endif
 
 #if USE(DXDRM)
     GRefPtr<GstElementFactory> playReadyDecryptorFactory = gst_element_factory_find("webkitplayreadydec");
-    if (!playReadyDecryptorFactory)
+    if (!playReadyDecryptorFactory) {
+        cerr << "initializeGStreamerAndRegisterWebKitElements no found element factory webkitplayreadydec" << endl;
         gst_element_register(0, "webkitplayreadydec", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_PLAYREADY_DECRYPT);
+    } else {
+        cerr << "initializeGStreamerAndRegisterWebKitElements did find element factory webkitplayreadydec" << endl;
+    }
 #endif
 
 #if ENABLE(MEDIA_SOURCE)
     GRefPtr<GstElementFactory> WebKitMediaSrcFactory = gst_element_factory_find("webkitmediasrc");
-    if (!WebKitMediaSrcFactory)
+    if (!WebKitMediaSrcFactory) {
+        cerr << "initializeGStreamerAndRegisterWebKitElements no found element factory webkitmediasrc" << endl;
         gst_element_register(0, "webkitmediasrc", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_SRC);
+    } else {
+        cerr << "initializeGStreamerAndRegisterWebKitElements did find element factory webkitmediasrc" << endl;
+    }
 #endif
     return true;
 }
