@@ -1046,7 +1046,7 @@ AudioSourceProvider* MediaPlayer::audioSourceProvider()
 }
 #endif // WEB_AUDIO
 
-//#if ENABLE(ENCRYPTED_MEDIA)
+#if ENABLE(ENCRYPTED_MEDIA)
 void MediaPlayer::keyAdded(const String& keySystem, const String& sessionId)
 {
     if (m_mediaPlayerClient)
@@ -1071,7 +1071,7 @@ bool MediaPlayer::keyNeeded(const String& keySystem, const String& sessionId, co
         return m_mediaPlayerClient->mediaPlayerKeyNeeded(this, keySystem, sessionId, initData, initDataLength);
     return false;
 }
-//#endif
+#endif
 
 #if ENABLE(ENCRYPTED_MEDIA_V2)
 bool MediaPlayer::keyNeeded(Uint8Array* initData)

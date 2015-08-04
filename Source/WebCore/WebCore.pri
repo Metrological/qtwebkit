@@ -199,6 +199,7 @@ enable?(ENCRYPTED_MEDIA_V2) {
     use?(DXDRM) {
         LIBS += -lDxDrm
     }
+    DEFINES += ENABLE_ENCRYPTED_MEDIA
 }
 
 enable?(MEDIA_SOURCE) {
