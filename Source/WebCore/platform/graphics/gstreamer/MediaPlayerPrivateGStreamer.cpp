@@ -229,10 +229,6 @@ static PassRefPtr<MediaPlayerPrivateInterface> createPrivateGStreamer(MediaPlaye
 
 void MediaPlayerPrivateGStreamer::registerMediaEngine(MediaEngineRegistrar registrar)
 {
-    // Original code:
-    //   registrar([](MediaPlayer* player) { return std::make_unique<MediaPlayerPrivateGStreamer>(player); },
-    //       getSupportedTypes, extendedSupportsType, 0, 0, 0, supportsKeySystem);
-
     if (isAvailable())
 #if ENABLE(ENCRYPTED_MEDIA_V2)
         registrar(createPrivateGStreamer, getSupportedTypes, extendedSupportsTypeWrapper, 0, 0, 0, supportsKeySystem);
@@ -1215,6 +1211,20 @@ static StreamType getStreamType(GstElement* element)
 }
 #endif
 
+struct CallNeedKeyParams {
+    MediaPlayerPrivateGStreamer* pInstance;
+    const char* keySystemId;
+    const unsigned char * data;
+    unsigned size;
+};
+
+// TODO: use smart pointer so we don't have to delete param struct here.
+void MediaPlayerPrivateGStreamer::callNeedKey(void* pParams) {
+    CallNeedKeyParams* pNeedKeyParams = static_cast<CallNeedKeyParams*>(pParams);
+    callNeedKey(pNeedKeyParams->pInstance, pNeedKeyParams->keySystemId, pNeedKeyParams->data, pNeedKeyParams->size);
+    delete pNeedKeyParams;
+}
+
 void MediaPlayerPrivateGStreamer::callNeedKey(MediaPlayerPrivateGStreamer* pInstance, const char* keySystemId, const unsigned char * data, unsigned size) {
     pInstance->needKey(keySystemId, "sessionId", data, size);
 }
@@ -1293,7 +1303,12 @@ void MediaPlayerPrivateGStreamer::handleSyncMessage(GstMessage* message)
                 m_drmKeySemaphore.signal();
                 m_drmKeySemaphore.wait();
                 // Fire the need key event from main thread
-                callOnMainThreadAndWait(callNeedKey, this, keySystemId, reinterpret_cast<const unsigned char *>(mapInfo.data), mapInfo.size);
+                CallNeedKeyParams* params = new CallNeedKeyParams;
+                params->pInstance = this;
+                params->keySystemId = keySystemId;
+                params->data = reinterpret_cast<const unsigned char *>(mapInfo.data);
+                params->size = mapInfo.size;
+                callOnMainThreadAndWait(callNeedKey, static_cast<void *>(params));
                 // Wait for a potential license
                 GST_DEBUG("waiting for a license");
                 m_drmKeySemaphore.wait();
@@ -2315,7 +2330,7 @@ bool MediaPlayerPrivateGStreamer::supportsKeySystem(const String& keySystem, con
     return false;
 }
 
-//#if ENABLE(ENCRYPTED_MEDIA)
+#if ENABLE(ENCRYPTED_MEDIA)
 MediaPlayer::MediaKeyException MediaPlayerPrivateGStreamer::addKey(const String& keySystem, const unsigned char* keyData, unsigned keyLength, const unsigned char* /* initData */, unsigned /* initDataLength */ , const String& sessionID)
 {
     LOG_MEDIA_MESSAGE("addKey system: %s, length: %u, session: %s", keySystem.utf8().data(), keyLength, sessionID.utf8().data());
@@ -2354,7 +2369,7 @@ void MediaPlayerPrivateGStreamer::signalDRM()
     // Wake up a potential waiter blocked in the GStreamer thread
     m_drmKeySemaphore.signal();
 }
-//#endif
+#endif
 
 
 #if ENABLE(ENCRYPTED_MEDIA_V2)

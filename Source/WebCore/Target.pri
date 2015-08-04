@@ -767,6 +767,7 @@ SOURCES += \
     html/shadow/SliderThumbElement.cpp \
     html/shadow/SpinButtonElement.cpp \
     html/shadow/TextControlInnerElements.cpp \
+    html/MediaKeyEvent.cpp \
     inspector/ConsoleMessage.cpp \
     inspector/ContentSearchUtils.cpp \
     inspector/DOMEditor.cpp \

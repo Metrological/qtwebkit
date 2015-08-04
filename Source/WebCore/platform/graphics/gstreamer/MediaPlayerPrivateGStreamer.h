@@ -44,9 +44,9 @@
 #include "MediaSourceGStreamer.h"
 #endif
 
-//#if ENABLE(ENCRYPTED_MEDIA)
+#if ENABLE(ENCRYPTED_MEDIA)
 #include <wtf/threads/BinarySemaphore.h>
-//#endif
+#endif
 
 #include "MediaPlayer.h"
 
@@ -158,14 +158,14 @@ public:
     AudioSourceProvider* audioSourceProvider() override { return reinterpret_cast<AudioSourceProvider*>(m_audioSourceProvider.get()); }
 #endif
 
-//#if ENABLE(ENCRYPTED_MEDIA)
+#if ENABLE(ENCRYPTED_MEDIA)
     MediaPlayer::MediaKeyException addKey(const String&, const unsigned char*, unsigned, const unsigned char*, unsigned, const String&);
     MediaPlayer::MediaKeyException generateKeyRequest(const String&, const unsigned char*, unsigned);
     MediaPlayer::MediaKeyException cancelKeyRequest(const String&, const String&);
     void needKey(const String&, const String&, const unsigned char*, unsigned);
 
     void signalDRM();
-//#endif
+#endif
 
     bool isLiveStream() const override { return m_isStreaming; }
 #if ENABLE(MEDIA_SOURCE)
@@ -238,6 +238,7 @@ private:
 #endif
 
 private:
+    static void callNeedKey(void* pParams);
     static void callNeedKey(MediaPlayerPrivateGStreamer* pInstance, const char* keySystemId, const unsigned char * data, unsigned size);
 
     GRefPtr<GstElement> m_source;
@@ -309,9 +310,9 @@ private:
     GstGLContext* m_glContext;
     GstGLDisplay* m_glDisplay;
 #endif
-//#if ENABLE(ENCRYPTED_MEDIA)
+#if ENABLE(ENCRYPTED_MEDIA)
     BinarySemaphore m_drmKeySemaphore;
-//#endif
+#endif
     Mutex m_pendingAsyncOperationsLock;
     GList* m_pendingAsyncOperations;
 };
