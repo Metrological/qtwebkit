@@ -180,7 +180,7 @@ public:
 
 private:
     static void getSupportedTypes(HashSet<String>&);
-    static MediaPlayer::SupportsType supportsType(const MediaEngineSupportParameters&);
+    static MediaPlayer::SupportsType supportsType2(const MediaEngineSupportParameters&);
 
     static bool isAvailable();
     static bool supportsKeySystem(const String& keySystem, const String& mimeType);
