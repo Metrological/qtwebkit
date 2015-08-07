@@ -109,6 +109,10 @@
 #include "ImageGStreamer.h"
 #include <wtf/gobject/GMutexLocker.h>
 
+#include <iostream>
+using std::cerr;
+using std::endl;
+
 struct FunctionWrapperParms
 {
     const Function<void ()>* function;
@@ -247,8 +251,13 @@ void MediaPlayerPrivateGStreamer::setAudioStreamProperties(GObject* object)
 
 static PassRefPtr<MediaPlayerPrivateInterface> createPrivateGStreamer(MediaPlayer* player)
 {
+    cerr << "createPrivateGStreamer entered" << endl;
+
     MediaPlayerPrivateGStreamer * privateGStreamer = new MediaPlayerPrivateGStreamer(player);
     PassRefPtr<MediaPlayerPrivateInterface> outPointer = PassRefPtr<MediaPlayerPrivateInterface>(privateGStreamer);
+
+    cerr << "createPrivateGStreamer exit" << endl;
+
     return outPointer;
 }
 
@@ -272,7 +281,7 @@ bool initializeGStreamerAndRegisterWebKitElements()
 
     GRefPtr<GstElementFactory> srcFactory = gst_element_factory_find("webkitwebsrc");
     if (!srcFactory) {
-        cerr << "initializeGStreamerAndRegisterWebKitElements no found element factory webkitwebsrc" << endl;
+        cerr << "initializeGStreamerAndRegisterWebKitElements did NOT find element factory webkitwebsrc" << endl;
         GST_DEBUG_CATEGORY_INIT(webkit_media_player_debug, "webkitmediaplayer", 0, "WebKit media player");
         gst_element_register(0, "webkitwebsrc", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_WEB_SRC);
     } else {
@@ -282,7 +291,7 @@ bool initializeGStreamerAndRegisterWebKitElements()
 #if ENABLE(ENCRYPTED_MEDIA)
     GRefPtr<GstElementFactory> cencDecryptorFactory = gst_element_factory_find("webkitcencdec");
     if (!cencDecryptorFactory) {
-        cerr << "initializeGStreamerAndRegisterWebKitElements no found element factory webkitcencdec" << endl;
+        cerr << "initializeGStreamerAndRegisterWebKitElements did NOT find element factory webkitcencdec" << endl;
         gst_element_register(0, "webkitcencdec", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_CENC_DECRYPT);
     } else {
         cerr << "initializeGStreamerAndRegisterWebKitElements did find element factory webkitcencdec" << endl;
@@ -292,7 +301,7 @@ bool initializeGStreamerAndRegisterWebKitElements()
 #if USE(DXDRM)
     GRefPtr<GstElementFactory> playReadyDecryptorFactory = gst_element_factory_find("webkitplayreadydec");
     if (!playReadyDecryptorFactory) {
-        cerr << "initializeGStreamerAndRegisterWebKitElements no found element factory webkitplayreadydec" << endl;
+        cerr << "initializeGStreamerAndRegisterWebKitElements did NOT find element factory webkitplayreadydec" << endl;
         gst_element_register(0, "webkitplayreadydec", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_PLAYREADY_DECRYPT);
     } else {
         cerr << "initializeGStreamerAndRegisterWebKitElements did find element factory webkitplayreadydec" << endl;
@@ -302,21 +311,28 @@ bool initializeGStreamerAndRegisterWebKitElements()
 #if ENABLE(MEDIA_SOURCE)
     GRefPtr<GstElementFactory> WebKitMediaSrcFactory = gst_element_factory_find("webkitmediasrc");
     if (!WebKitMediaSrcFactory) {
-        cerr << "initializeGStreamerAndRegisterWebKitElements no found element factory webkitmediasrc" << endl;
+        cerr << "initializeGStreamerAndRegisterWebKitElements did NOT find element factory webkitmediasrc" << endl;
         gst_element_register(0, "webkitmediasrc", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_SRC);
     } else {
         cerr << "initializeGStreamerAndRegisterWebKitElements did find element factory webkitmediasrc" << endl;
     }
 #endif
+
+    cerr << "initializeGStreamerAndRegisterWebKitElements exit" << endl;
+
     return true;
 }
 
 bool MediaPlayerPrivateGStreamer::isAvailable()
 {
+    cerr << "MediaPlayerPrivateGStreamer::isAvailable enter" << endl;
+
     if (!initializeGStreamerAndRegisterWebKitElements())
         return false;
 
     GRefPtr<GstElementFactory> factory = gst_element_factory_find("playbin");
+
+    cerr << "MediaPlayerPrivateGStreamer::isAvailable exit, factory: " << factory << endl;
     return factory;
 }
 
@@ -2353,22 +2369,33 @@ static HashSet<String> mimeTypeCache()
 
 void MediaPlayerPrivateGStreamer::getSupportedTypes(HashSet<String>& types)
 {
+    cerr << "MediaPlayerPrivateGStreamer::getSupportedTypes entered" << endl;
+
     types = mimeTypeCache();
+
+    cerr << "MediaPlayerPrivateGStreamer::getSupportedTypes exit" << endl;
 }
 
 bool MediaPlayerPrivateGStreamer::supportsKeySystem(const String& keySystem, const String& mimeType)
 {
+    cerr << "MediaPlayerPrivateGStreamer::supportsKeySystem entered" << endl;
+
     GST_DEBUG("Checking for KeySystem support with %s and type %s", keySystem.utf8().data(), mimeType.utf8().data());
 
 #if USE(DXDRM)
     if (equalIgnoringCase(keySystem, "com.microsoft.playready") ||
-        equalIgnoringCase(keySystem, "com.youtube.playready"))
+        equalIgnoringCase(keySystem, "com.youtube.playready")) {
+        cerr << "MediaPlayerPrivateGStreamer::supportsKeySystem exit through if in USE(DXDRM)" << endl;
         return true;
+    }
 #endif
 
-    if (equalIgnoringCase(keySystem, "org.w3.clearkey"))
+    if (equalIgnoringCase(keySystem, "org.w3.clearkey")) {
+        cerr << "MediaPlayerPrivateGStreamer::supportsKeySystem exit through clearkey if" << endl;
         return true;
+    }
 
+    cerr << "MediaPlayerPrivateGStreamer::supportsKeySystem exit and returning false" << endl;
     return false;
 }
 
@@ -2419,34 +2446,48 @@ void MediaPlayerPrivateGStreamer::signalDRM()
 // Wrapper method to get new extendedSupportsType working with QT style MediaPlayer.
 MediaPlayer::SupportsType MediaPlayerPrivateGStreamer::extendedSupportsTypeWrapper(const String& type, const String& codecs, const String& keySystem, const KURL& url)
 {
+    cerr << "MediaPlayerPrivateGStreamer::extendedSupportsTypeWrapper entered l2445" << endl;
+    cerr << "MediaPlayerPrivateGStreamer::extendedSupportsTypeWrapper, codecs: \"" << codecs.ascii().data() << "\"" << endl;
+
     MediaEngineSupportParameters parameters;
     parameters.type = type;
     parameters.codecs = codecs;
     parameters.keySystem = keySystem;
     parameters.url = url;
 
+    cerr << "MediaPlayerPrivateGStreamer::extendedSupportsTypeWrapper exit by calling original extendedSupportsType" << endl;
+
     return extendedSupportsType(parameters);
 }
 
 MediaPlayer::SupportsType MediaPlayerPrivateGStreamer::extendedSupportsType(const MediaEngineSupportParameters& parameters)
 {
+    cerr << "MediaPlayerPrivateGStreamer::extendedSupportsType entered" << endl;
+
     // From: <http://dvcs.w3.org/hg/html-media/raw-file/eme-v0.1b/encrypted-media/encrypted-media.html#dom-canplaytype>
     // In addition to the steps in the current specification, this method must run the following steps:
 
     // 1. Check whether the Key System is supported with the specified container and codec type(s) by following the steps for the first matching condition from the following list:
     //    If keySystem is null, continue to the next step.
-    if (parameters.keySystem.isNull() || parameters.keySystem.isEmpty())
-        return supportsType(parameters);
+    if (parameters.keySystem.isNull() || parameters.keySystem.isEmpty()) {
+        cerr << "MediaPlayerPrivateGStreamer::extendedSupportsType exit by calling supports type (l2461)" << endl;
+        MediaPlayer::SupportsType output = supportsType2(parameters);
+        cerr << "MediaPlayerPrivateGStreamer::extendedSupportsType supports type returned with: " << output << endl;
+        return output;
+    }
 
     // If keySystem contains an unrecognized or unsupported Key System, return the empty string
-    if (!supportsKeySystem(parameters.keySystem, emptyString()))
+    if (!supportsKeySystem(parameters.keySystem, emptyString())) {
+        cerr << "MediaPlayerPrivateGStreamer::extendedSupportsType exit and returning IsNotSupported" << endl;
         return MediaPlayer::IsNotSupported;
+    }
 
     // If the Key System specified by keySystem does not support decrypting the container and/or codec specified in the rest of the type string.
     // (AVFoundation does not provide an API which would allow us to determine this, so this is a no-op)
 
     // 2. Return "maybe" or "probably" as appropriate per the existing specification of canPlayType().
-    return supportsType(parameters);
+    cerr << "MediaPlayerPrivateGStreamer::extendedSupportsType exit by calling supportsType (l2475)" << endl;
+    return supportsType2(parameters);
 }
 
 void MediaPlayerPrivateGStreamer::needKey(RefPtr<Uint8Array> initData)
@@ -2487,20 +2528,30 @@ void MediaPlayerPrivateGStreamer::keyAdded()
 #endif
 
 
-MediaPlayer::SupportsType MediaPlayerPrivateGStreamer::supportsType(const MediaEngineSupportParameters& parameters)
+MediaPlayer::SupportsType MediaPlayerPrivateGStreamer::supportsType2(const MediaEngineSupportParameters& parameters)
 {
+    cerr << "MediaPlayerPrivateGStreamer::supportsType entered" << endl;
+
 #if ENABLE(MEDIA_SOURCE)
     // Disable VPX/Opus on MSE for now, mp4/avc1 seems way more reliable currently.
-    if (parameters.isMediaSource && parameters.type.endsWith("webm"))
+    if (parameters.isMediaSource && parameters.type.endsWith("webm")) {
+        cerr << "MediaPlayerPrivateGStreamer::supportsType exit because of webm" << endl;
         return MediaPlayer::IsNotSupported;
+    }
 #endif
 
-    if (parameters.type.isNull() || parameters.type.isEmpty())
+    if (parameters.type.isNull() || parameters.type.isEmpty()) {
+        cerr << "MediaPlayerPrivateGStreamer::supportsType exit because of isNull or isEmpty" << endl;
         return MediaPlayer::IsNotSupported;
+    }
 
     // spec says we should not return "probably" if the codecs string is empty
-    if (mimeTypeCache().contains(parameters.type))
+    if (mimeTypeCache().contains(parameters.type)) {
+        cerr << "MediaPlayerPrivateGStreamer::supportsType exit because mimeTypeCache contains parameters type" << endl;
         return parameters.codecs.isEmpty() ? MediaPlayer::MayBeSupported : MediaPlayer::IsSupported;
+    }
+
+    cerr << "MediaPlayerPrivateGStreamer::supportsType exit at the end with isNotSupported" << endl;
     return MediaPlayer::IsNotSupported;
 }
 

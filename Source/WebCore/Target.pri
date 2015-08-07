@@ -2237,6 +2237,7 @@ HEADERS += \
     platform/graphics/SourceBufferPrivateClient.h \
     platform/graphics/qt/FontCustomPlatformData.h \
     platform/graphics/qt/NativeImageQt.h \
+    platform/graphics/MediaSourcePrivate.h
 
 contains(QT_CONFIG,opengl) {
 HEADERS += \
