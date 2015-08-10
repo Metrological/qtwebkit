@@ -2254,9 +2254,7 @@ PassOwnPtr<CDMSession> MediaPlayerPrivateGStreamer::createSession(const String& 
     if (!supportsKeySystem(keySystem, emptyString()))
         return nullptr;
 
-#warning TODO, Sander: turn CDMPRSessionGStreamer back on!
-    //return adoptPtr(new CDMPRSessionGStreamer(this));
-    return nullptr;
+    return adoptPtr(new CDMPRSessionGStreamer(this));
 }
 
 void MediaPlayerPrivateGStreamer::needKey(RefPtr<Uint8Array> initData)
