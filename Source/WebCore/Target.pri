@@ -3381,9 +3381,9 @@ enable?(ENCRYPTED_MEDIA_V2) {
             platform/network/HTTPHeaderNames.h
 
         SOURCES += \
-#            platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp \ 
-#            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp \
-#            platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp \
+            platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp \ 
+            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp \
+            platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp \
             platform/network/HTTPHeaderNames.cpp
     }
 }
