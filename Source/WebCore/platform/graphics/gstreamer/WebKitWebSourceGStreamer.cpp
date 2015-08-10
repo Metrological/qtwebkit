@@ -47,6 +47,10 @@
 #include <wtf/gobject/GRefPtr.h>
 #include <wtf/text/CString.h>
 
+#include <iostream>
+using std::cerr;
+using std::endl;
+
 using namespace WebCore;
 
 static CachedResourceLoader* s_cachedResourceLoader = 0;
@@ -209,6 +213,8 @@ G_DEFINE_TYPE_WITH_CODE(WebKitWebSrc, webkit_web_src, GST_TYPE_BIN,
 
 static void webkit_web_src_class_init(WebKitWebSrcClass* klass)
 {
+    //cerr << "webkit_web_src_class_init enter" << endl;
+
     GObjectClass* oklass = G_OBJECT_CLASS(klass);
     GstElementClass* eklass = GST_ELEMENT_CLASS(klass);
 
@@ -276,10 +282,14 @@ static void webkit_web_src_class_init(WebKitWebSrcClass* klass)
     eklass->change_state = webKitWebSrcChangeState;
 
     g_type_class_add_private(klass, sizeof(WebKitWebSrcPrivate));
+
+    //cerr << "webkit_web_src_class_init exit" << endl;
 }
 
 static void webkit_web_src_init(WebKitWebSrc* src)
 {
+    //cerr << "webkit_web_src_init enter" << endl;
+
     WebKitWebSrcPrivate* priv = WEBKIT_WEB_SRC_GET_PRIVATE(src);
 
     src->priv = priv;
@@ -287,6 +297,7 @@ static void webkit_web_src_init(WebKitWebSrc* src)
     priv->appsrc = GST_APP_SRC(gst_element_factory_make("appsrc", 0));
     if (!priv->appsrc) {
         GST_ERROR_OBJECT(src, "Failed to create appsrc");
+        //cerr << "webkit_web_src_init exit 1" << endl;
         return;
     }
 
@@ -334,10 +345,14 @@ static void webkit_web_src_init(WebKitWebSrc* src)
 
     gst_app_src_set_caps(priv->appsrc, 0);
     gst_app_src_set_size(priv->appsrc, -1);
+
+    //cerr << "webkit_web_src_init exit 2" << endl;
 }
 
 static void webKitWebSrcDispose(GObject* object)
 {
+    //cerr << "webKitWebSrcDispose enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(object);
     WebKitWebSrcPrivate* priv = src->priv;
 
@@ -347,20 +362,28 @@ static void webKitWebSrcDispose(GObject* object)
     }
 
     GST_CALL_PARENT(G_OBJECT_CLASS, dispose, (object));
+
+    //cerr << "webKitWebSrcDispose exit" << endl;
 }
 
 static void webKitWebSrcFinalize(GObject* object)
 {
+    //cerr << "webKitWebSrcFinalize enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(object);
     WebKitWebSrcPrivate* priv = src->priv;
 
     g_free(priv->uri);
 
     GST_CALL_PARENT(G_OBJECT_CLASS, finalize, (object));
+
+    //cerr << "webKitWebSrcFinalize exit" << endl;
 }
 
 static void webKitWebSrcSetProperty(GObject* object, guint propID, const GValue* value, GParamSpec* pspec)
 {
+    //cerr << "webKitWebSrcSetProperty enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(object);
     WebKitWebSrcPrivate* priv = src->priv;
 
@@ -381,10 +404,14 @@ static void webKitWebSrcSetProperty(GObject* object, guint propID, const GValue*
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propID, pspec);
         break;
     }
+
+    //cerr << "webKitWebSrcSetProperty exit" << endl;
 }
 
 static void webKitWebSrcGetProperty(GObject* object, guint propID, GValue* value, GParamSpec* pspec)
 {
+    //cerr << "webKitWebSrcGetProperty enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(object);
     WebKitWebSrcPrivate* priv = src->priv;
 
@@ -412,10 +439,14 @@ static void webKitWebSrcGetProperty(GObject* object, guint propID, GValue* value
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propID, pspec);
         break;
     }
+
+    //cerr << "webKitWebSrcGetProperty exit" << endl;
 }
 
 static void removeTimeoutSources(WebKitWebSrc* src)
 {
+    //cerr << "removeTimeoutSources enter" << endl;
+
     WebKitWebSrcPrivate* priv = src->priv;
 
     if (!priv->pendingStart && priv->startID) {
@@ -434,10 +465,14 @@ static void removeTimeoutSources(WebKitWebSrc* src)
     if (priv->seekID)
         g_source_remove(priv->seekID);
     priv->seekID = 0;
+
+    //cerr << "removeTimeoutSources exit" << endl;
 }
 
 static gboolean webKitWebSrcStop(WebKitWebSrc* src)
 {
+    //cerr << "webKitWebSrcStop enter" << endl;
+
     WebKitWebSrcPrivate* priv = src->priv;
 
     ASSERT(isMainThread());
@@ -497,11 +532,15 @@ static gboolean webKitWebSrcStop(WebKitWebSrc* src)
 
     GST_DEBUG_OBJECT(src, "Stopped request");
 
+    //cerr << "webKitWebSrcStop exit" << endl;
+
     return FALSE;
 }
 
 static gboolean webKitWebSrcStart(WebKitWebSrc* src)
 {
+    //cerr << "webKitWebSrcStart enter" << endl;
+
     WebKitWebSrcPrivate* priv = src->priv;
 
     ASSERT(isMainThread());
@@ -516,6 +555,9 @@ static gboolean webKitWebSrcStart(WebKitWebSrc* src)
         GST_ERROR_OBJECT(src, "No URI provided");
         locker.unlock();
         webKitWebSrcStop(src);
+
+        //cerr << "webKitWebSrcStart exit 1" << endl;
+
         return FALSE;
     }
 
@@ -571,14 +613,22 @@ static gboolean webKitWebSrcStart(WebKitWebSrc* src)
         }
         locker.unlock();
         webKitWebSrcStop(src);
+
+        //cerr << "webKitWebSrcStart exit 2" << endl;
+
         return FALSE;
     }
     GST_DEBUG_OBJECT(src, "Started request");
+
+    //cerr << "webKitWebSrcStart exit 3" << endl;
+
     return FALSE;
 }
 
 static GstStateChangeReturn webKitWebSrcChangeState(GstElement* element, GstStateChange transition)
 {
+    //cerr << "webKitWebSrcChangeState enter" << endl;
+
     GstStateChangeReturn ret = GST_STATE_CHANGE_SUCCESS;
     WebKitWebSrc* src = WEBKIT_WEB_SRC(element);
     WebKitWebSrcPrivate* priv = src->priv;
@@ -589,6 +639,9 @@ static GstStateChangeReturn webKitWebSrcChangeState(GstElement* element, GstStat
             gst_element_post_message(element,
                                      gst_missing_element_message_new(element, "appsrc"));
             GST_ELEMENT_ERROR(src, CORE, MISSING_PLUGIN, (0), ("no appsrc"));
+
+            //cerr << "webKitWebSrcChangeState exit 1" << endl;
+
             return GST_STATE_CHANGE_FAILURE;
         }
         break;
@@ -599,6 +652,9 @@ static GstStateChangeReturn webKitWebSrcChangeState(GstElement* element, GstStat
     ret = GST_ELEMENT_CLASS(parent_class)->change_state(element, transition);
     if (G_UNLIKELY(ret == GST_STATE_CHANGE_FAILURE)) {
         GST_DEBUG_OBJECT(src, "State change failed");
+
+        //cerr << "webKitWebSrcChangeState exit 2" << endl;
+
         return ret;
     }
 
@@ -622,11 +678,15 @@ static GstStateChangeReturn webKitWebSrcChangeState(GstElement* element, GstStat
         break;
     }
 
+    //cerr << "webKitWebSrcChangeState exit 3" << endl;
+
     return ret;
 }
 
 static gboolean webKitWebSrcQueryWithParent(GstPad* pad, GstObject* parent, GstQuery* query)
 {
+    //cerr << "webKitWebSrcQueryWithParent enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(GST_ELEMENT(parent));
     gboolean result = FALSE;
 
@@ -669,14 +729,22 @@ static gboolean webKitWebSrcQueryWithParent(GstPad* pad, GstObject* parent, GstQ
     }
     }
 
+    //cerr << "webKitWebSrcQueryWithParent exit" << endl;
+
     return result;
 }
 
 #ifndef GST_API_VERSION_1
 static gboolean webKitWebSrcQuery(GstPad* pad, GstQuery* query)
 {
+    //cerr << "webKitWebSrcQuery enter" << endl;
+
     GRefPtr<GstElement> src = adoptGRef(gst_pad_get_parent_element(pad));
-    return webKitWebSrcQueryWithParent(pad, GST_OBJECT(src.get()), query);
+
+    gboolean output = webKitWebSrcQueryWithParent(pad, GST_OBJECT(src.get()), query);
+    //cerr << "webKitWebSrcQuery exit 1" << endl;
+
+    return output;
 }
 #endif
 
@@ -685,32 +753,46 @@ static gboolean webKitWebSrcQuery(GstPad* pad, GstQuery* query)
 #ifdef GST_API_VERSION_1
 static GstURIType webKitWebSrcUriGetType(GType)
 {
+    //cerr << "webKitWebSrcUriGetType enter and exit" << endl;
+
     return GST_URI_SRC;
 }
 
 const gchar* const* webKitWebSrcGetProtocols(GType)
 {
+    //cerr << "webKitWebSrcGetProtocols enter and exit" << endl;
+
     static const char* protocols[] = {"http", "https", 0 };
     return protocols;
 }
 
 static gchar* webKitWebSrcGetUri(GstURIHandler* handler)
 {
+    //cerr << "webKitWebSrcGetUri enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(handler);
     gchar* ret;
 
     WebCore::GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
     ret = g_strdup(src->priv->uri);
+
+    //cerr << "webKitWebSrcGetUri exit" << endl;
+
     return ret;
 }
 
 static gboolean webKitWebSrcSetUri(GstURIHandler* handler, const gchar* uri, GError** error)
 {
+    //cerr << "webKitWebSrcSetUri enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(handler);
     WebKitWebSrcPrivate* priv = src->priv;
 
     if (GST_STATE(src) >= GST_STATE_PAUSED) {
         GST_ERROR_OBJECT(src, "URI can only be set in states < PAUSED");
+
+        //cerr << "webKitWebSrcSetUri exit 1" << endl;
+
         return FALSE;
     }
 
@@ -719,49 +801,65 @@ static gboolean webKitWebSrcSetUri(GstURIHandler* handler, const gchar* uri, GEr
     g_free(priv->uri);
     priv->uri = 0;
 
-    if (!uri)
+    if (!uri) {
+        //cerr << "webKitWebSrcSetUri exit 2" << endl;
         return TRUE;
+    }
 
     KURL url(KURL(), uri);
 
     if (!url.isValid() || !url.protocolIsInHTTPFamily()) {
         g_set_error(error, GST_URI_ERROR, GST_URI_ERROR_BAD_URI, "Invalid URI '%s'", uri);
+        //cerr << "webKitWebSrcSetUri exit 3" << endl;
         return FALSE;
     }
 
     priv->uri = g_strdup(url.string().utf8().data());
+
+    //cerr << "webKitWebSrcSetUri exit 4" << endl;
     return TRUE;
 }
 
 #else
 static GstURIType webKitWebSrcUriGetType(void)
 {
+    //cerr << "webKitWebSrcUriGetType enter and exit" << endl;
     return GST_URI_SRC;
 }
 
 static gchar** webKitWebSrcGetProtocols(void)
 {
+    //cerr << "webKitWebSrcGetProtocols enter and exit" << endl;
     static gchar* protocols[] = {(gchar*) "http", (gchar*) "https", 0 };
     return protocols;
 }
 
 static const gchar* webKitWebSrcGetUri(GstURIHandler* handler)
 {
+    //cerr << "webKitWebSrcGetUri enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(handler);
     gchar* ret;
 
     WebCore::GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
     ret = g_strdup(src->priv->uri);
+
+    //cerr << "webKitWebSrcGetUri exit" << endl;
+
     return ret;
 }
 
 static gboolean webKitWebSrcSetUri(GstURIHandler* handler, const gchar* uri)
 {
+    //cerr << "webKitWebSrcSetUri enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(handler);
     WebKitWebSrcPrivate* priv = src->priv;
 
     if (GST_STATE(src) >= GST_STATE_PAUSED) {
         GST_ERROR_OBJECT(src, "URI can only be set in states < PAUSED");
+
+        //cerr << "webKitWebSrcSetUri exit 1" << endl;
         return FALSE;
     }
 
@@ -770,43 +868,55 @@ static gboolean webKitWebSrcSetUri(GstURIHandler* handler, const gchar* uri)
     g_free(priv->uri);
     priv->uri = 0;
 
-    if (!uri)
+    if (!uri) {
+        //cerr << "webKitWebSrcSetUri exit 2" << endl;
         return TRUE;
+    }
 
     KURL url(KURL(), uri);
 
     if (!url.isValid() || !url.protocolIsInHTTPFamily()) {
         GST_ERROR_OBJECT(src, "Invalid URI '%s'", uri);
+        //cerr << "webKitWebSrcSetUri exit 3" << endl;
         return FALSE;
     }
 
     priv->uri = g_strdup(url.string().utf8().data());
+    //cerr << "webKitWebSrcSetUri exit 4" << endl;
     return TRUE;
 }
 #endif
 
 static void webKitWebSrcUriHandlerInit(gpointer gIface, gpointer)
 {
+    //cerr << "webKitWebSrcUriHandlerInit enter" << endl;
+
     GstURIHandlerInterface* iface = (GstURIHandlerInterface *) gIface;
 
     iface->get_type = webKitWebSrcUriGetType;
     iface->get_protocols = webKitWebSrcGetProtocols;
     iface->get_uri = webKitWebSrcGetUri;
     iface->set_uri = webKitWebSrcSetUri;
+
+    //cerr << "webKitWebSrcUriHandlerInit exit" << endl;
 }
 
 // appsrc callbacks
 
 static gboolean webKitWebSrcNeedDataMainCb(WebKitWebSrc* src)
 {
+    //cerr << "webKitWebSrcNeedDataMainCb enter" << endl;
+
     WebKitWebSrcPrivate* priv = src->priv;
 
     ASSERT(isMainThread());
 
     WebCore::GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
     // already stopped
-    if (!priv->needDataID)
+    if (!priv->needDataID) {
+        //cerr << "webKitWebSrcNeedDataMainCb exit 1" << endl;
         return FALSE;
+    }
 
     priv->paused = FALSE;
     priv->needDataID = 0;
@@ -814,11 +924,16 @@ static gboolean webKitWebSrcNeedDataMainCb(WebKitWebSrc* src)
 
     if (priv->client)
         priv->client->setDefersLoading(false);
+
+    //cerr << "webKitWebSrcNeedDataMainCb exit 2" << endl;
+
     return FALSE;
 }
 
 static void webKitWebSrcNeedDataCb(GstAppSrc*, guint length, gpointer userData)
 {
+    //cerr << "webKitWebSrcNeedDataCb enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(userData);
     WebKitWebSrcPrivate* priv = src->priv;
 
@@ -826,23 +941,30 @@ static void webKitWebSrcNeedDataCb(GstAppSrc*, guint length, gpointer userData)
 
     WebCore::GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
     if (priv->needDataID || !priv->paused) {
+        //cerr << "webKitWebSrcNeedDataCb exit 1" << endl;
         return;
     }
 
     priv->needDataID = g_idle_add_full(G_PRIORITY_DEFAULT, (GSourceFunc) webKitWebSrcNeedDataMainCb, gst_object_ref(src), (GDestroyNotify) gst_object_unref);
     g_source_set_name_by_id(priv->needDataID, "[WebKit] webKitWebSrcNeedDataMainCb");
+
+    //cerr << "webKitWebSrcNeedDataCb exit 2" << endl;
 }
 
 static gboolean webKitWebSrcEnoughDataMainCb(WebKitWebSrc* src)
 {
+    //cerr << "webKitWebSrcEnoughDataMainCb enter" << endl;
+
     WebKitWebSrcPrivate* priv = src->priv;
 
     ASSERT(isMainThread());
 
     WebCore::GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
     // already stopped
-    if (!priv->enoughDataID)
+    if (!priv->enoughDataID) {
+        //cerr << "webKitWebSrcEnoughDataMainCb exit 1" << endl;
         return FALSE;
+    }
 
     priv->paused = TRUE;
     priv->enoughDataID = 0;
@@ -850,11 +972,16 @@ static gboolean webKitWebSrcEnoughDataMainCb(WebKitWebSrc* src)
 
     if (priv->client)
         priv->client->setDefersLoading(true);
+
+    //cerr << "webKitWebSrcEnoughDataMainCb exit 2" << endl;
+
     return FALSE;
 }
 
 static void webKitWebSrcEnoughDataCb(GstAppSrc*, gpointer userData)
 {
+    //cerr << "webKitWebSrcEnoughDataCb enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(userData);
     WebKitWebSrcPrivate* priv = src->priv;
 
@@ -862,44 +989,58 @@ static void webKitWebSrcEnoughDataCb(GstAppSrc*, gpointer userData)
 
     WebCore::GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
     if (priv->enoughDataID || priv->paused) {
+        //cerr << "webKitWebSrcEnoughDataCb exit 1" << endl;
         return;
     }
 
     priv->enoughDataID = g_idle_add_full(G_PRIORITY_DEFAULT, (GSourceFunc) webKitWebSrcEnoughDataMainCb, gst_object_ref(src), (GDestroyNotify) gst_object_unref);
     g_source_set_name_by_id(priv->enoughDataID, "[WebKit] webKitWebSrcEnoughDataMainCb");
 
+    //cerr << "webKitWebSrcEnoughDataCb exit 2" << endl;
+
 }
 
 static gboolean webKitWebSrcSeekMainCb(WebKitWebSrc* src)
 {
+    //cerr << "webKitWebSrcSeekMainCb enter" << endl;
+
     WebKitWebSrcPrivate* priv = src->priv;
 
     ASSERT(isMainThread());
 
     WebCore::GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
     // already stopped
-    if (!priv->seekID)
+    if (!priv->seekID) {
+        //cerr << "webKitWebSrcSeekMainCb exit 1" << endl;
         return FALSE;
+    }
     locker.unlock();
 
     webKitWebSrcStop(src);
     webKitWebSrcStart(src);
 
+    //cerr << "webKitWebSrcSeekMainCb exit 2" << endl;
     return FALSE;
 }
 
 static gboolean webKitWebSrcSeekDataCb(GstAppSrc*, guint64 offset, gpointer userData)
 {
+    //cerr << "webKitWebSrcSeekDataCb enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(userData);
     WebKitWebSrcPrivate* priv = src->priv;
 
     GST_DEBUG_OBJECT(src, "Seeking to offset: %" G_GUINT64_FORMAT, offset);
     WebCore::GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
-    if (offset == priv->offset && priv->requestedOffset == priv->offset)
+    if (offset == priv->offset && priv->requestedOffset == priv->offset) {
+        //cerr << "webKitWebSrcSeekDataCb exit 1" << endl;
         return TRUE;
+    }
 
-    if (!priv->seekable)
+    if (!priv->seekable) {
+        //cerr << "webKitWebSrcSeekDataCb exit 2" << endl;
         return FALSE;
+    }
 
     GST_DEBUG_OBJECT(src, "Doing range-request seek");
     priv->requestedOffset = offset;
@@ -909,34 +1050,47 @@ static gboolean webKitWebSrcSeekDataCb(GstAppSrc*, guint64 offset, gpointer user
     priv->seekID = g_idle_add_full(G_PRIORITY_DEFAULT, (GSourceFunc) webKitWebSrcSeekMainCb, gst_object_ref(src), (GDestroyNotify) gst_object_unref);
     g_source_set_name_by_id(priv->seekID, "[WebKit] webKitWebSrcSeekMainCb");
 
+    //cerr << "webKitWebSrcSeekDataCb exit 3" << endl;
+
     return TRUE;
 }
 
 void webKitWebSrcSetMediaPlayer(WebKitWebSrc* src, WebCore::MediaPlayer* player)
 {
+    //cerr << "webKitWebSrcSetMediaPlayer enter" << endl;
+
     ASSERT(player);
     WebCore::GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
     src->priv->player = player;
     s_cachedResourceLoader = player->cachedResourceLoader();
+
+    //cerr << "webKitWebSrcSetMediaPlayer exit" << endl;
 }
 
 bool webKitSrcPassedCORSAccessCheck(WebKitWebSrc* src)
 {
+    //cerr << "webKitSrcPassedCORSAccessCheck enter and exit" << endl;
+
     return src->priv->corsAccessCheck == CORSSuccess;
 }
 
 StreamingClient::StreamingClient(WebKitWebSrc* src)
     : m_src(static_cast<GstElement*>(gst_object_ref(src)))
 {
+    //cerr << "StreamingClient::StreamingClient enter and exit" << endl;
 }
 
 StreamingClient::~StreamingClient()
 {
+    //cerr << "StreamingClient::~StreamingClient enter" << endl;
     gst_object_unref(m_src);
+    //cerr << "StreamingClient::~StreamingClient exit" << endl;
 }
 
 char* StreamingClient::createReadBuffer(size_t requestedSize, size_t& actualSize)
 {
+    //cerr << "StreamingClient::createReadBuffer enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(m_src);
     WebKitWebSrcPrivate* priv = src->priv;
 
@@ -953,11 +1107,17 @@ char* StreamingClient::createReadBuffer(size_t requestedSize, size_t& actualSize
     locker.unlock();
 
     actualSize = getGstBufferSize(buffer);
-    return getGstBufferDataPointer(buffer);
+
+    char * output = getGstBufferDataPointer(buffer);
+    //cerr << "StreamingClient::createReadBuffer enter" << endl;
+
+    return output;
 }
 
 void StreamingClient::handleResponseReceived(const ResourceResponse& response, CORSAccessCheckResult corsAccessCheck)
 {
+    //cerr << "StreamingClient::handleResponseReceived enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(m_src);
     WebKitWebSrcPrivate* priv = src->priv;
 
@@ -971,6 +1131,7 @@ void StreamingClient::handleResponseReceived(const ResourceResponse& response, C
             GST_ELEMENT_ERROR(src, RESOURCE, READ, ("Received %d HTTP error code", response.httpStatusCode()), (0));
         gst_app_src_end_of_stream(priv->appsrc);
         webKitWebSrcStop(src);
+        //cerr << "StreamingClient::handleResponseReceived exit 1" << endl;
         return;
     }
 
@@ -980,6 +1141,7 @@ void StreamingClient::handleResponseReceived(const ResourceResponse& response, C
 
     if (priv->seekID) {
         GST_DEBUG_OBJECT(src, "Seek in progress, ignoring response");
+        //cerr << "StreamingClient::handleResponseReceived exit 2" << endl;
         return;
     }
 
@@ -994,6 +1156,7 @@ void StreamingClient::handleResponseReceived(const ResourceResponse& response, C
             GST_ELEMENT_ERROR(src, RESOURCE, READ, ("Received unexpected %d HTTP status code", response.httpStatusCode()), (0));
             gst_app_src_end_of_stream(priv->appsrc);
             webKitWebSrcStop(src);
+            //cerr << "StreamingClient::handleResponseReceived exit 3" << endl;
             return;
         }
     }
@@ -1083,10 +1246,14 @@ void StreamingClient::handleResponseReceived(const ResourceResponse& response, C
 #endif
     else
         notifyGstTagsOnPad(GST_ELEMENT(src), priv->srcpad, tags);
+
+    //cerr << "StreamingClient::handleResponseReceived exit 4" << endl;
 }
 
 void StreamingClient::handleDataReceived(const char* data, int length)
 {
+    //cerr << "StreamingClient::handleDataReceived enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(m_src);
     WebKitWebSrcPrivate* priv = src->priv;
 
@@ -1104,6 +1271,7 @@ void StreamingClient::handleDataReceived(const char* data, int length)
     if (priv->seekID) {
         GST_DEBUG_OBJECT(src, "Seek in progress, ignoring data");
         priv->buffer.clear();
+        //cerr << "StreamingClient::handleDataReceived exit 1" << endl;
         return;
     }
 
@@ -1113,6 +1281,7 @@ void StreamingClient::handleDataReceived(const char* data, int length)
             // Discard all the buffers coming before the requested seek position.
             priv->offset += length;
             priv->buffer.clear();
+            //cerr << "StreamingClient::handleDataReceived exit 2" << endl;
             return;
         }
 
@@ -1156,10 +1325,14 @@ void StreamingClient::handleDataReceived(const char* data, int length)
     if (ret != GST_FLOW_OK && ret != GST_FLOW_UNEXPECTED)
 #endif
         GST_ELEMENT_ERROR(src, CORE, FAILED, (0), (0));
+
+    //cerr << "StreamingClient::handleDataReceived exit 3" << endl;
 }
 
 void StreamingClient::handleNotifyFinished()
 {
+    //cerr << "StreamingClient::handleNotifyFinished enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(m_src);
     WebKitWebSrcPrivate* priv = src->priv;
 
@@ -1170,11 +1343,15 @@ void StreamingClient::handleNotifyFinished()
         locker.unlock();
         gst_app_src_end_of_stream(priv->appsrc);
     }
+
+    //cerr << "StreamingClient::handleNotifyFinished exit" << endl;
 }
 
 CachedResourceStreamingClient::CachedResourceStreamingClient(WebKitWebSrc* src, CachedResourceLoader* resourceLoader, const ResourceRequest& request, MediaPlayerClient::CORSMode corsMode)
     : StreamingClient(src)
 {
+    //cerr << "CachedResourceStreamingClient::CachedResourceStreamingClient enter" << endl;
+
     DataBufferingPolicy bufferingPolicy = request.url().protocolIs("blob") ? BufferData : DoNotBufferData;
     RequestOriginPolicy corsPolicy = corsMode != MediaPlayerClient::Unspecified ? PotentiallyCrossOriginEnabled : UseDefaultOriginRestrictionsForType;
     StoredCredentials allowCredentials = corsMode == MediaPlayerClient::Anonymous ? DoNotAllowStoredCredentials : AllowStoredCredentials;
@@ -1191,47 +1368,75 @@ CachedResourceStreamingClient::CachedResourceStreamingClient(WebKitWebSrc* src, 
     m_resource = resourceLoader->requestRawResource(cacheRequest);
     if (m_resource)
         m_resource->addClient(this);
+
+    //cerr << "CachedResourceStreamingClient::CachedResourceStreamingClient exit" << endl;
 }
 
 CachedResourceStreamingClient::~CachedResourceStreamingClient()
 {
+    //cerr << "CachedResourceStreamingClient::~CachedResourceStreamingClient enter" << endl;
+
     if (m_resource) {
         m_resource->removeClient(this);
         m_resource = 0;
     }
+
+    //cerr << "CachedResourceStreamingClient::~CachedResourceStreamingClient exit" << endl;
 }
 
 bool CachedResourceStreamingClient::loadFailed() const
 {
+    //cerr << "CachedResourceStreamingClient::loadFailed enter and exit" << endl;
+
     return !m_resource;
 }
 
 void CachedResourceStreamingClient::setDefersLoading(bool defers)
 {
+    //cerr << "CachedResourceStreamingClient::setDefersLoading enter" << endl;
+
     if (m_resource)
         m_resource->setDefersLoading(defers);
+
+    //cerr << "CachedResourceStreamingClient::setDefersLoading exit" << endl;
 }
 
 char* CachedResourceStreamingClient::getOrCreateReadBuffer(CachedResource*, size_t requestedSize, size_t& actualSize)
 {
-    return createReadBuffer(requestedSize, actualSize);
+    //cerr << "CachedResourceStreamingClient::getOrCreateReadBuffer enter" << endl;
+
+    char* output = createReadBuffer(requestedSize, actualSize);
+
+    //cerr << "CachedResourceStreamingClient::getOrCreateReadBuffer exit" << endl;
+
+    return output;
 }
 
 void CachedResourceStreamingClient::responseReceived(CachedResource* resource, const ResourceResponse& response)
 {
+    //cerr << "CachedResourceStreamingClient::responseReceived enter" << endl;
+
     CORSAccessCheckResult corsAccessCheck = CORSNoCheck;
     if (m_origin)
         corsAccessCheck = (m_origin->canRequest(response.url()) || resource->passesAccessControlCheck(m_origin.get())) ? CORSSuccess : CORSFailure;
     handleResponseReceived(response, corsAccessCheck);
+
+    //cerr << "CachedResourceStreamingClient::responseReceived exit" << endl;
 }
 
 void CachedResourceStreamingClient::dataReceived(CachedResource*, const char* data, int length)
 {
+    //cerr << "CachedResourceStreamingClient::dataReceived enter" << endl;
+
     handleDataReceived(data, length);
+
+    //cerr << "CachedResourceStreamingClient::dataReceived exit" << endl;
 }
 
 void CachedResourceStreamingClient::notifyFinished(CachedResource* resource)
 {
+    //cerr << "CachedResourceStreamingClient::notifyFinished enter" << endl;
+
     if (resource->loadFailedOrCanceled()) {
         WebKitWebSrc* src = WEBKIT_WEB_SRC(m_src);
 
@@ -1241,76 +1446,118 @@ void CachedResourceStreamingClient::notifyFinished(CachedResource* resource)
             GST_ELEMENT_ERROR(src, RESOURCE, FAILED, ("%s", error.localizedDescription().utf8().data()), (0));
         }
         gst_app_src_end_of_stream(src->priv->appsrc);
+
+        //cerr << "CachedResourceStreamingClient::notifyFinished exit 1" << endl;
         return;
     }
 
     handleNotifyFinished();
+    //cerr << "CachedResourceStreamingClient::notifyFinished exit 2" << endl;
 }
 
 ResourceHandleStreamingClient::ResourceHandleStreamingClient(WebKitWebSrc* src, const ResourceRequest& request)
     : StreamingClient(src)
 {
+    //cerr << "CachedResourceStreamingClient::ResourceHandleStreamingClient enter" << endl;
+
     NetworkingContext* context = 0;
     if (s_cachedResourceLoader)
         context = s_cachedResourceLoader->frame()->loader()->networkingContext();
     m_resource = ResourceHandle::create(context, request, this, false, false);
+
+    //cerr << "CachedResourceStreamingClient::ResourceHandleStreamingClient exit" << endl;
 }
 
 ResourceHandleStreamingClient::~ResourceHandleStreamingClient()
 {
+    //cerr << "ResourceHandleStreamingClient::~ResourceHandleStreamingClient enter" << endl;
+
     if (m_resource) {
         m_resource->cancel();
         m_resource.release();
         m_resource = 0;
     }
+
+    //cerr << "ResourceHandleStreamingClient::~ResourceHandleStreamingClient exit" << endl;
 }
 
 bool ResourceHandleStreamingClient::loadFailed() const
 {
+    //cerr << "ResourceHandleStreamingClient::loadFailed enter and exit" << endl;
+
     return !m_resource;
 }
 
 void ResourceHandleStreamingClient::setDefersLoading(bool defers)
 {
+    //cerr << "ResourceHandleStreamingClient::setDefersLoading enter" << endl;
+
     if (m_resource)
         m_resource->setDefersLoading(defers);
+
+    //cerr << "ResourceHandleStreamingClient::setDefersLoading exit" << endl;
 }
 
 char* ResourceHandleStreamingClient::getOrCreateReadBuffer(size_t requestedSize, size_t& actualSize)
 {
-    return createReadBuffer(requestedSize, actualSize);
+    //cerr << "ResourceHandleStreamingClient::getOrCreateReadBuffer enter" << endl;
+
+    char* output = createReadBuffer(requestedSize, actualSize);
+
+    //cerr << "ResourceHandleStreamingClient::getOrCreateReadBuffer exit" << endl;
+
+    return output;
 }
 
 void ResourceHandleStreamingClient::willSendRequest(ResourceHandle*, ResourceRequest&, const ResourceResponse&)
 {
+    //cerr << "ResourceHandleStreamingClient::willSendRequest enter and exit" << endl;
 }
 
 void ResourceHandleStreamingClient::didReceiveResponse(ResourceHandle*, const ResourceResponse& response)
 {
+    //cerr << "ResourceHandleStreamingClient::didReceiveResponse enter" << endl;
+
     handleResponseReceived(response, CORSNoCheck);
+
+    //cerr << "ResourceHandleStreamingClient::didReceiveResponse exit" << endl;
 }
 
 void ResourceHandleStreamingClient::didReceiveData(ResourceHandle*, const char* data, int length, int)
 {
+    //cerr << "ResourceHandleStreamingClient::didReceiveData enter" << endl;
+
     handleDataReceived(data, length);
+
+    //cerr << "ResourceHandleStreamingClient::didReceiveData exit" << endl;
 }
 
 void ResourceHandleStreamingClient::didFinishLoading(ResourceHandle*, double)
 {
+    //cerr << "ResourceHandleStreamingClient::didFinishLoading enter" << endl;
+
     handleNotifyFinished();
+
+    //cerr << "ResourceHandleStreamingClient::didFinishLoading exit" << endl;
 }
 
 void ResourceHandleStreamingClient::didFail(ResourceHandle*, const ResourceError& error)
 {
+    //cerr << "ResourceHandleStreamingClient::didFail enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(m_src);
 
     GST_ERROR_OBJECT(src, "Have failure: %s", error.localizedDescription().utf8().data());
     GST_ELEMENT_ERROR(src, RESOURCE, FAILED, ("%s", error.localizedDescription().utf8().data()), (0));
     gst_app_src_end_of_stream(src->priv->appsrc);
+
+    //cerr << "ResourceHandleStreamingClient::didFail exit" << endl;
 }
 
 void ResourceHandleStreamingClient::wasBlocked(ResourceHandle*)
 {
+    //cerr << "ResourceHandleStreamingClient::wasBlocked enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(m_src);
     GOwnPtr<gchar> uri;
 
@@ -1321,10 +1568,14 @@ void ResourceHandleStreamingClient::wasBlocked(ResourceHandle*)
     locker.unlock();
 
     GST_ELEMENT_ERROR(src, RESOURCE, OPEN_READ, ("Access to \"%s\" was blocked", uri.get()), (0));
+
+    //cerr << "ResourceHandleStreamingClient::wasBlocked exit" << endl;
 }
 
 void ResourceHandleStreamingClient::cannotShowURL(ResourceHandle*)
 {
+    //cerr << "ResourceHandleStreamingClient::cannotShowURL enter" << endl;
+
     WebKitWebSrc* src = WEBKIT_WEB_SRC(m_src);
     GOwnPtr<gchar> uri;
 
@@ -1335,6 +1586,8 @@ void ResourceHandleStreamingClient::cannotShowURL(ResourceHandle*)
     locker.unlock();
 
     GST_ELEMENT_ERROR(src, RESOURCE, OPEN_READ, ("Can't show \"%s\"", uri.get()), (0));
+
+    //cerr << "ResourceHandleStreamingClient::cannotShowURL exit" << endl;
 }
 
 #endif // USE(GSTREAMER)
