@@ -89,10 +89,6 @@
 #endif
 #endif // GST_API_VERSION_1
 
-#include <iostream>
-using std::cerr;
-using std::endl;
-
 static GstStaticPadTemplate s_sinkTemplate = GST_STATIC_PAD_TEMPLATE("sink", GST_PAD_SINK, GST_PAD_ALWAYS, GST_STATIC_CAPS(WEBKIT_VIDEO_SINK_PAD_CAPS));
 
 
@@ -231,17 +227,13 @@ static gboolean webkitVideoSinkTimeoutCallback(gpointer data)
 
 static GstFlowReturn webkitVideoSinkRender(GstBaseSink* baseSink, GstBuffer* buffer)
 {
-    cerr << "webkitVideoSinkRender enter" << endl;
-
     WebKitVideoSink* sink = WEBKIT_VIDEO_SINK(baseSink);
     WebKitVideoSinkPrivate* priv = sink->priv;
 
-    cerr << "webkitVideoSinkRender about to lock mutex" << endl;
     g_mutex_lock(priv->bufferMutex);
 
     if (priv->unlocked) {
         g_mutex_unlock(priv->bufferMutex);
-        cerr << "webkitVideoSinkRender exit because of unlocked" << endl;
         return GST_FLOW_OK;
     }
 
@@ -250,7 +242,6 @@ static GstFlowReturn webkitVideoSinkRender(GstBaseSink* baseSink, GstBuffer* buf
     // another sink.
     if (priv->gstGWorld->isFullscreen()) {
         g_mutex_unlock(priv->bufferMutex);
-        cerr << "webkitVideoSinkRender exit because of native fullscreen, unlocked mutex" << endl;
         return GST_FLOW_OK;
     }
 #endif
@@ -261,7 +252,6 @@ static GstFlowReturn webkitVideoSinkRender(GstBaseSink* baseSink, GstBuffer* buf
     // For the unlikely case where the buffer has no caps, the caps
     // are implicitely the caps of the pad. This shouldn't happen.
     if (UNLIKELY(!GST_BUFFER_CAPS(buffer))) {
-        cerr << "webkitVideoSinkRender setting caps to those of pad" << endl;
         buffer = priv->buffer = gst_buffer_make_metadata_writable(priv->buffer);
         gst_buffer_set_caps(priv->buffer, GST_PAD_CAPS(GST_BASE_SINK_PAD(baseSink)));
     }
@@ -270,31 +260,24 @@ static GstFlowReturn webkitVideoSinkRender(GstBaseSink* baseSink, GstBuffer* buf
 #else
     GRefPtr<GstCaps> caps;
     // The video info structure is valid only if the sink handled an allocation query.
-    if (GST_VIDEO_INFO_FORMAT(&priv->info) != GST_VIDEO_FORMAT_UNKNOWN) {
-        cerr << "webkitVideoSinkRender video info format is not UNKNOWN" << endl;
+    if (GST_VIDEO_INFO_FORMAT(&priv->info) != GST_VIDEO_FORMAT_UNKNOWN)
         caps = adoptGRef(gst_video_info_to_caps(&priv->info));
-    } else {
-        cerr << "webkitVideoSinkRender video info format is UNKNOWN" << endl;
+    else
         caps = priv->currentCaps;
-    }
 #endif
 
     GstVideoFormat format;
     WebCore::IntSize size;
     int pixelAspectRatioNumerator, pixelAspectRatioDenominator, stride;
     if (!getVideoSizeAndFormatFromCaps(caps.get(), size, format, pixelAspectRatioNumerator, pixelAspectRatioDenominator, stride)) {
-        cerr << "webkitVideoSinkRender failed to get video size and format from caps" << endl;
         gst_buffer_unref(buffer);
         g_mutex_unlock(priv->bufferMutex);
-        cerr << "webkitVideoSinkRender returning flow error" << endl;
         return GST_FLOW_ERROR;
     }
 
     // Cairo's ARGB has pre-multiplied alpha while GStreamer's doesn't.
     // Here we convert to Cairo's ARGB.
     if (format == GST_VIDEO_FORMAT_ARGB || format == GST_VIDEO_FORMAT_BGRA) {
-        cerr << "webkitVideoSinkRender converting to Cairo's ARGB" << endl;
-
         // Because GstBaseSink::render() only owns the buffer reference in the
         // method scope we can't use gst_buffer_make_writable() here. Also
         // The buffer content should not be changed here because the same buffer
@@ -303,9 +286,7 @@ static GstFlowReturn webkitVideoSinkRender(GstBaseSink* baseSink, GstBuffer* buf
 
         // Check if allocation failed.
         if (UNLIKELY(!newBuffer)) {
-            cerr << "webkitVideoSinkRender allocation failed of new buffer" << endl;
             g_mutex_unlock(priv->bufferMutex);
-            cerr << "webkitVideoSinkRender returning flow error" << endl;
             return GST_FLOW_ERROR;
         }
 
@@ -314,11 +295,9 @@ static GstFlowReturn webkitVideoSinkRender(GstBaseSink* baseSink, GstBuffer* buf
         // For 720p/PAL for example this means 1280*720*25=23040000
         // function calls per second!
 #ifndef GST_API_VERSION_1
-        cerr << "webkitVideoSinkRender not gst api 1, getting source and dest buffer" << endl;
         const guint8* source = GST_BUFFER_DATA(buffer);
         guint8* destination = GST_BUFFER_DATA(newBuffer);
 #else
-        cerr << "webkitVideoSinkRender gst api 1, getting source and dest buffer" << endl;
         GstMapInfo sourceInfo;
         GstMapInfo destinationInfo;
         gst_buffer_map(buffer, &sourceInfo, GST_MAP_READ);
@@ -327,7 +306,6 @@ static GstFlowReturn webkitVideoSinkRender(GstBaseSink* baseSink, GstBuffer* buf
         guint8* destination = static_cast<guint8*>(destinationInfo.data);
 #endif
 
-        cerr << "webkitVideoSinkRender looping over pixels, fixing alpha" << endl;
         for (int x = 0; x < size.height(); x++) {
             for (int y = 0; y < size.width(); y++) {
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
@@ -349,7 +327,6 @@ static GstFlowReturn webkitVideoSinkRender(GstBaseSink* baseSink, GstBuffer* buf
         }
 
 #ifdef GST_API_VERSION_1
-        cerr << "webkitVideoSinkRender gst api 1, unmapping pointers" << endl;
         gst_buffer_unmap(buffer, &sourceInfo);
         gst_buffer_unmap(newBuffer, &destinationInfo);
 #endif
@@ -360,15 +337,11 @@ static GstFlowReturn webkitVideoSinkRender(GstBaseSink* baseSink, GstBuffer* buf
     // This should likely use a lower priority, but glib currently starves
     // lower priority sources.
     // See: https://bugzilla.gnome.org/show_bug.cgi?id=610830.
-    cerr << "webkitVideoSinkRender adding time out to private struct" << endl;
-
     priv->timeoutId = g_timeout_add_full(G_PRIORITY_DEFAULT, 0, webkitVideoSinkTimeoutCallback,
                                           gst_object_ref(sink), reinterpret_cast<GDestroyNotify>(gst_object_unref));
 
     g_cond_wait(priv->dataCondition, priv->bufferMutex);
     g_mutex_unlock(priv->bufferMutex);
-
-    cerr << "webkitVideoSinkRender exit, returning FLOW OK" << endl;
     return GST_FLOW_OK;
 }
 

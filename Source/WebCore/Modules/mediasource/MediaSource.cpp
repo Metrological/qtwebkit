@@ -56,10 +56,6 @@
 #include <wtf/text/CString.h>
 #include <wtf/text/WTFString.h>
 
-#include <iostream>
-using std::cerr;
-using std::endl;
-
 namespace WebCore {
 
 URLRegistry* MediaSource::s_registry = 0;
@@ -72,12 +68,8 @@ void MediaSource::setRegistry(URLRegistry* registry)
 
 PassRefPtr<MediaSource> MediaSource::create(ScriptExecutionContext* context)
 {
-    cerr << "MediaSource::create entered" << endl;
-
     RefPtr<MediaSource> mediaSource(adoptRef(new MediaSource(context)));
     mediaSource->suspendIfNeeded();
-
-	cerr << "MediaSource::create about to exit by passing result from mediaSource.release" << endl;
     return mediaSource.release();
 }
 
@@ -89,8 +81,6 @@ MediaSource::MediaSource(ScriptExecutionContext* context)
     , m_readyState(closedKeyword())
     , m_asyncEventQueue(GenericEventQueue::create(this))
 {
-    cerr << "MediaSource constructor (l92) entered" << endl;
-
     LOG(MediaSource, "MediaSource::MediaSource %p", this);
     m_sourceBuffers = SourceBufferList::create(scriptExecutionContext());
     m_activeSourceBuffers = SourceBufferList::create(scriptExecutionContext());
@@ -541,15 +531,12 @@ void MediaSource::streamEndedWithError(const AtomicString& error, ExceptionCode&
 
 SourceBuffer* MediaSource::addSourceBuffer(const String& type, ExceptionCode& ec)
 {
-    cerr << "MediaSource::addSourceBuffer entered" << endl;
-
     LOG(MediaSource, "MediaSource::addSourceBuffer(%s) %p", type.ascii().data(), this);
 
     // 2.2 https://dvcs.w3.org/hg/html-media/raw-file/default/media-source/media-source.html#widl-MediaSource-addSourceBuffer-SourceBuffer-DOMString-type
     // 1. If type is null or an empty then throw an INVALID_ACCESS_ERR exception and
     // abort these steps.
     if (type.isNull() || type.isEmpty()) {
-        cerr << "MediaSource::addSourceBuffer exit on isNull/isEmpty" << endl;
         ec = INVALID_ACCESS_ERR;
         return 0;
     }
@@ -557,7 +544,6 @@ SourceBuffer* MediaSource::addSourceBuffer(const String& type, ExceptionCode& ec
     // 2. If type contains a MIME type that is not supported ..., then throw a
     // NOT_SUPPORTED_ERR exception and abort these steps.
     if (!isTypeSupported(type)) {
-        cerr << "MediaSource::addSourceBuffer exit on isTypeSupported" << endl;
         ec = NOT_SUPPORTED_ERR;
         return 0;
     }
@@ -565,7 +551,6 @@ SourceBuffer* MediaSource::addSourceBuffer(const String& type, ExceptionCode& ec
     // 4. If the readyState attribute is not in the "open" state then throw an
     // INVALID_STATE_ERR exception and abort these steps.
     if (!isOpen()) {
-        cerr << "MediaSource::addSourceBuffer exit on isOpen" << endl;
         ec = INVALID_STATE_ERR;
         return 0;
     }
@@ -575,7 +560,6 @@ SourceBuffer* MediaSource::addSourceBuffer(const String& type, ExceptionCode& ec
     RefPtr<SourceBufferPrivate> sourceBufferPrivate = createSourceBufferPrivate(contentType, ec);
 
     if (!sourceBufferPrivate) {
-        cerr << "MediaSource::addSourceBuffer exit on !sourceBufferPrivate" << endl;
         ASSERT(ec == NOT_SUPPORTED_ERR || ec == QUOTA_EXCEEDED_ERR);
         // 2. If type contains a MIME type that is not supported ..., then throw a NOT_SUPPORTED_ERR exception and abort these steps.
         // 3. If the user agent can't handle any more SourceBuffer objects then throw a QUOTA_EXCEEDED_ERR exception and abort these steps
@@ -749,8 +733,6 @@ void MediaSource::removeSourceBuffer(SourceBuffer* buffer, ExceptionCode& ec)
 
 bool MediaSource::isTypeSupported(const String& type)
 {
-    cerr << "MediaSource::isTypeSupported entered" << endl;
-
     LOG(MediaSource, "MediaSource::isTypeSupported(%s)", type.ascii().data());
 
     // Section 2.2 isTypeSupported() method steps.
@@ -881,17 +863,12 @@ Vector<PlatformTimeRanges> MediaSource::activeRanges() const
 
 RefPtr<SourceBufferPrivate> MediaSource::createSourceBufferPrivate(const ContentType& type, ExceptionCode& ec)
 {
-    cerr << "MediaSource::createSourceBufferPrivate enter" << endl;
-
     RefPtr<SourceBufferPrivate> sourceBufferPrivate;
-    cerr << "MediaSource::createSourceBufferPrivate about to switch on addSourceBuffer" << endl;
     switch (m_private->addSourceBuffer(type, sourceBufferPrivate)) {
     case MediaSourcePrivate::Ok: {
-        cerr << "MediaSource::createSourceBufferPrivate switch: Ok" << endl;
         return sourceBufferPrivate;
     }
     case MediaSourcePrivate::NotSupported:
-        cerr << "MediaSource::createSourceBufferPrivate switch: NotSupported" << endl;
         // 2.2 https://dvcs.w3.org/hg/html-media/raw-file/default/media-source/media-source.html#widl-MediaSource-addSourceBuffer-SourceBuffer-DOMString-type
         // Step 2: If type contains a MIME type ... that is not supported with the types
         // specified for the other SourceBuffer objects in sourceBuffers, then throw
@@ -899,7 +876,6 @@ RefPtr<SourceBufferPrivate> MediaSource::createSourceBufferPrivate(const Content
         ec = NOT_SUPPORTED_ERR;
         return 0;
     case MediaSourcePrivate::ReachedIdLimit:
-        cerr << "MediaSource::createSourceBufferPrivate switch: ReachedLimit" << endl;
         // 2.2 https://dvcs.w3.org/hg/html-media/raw-file/default/media-source/media-source.html#widl-MediaSource-addSourceBuffer-SourceBuffer-DOMString-type
         // Step 3: If the user agent can't handle any more SourceBuffer objects then throw
         // a QUOTA_EXCEEDED_ERR exception and abort these steps.
@@ -907,7 +883,6 @@ RefPtr<SourceBufferPrivate> MediaSource::createSourceBufferPrivate(const Content
         return 0;
     }
 
-    cerr << "MediaSource::createSourceBufferPrivate after switch, return 0" << endl;
     ASSERT_NOT_REACHED();
     return 0;
 }

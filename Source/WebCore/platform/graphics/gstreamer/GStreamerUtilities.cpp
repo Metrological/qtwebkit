@@ -24,13 +24,7 @@
 #include <gst/gst.h>
 #include <wtf/gobject/GOwnPtr.h>
 
-// TODO: can this one be made a bit less specific ("video.info.h", for example)?
-#include <gstreamer-1.0/gst/video/video-info.h>
-#include "IntSize.h"
-
 namespace WebCore {
-
-const char* webkitGstMapInfoQuarkString = "webkit-gst-map-info";
 
 bool initializeGStreamer()
 {
@@ -46,26 +40,6 @@ bool initializeGStreamer()
     return gstInitialized;
 }
 
-#if ENABLE(VIDEO)
-bool getVideoSizeAndFormatFromCaps(GstCaps* caps, WebCore::IntSize& size, GstVideoFormat& format, int& pixelAspectRatioNumerator, int& pixelAspectRatioDenominator, int& stride)
-{
-    GstVideoInfo info;
-
-    gst_video_info_init(&info);
-    if (!gst_video_info_from_caps(&info, caps))
-        return false;
-
-    format = GST_VIDEO_INFO_FORMAT(&info);
-    size.setWidth(GST_VIDEO_INFO_WIDTH(&info));
-    size.setHeight(GST_VIDEO_INFO_HEIGHT(&info));
-    pixelAspectRatioNumerator = GST_VIDEO_INFO_PAR_N(&info);
-    pixelAspectRatioDenominator = GST_VIDEO_INFO_PAR_D(&info);
-    stride = GST_VIDEO_INFO_PLANE_STRIDE(&info, 0);
-
-    return true;
-}
-#endif
-
 unsigned getGstPlaysFlag(const char* nick)
 {
     static GFlagsClass* flagsClass = static_cast<GFlagsClass*>(g_type_class_ref(g_type_from_name("GstPlayFlags")));
@@ -77,87 +51,6 @@ unsigned getGstPlaysFlag(const char* nick)
 
     return flag->value;
 }
-
-GstBuffer* createGstBufferForData(const char* data, int length)
-{
-    GstBuffer* buffer = gst_buffer_new_and_alloc(length);
-
-    gst_buffer_fill(buffer, 0, data, length);
-
-    return buffer;
-}
-
-char* getGstBufferDataPointer(GstBuffer* buffer)
-{
-    GstMiniObject* miniObject = reinterpret_cast<GstMiniObject*>(buffer);
-    GstMapInfo* mapInfo = static_cast<GstMapInfo*>(gst_mini_object_get_qdata(miniObject, g_quark_from_static_string(webkitGstMapInfoQuarkString)));
-    return reinterpret_cast<char*>(mapInfo->data);
-}
-
-void mapGstBuffer(GstBuffer* buffer)
-{
-    GstMapInfo* mapInfo = g_slice_new(GstMapInfo);
-    if (!gst_buffer_map(buffer, mapInfo, GST_MAP_WRITE)) {
-        g_slice_free(GstMapInfo, mapInfo);
-        gst_buffer_unref(buffer);
-        return;
-    }
-
-    GstMiniObject* miniObject = reinterpret_cast<GstMiniObject*>(buffer);
-    gst_mini_object_set_qdata(miniObject, g_quark_from_static_string(webkitGstMapInfoQuarkString), mapInfo, 0);
-}
-
-void unmapGstBuffer(GstBuffer* buffer)
-{
-    GstMiniObject* miniObject = reinterpret_cast<GstMiniObject*>(buffer);
-    GstMapInfo* mapInfo = static_cast<GstMapInfo*>(gst_mini_object_steal_qdata(miniObject, g_quark_from_static_string(webkitGstMapInfoQuarkString)));
-
-    if (!mapInfo)
-        return;
-
-    gst_buffer_unmap(buffer, mapInfo);
-    g_slice_free(GstMapInfo, mapInfo);
-}
-
-GstPad* webkitGstGhostPadFromStaticTemplate(GstStaticPadTemplate* staticPadTemplate, const gchar* name, GstPad* target)
-{
-    GstPad* pad;
-    GstPadTemplate* padTemplate = gst_static_pad_template_get(staticPadTemplate);
-
-    if (target)
-        pad = gst_ghost_pad_new_from_template(name, target, padTemplate);
-    else
-        pad = gst_ghost_pad_new_no_target_from_template(name, padTemplate);
-
-    gst_object_unref(padTemplate);
-
-    return pad;
-}
-
-unsigned getGstPlayFlag(const char* nick)
-{
-    static GFlagsClass* flagsClass = static_cast<GFlagsClass*>(g_type_class_ref(g_type_from_name("GstPlayFlags")));
-    ASSERT(flagsClass);
-
-    GFlagsValue* flag = g_flags_get_value_by_nick(flagsClass, nick);
-    if (!flag)
-        return 0;
-
-    return flag->value;
-}
-
-GstClockTime toGstClockTime(float time)
-{
-    // Extract the integer part of the time (seconds) and the fractional part (microseconds). Attempt to
-    // round the microseconds so no floating point precision is lost and we can perform an accurate seek.
-    float seconds;
-    float microSeconds = std::modf(time, &seconds) * 1000000;
-    GTimeVal timeValue;
-    timeValue.tv_sec = static_cast<glong>(seconds);
-    timeValue.tv_usec = static_cast<glong>(roundf(microSeconds / 10000) * 10000);
-    return GST_TIMEVAL_TO_TIME(timeValue);
-}
-
 
 }
 

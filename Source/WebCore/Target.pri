@@ -2256,7 +2256,6 @@ HEADERS += \
     platform/graphics/texmap/GraphicsLayerTextureMapper.h \
     platform/graphics/texmap/GraphicsLayerTextureMapper.h \
     platform/graphics/texmap/TextureMapper.h \
-    platform/graphics/texmap/TextureMapper.h \
     platform/graphics/texmap/TextureMapperBackingStore.h \
     platform/graphics/texmap/TextureMapperFPSCounter.h \
     platform/graphics/texmap/TextureMapperImageBuffer.h \
@@ -2916,7 +2915,6 @@ SOURCES += \
     platform/graphics/texmap/TextureMapperTile.cpp \
     platform/graphics/texmap/TextureMapperTiledBackingStore.cpp \
     platform/network/DNSResolveQueue.cpp \
-    platform/network/DNSResolveQueue.cpp \
     platform/network/MIMESniffing.cpp \
     platform/Cursor.cpp \
     platform/ContextMenu.cpp \
@@ -3249,7 +3247,7 @@ enable?(MEDIA_SOURCE) {
             platform/audio/gstreamer/AudioSourceProviderGStreamer.h
        SOURCES += \
             platform/graphics/gstreamer/WebKitMediaSourceGStreamer.cpp \
-            platform/audio/gstreamer/AudioSourceProviderGStreamer.cpp \
+#            platform/audio/gstreamer/AudioSourceProviderGStreamer.cpp \
             platform/graphics/gstreamer/WebKitMediaAesCtr.c \
             platform/graphics/gstreamer/SourceBufferPrivateGStreamer.cpp \
             platform/graphics/gstreamer/MediaSourceGStreamer.cpp
@@ -3383,9 +3381,9 @@ enable?(ENCRYPTED_MEDIA_V2) {
             platform/network/HTTPHeaderNames.h
 
         SOURCES += \
-            platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp \ 
-            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp \
-            platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp \
+#            platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp \ 
+#            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp \
+#            platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp \
             platform/network/HTTPHeaderNames.cpp
     }
 }
