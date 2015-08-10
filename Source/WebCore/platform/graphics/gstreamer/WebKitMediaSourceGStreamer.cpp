@@ -43,11 +43,6 @@
 #include <gst/video/video.h>
 #include <wtf/text/CString.h>
 #include <wtf/gobject/GOwnPtr.h>
-#include "GStreamerUtilities.h"
-
-#include <iostream>
-using std::cerr;
-using std::endl;
 
 namespace WebCore
 {
@@ -304,6 +299,7 @@ static gboolean webKitMediaSrcDemuxerEventWithParent(GstPad*, GstObject*, GstEve
 static gboolean webKitMediaSrcSeekDataCb(GstAppSrc*, guint64 offset, gpointer userData);
 
 static Stream* getStreamByDemuxerPad(WebKitMediaSrc* src, const GstPad* demuxersrcpad);
+static GstClockTime toGstClockTime(float);
 
 static void webkit_media_src_set_appending(WebKitMediaSrc*, gboolean);
 
@@ -502,15 +498,11 @@ static GstStateChangeReturn webKitMediaSrcChangeState(GstElement* element, GstSt
 
 static gboolean webKitMediaSrcQueryWithParent(GstPad* pad, GstObject* parent, GstQuery* query)
 {
-    cerr << "(WebKitMediaSourceGStreamer::)webKitMediaSrcQueryWithParent enter" << endl;
-
     WebKitMediaSrc* src = WEBKIT_MEDIA_SRC(GST_ELEMENT(parent));
     gboolean result = FALSE;
 
     switch (GST_QUERY_TYPE(query)) {
     case GST_QUERY_DURATION: {
-        cerr << "(WebKitMediaSourceGStreamer::)webKitMediaSrcQueryWithParent query DURATION" << endl;
-
         GstFormat format;
         gst_query_parse_duration(query, &format, NULL);
 
@@ -524,7 +516,6 @@ static gboolean webKitMediaSrcQueryWithParent(GstPad* pad, GstObject* parent, Gs
         break;
     }
     case GST_QUERY_URI:
-        cerr << "(WebKitMediaSourceGStreamer::)webKitMediaSrcQueryWithParent query URI" << endl;
         GST_OBJECT_LOCK(src);
         if (src && src->priv)
             gst_query_set_uri(query, src->priv->location);
@@ -532,8 +523,6 @@ static gboolean webKitMediaSrcQueryWithParent(GstPad* pad, GstObject* parent, Gs
         result = TRUE;
         break;
     default:{
-        cerr << "(WebKitMediaSourceGStreamer::)webKitMediaSrcQueryWithParent query default" << endl;
-
         GRefPtr<GstPad> target = adoptGRef(gst_ghost_pad_get_target(GST_GHOST_PAD_CAST(pad)));
         // Forward the query to the proxy target pad.
         if (target)
@@ -541,8 +530,6 @@ static gboolean webKitMediaSrcQueryWithParent(GstPad* pad, GstObject* parent, Gs
         break;
     }
     }
-
-    cerr << "(WebKitMediaSourceGStreamer::)webKitMediaSrcQueryWithParent exit" << endl;
 
     return result;
 }
@@ -642,7 +629,7 @@ static gboolean webKitMediaSrcDemuxerSinkEventWithParent(GstPad* pad, GstObject*
         GstSegment* segment = gst_segment_new();
         gst_segment_init(segment, GST_FORMAT_TIME);
 
-        segment->start = WebCore::toGstClockTime(nextSamplePts.toFloat());
+        segment->start =toGstClockTime(nextSamplePts.toFloat());
         segment->stop = GST_CLOCK_TIME_NONE;
 
         gst_element_send_event(GST_ELEMENT(parent), gst_event_new_segment(segment));
@@ -1309,8 +1296,6 @@ static void webKitMediaSrcDemuxerNoMorePads(GstElement*, Source* source)
 
 static void webKitMediaSrcHaveType(GstElement* typefind, guint probability, GstCaps* caps, Source* source)
 {
-    cerr << "webKitMediaSrcHaveType entered" << endl;
-
     GST_OBJECT_LOCK(source->parent);
     bool alreadyProcessed = source->demuxer || source->streams;
     GST_OBJECT_UNLOCK(source->parent);
@@ -1323,14 +1308,11 @@ static void webKitMediaSrcHaveType(GstElement* typefind, guint probability, GstC
     GstElement* demuxer = NULL;
     GstElement* multiqueue = NULL;
 
-    cerr << "webKitMediaSrcHaveType before demuxer if" << endl;
     if (gst_structure_has_name(s, "video/webm") || gst_structure_has_name(s, "audio/webm")) {
         demuxer = gst_element_factory_make("matroskademux", NULL);
     } else if (gst_structure_has_name(s, "video/quicktime") || gst_structure_has_name(s, "audio/x-m4a")
                || gst_structure_has_name(s, "application/x-3gp")) {
-        cerr << "webKitMediaSrcHaveType setting demuxer to qtdemux" << endl;
         demuxer = gst_element_factory_make("qtdemux", NULL);
-        cerr << "webKitMediaSrcHaveType done setting demuxer to qtdemux" << endl;
     } else if (gst_structure_has_name(s, "video/mpegts")) {
         demuxer = gst_element_factory_make("tsdemux", NULL);
     } else if (gst_structure_has_name(s, "audio/mpeg")) {
@@ -1349,7 +1331,6 @@ static void webKitMediaSrcHaveType(GstElement* typefind, guint probability, GstC
     } else {
         g_assert_not_reached();
     }
-    cerr << "webKitMediaSrcHaveType after demuxer if" << endl;
 
     if (demuxer) {
         multiqueue = gst_element_factory_make("multiqueue", NULL);
@@ -1383,7 +1364,6 @@ static void webKitMediaSrcHaveType(GstElement* typefind, guint probability, GstC
         g_assert_not_reached();
     }
 
-    cerr << "webKitMediaSrcHaveType exit" << endl;
 }
 
 // uri handler interface
@@ -1518,13 +1498,10 @@ MediaSourceClientGStreamer::~MediaSourceClientGStreamer()
 
 MediaSourcePrivate::AddStatus MediaSourceClientGStreamer::addSourceBuffer(PassRefPtr<SourceBufferPrivateGStreamer> sourceBufferPrivate, const ContentType&)
 {
-    cerr << "MediaSourceClientGStreamer::addSourceBuffer entered" << endl;
-
     WebKitMediaSrcPrivate* priv = m_src->priv;
 
     if (priv->noMorePads) {
         GST_ERROR_OBJECT(m_src.get(), "Adding new source buffers after first data not supported yet");
-        cerr << "MediaSourceClientGStreamer::addSourceBuffer returning NotSupported" << endl;
         return MediaSourcePrivate::NotSupported;
     }
 
@@ -1559,7 +1536,6 @@ MediaSourcePrivate::AddStatus MediaSourceClientGStreamer::addSourceBuffer(PassRe
     gst_element_sync_state_with_parent(source->src);
     gst_element_sync_state_with_parent(source->typefind);
 
-    cerr << "MediaSourceClientGStreamer::addSourceBuffer returning Ok" << endl;
     return MediaSourcePrivate::Ok;
 }
 
@@ -1686,8 +1662,6 @@ void MediaSourceClientGStreamer::markEndOfStream(MediaSourcePrivate::EndOfStream
 
 void MediaSourceClientGStreamer::removedFromMediaSource(PassRefPtr<SourceBufferPrivateGStreamer> sourceBufferPrivate)
 {
-    cerr << "MediaSourceClientGStreamer::removedFromMediaSource enter" << endl;
-
     GST_OBJECT_LOCK(m_src.get());
     WebKitMediaSrcPrivate* priv = m_src->priv;
     Source* source = 0;
@@ -1711,7 +1685,6 @@ void MediaSourceClientGStreamer::removedFromMediaSource(PassRefPtr<SourceBufferP
         source->pendingSamplesAfterInitSegment = 0;
 
         if (source->typefind) {
-            cerr << "MediaSourceClientGStreamer::removedFromMediaSource removing webKitMediaSrcHaveType" << endl;
             g_signal_handlers_disconnect_by_func(source->typefind, (gpointer)webKitMediaSrcHaveType, source);
             source->typefind = NULL;
         }
@@ -1945,6 +1918,18 @@ void webkit_media_src_set_seek_time(WebKitMediaSrc* src, const MediaTime& time)
     src->priv->flushAndReenqueueCount = 0;
 }
 
+static GstClockTime toGstClockTime(float time)
+{
+    // Extract the integer part of the time (seconds) and the fractional part (microseconds). Attempt to
+    // round the microseconds so no floating point precision is lost and we can perform an accurate seek.
+    float seconds;
+    float microSeconds = std::modf(time, &seconds) * 1000000;
+    GTimeVal timeValue;
+    timeValue.tv_sec = static_cast<glong>(seconds);
+    timeValue.tv_usec = static_cast<glong>(roundf(microSeconds / 10000) * 10000);
+    return GST_TIMEVAL_TO_TIME(timeValue);
+}
+
 void webkit_media_src_segment_needed(WebKitMediaSrc* src, StreamType streamType)
 {
     // The video sink has received reset-time and needs a new segment before
@@ -1992,7 +1977,7 @@ void webkit_media_src_segment_needed(WebKitMediaSrc* src, StreamType streamType)
         GstSegment* segment = gst_segment_new();
 
         gst_segment_init(segment, GST_FORMAT_TIME);
-        segment->start = WebCore::toGstClockTime(seekTime.toFloat());
+        segment->start = toGstClockTime(seekTime.toFloat());
         segment->stop = GST_CLOCK_TIME_NONE;
 
         gst_pad_push_event(demuxersrcpad, gst_event_new_segment(segment));

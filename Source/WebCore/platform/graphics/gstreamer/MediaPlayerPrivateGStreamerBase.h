@@ -26,54 +26,52 @@
 
 #include "GRefPtrGStreamer.h"
 #include "MediaPlayerPrivate.h"
-//#include "../texmap/BitmapTexture.h"
-#include "TextureMapper.h"
 
 #include <glib.h>
 
 #include <wtf/Forward.h>
-#include <wtf/glib/GSourceWrap.h>
 
-#if USE(TEXTURE_MAPPER_GL) && !USE(COORDINATED_GRAPHICS)
+#if USE(ACCELERATED_COMPOSITING) && USE(TEXTURE_MAPPER_GL)
 #include "TextureMapperPlatformLayer.h"
 #endif
 
-#if USE(COORDINATED_GRAPHICS_THREADED)
-#include "TextureMapperPlatformLayerProxy.h"
+#if USE(OPENGL_ES_2)
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 #endif
 
-typedef struct _GstSample GstSample;
+#if USE(EGL)
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#endif
+
+#if PLATFORM(QT)
+#include <QOpenGLFramebufferObject>
+#include <QOpenGLPaintDevice>
+#endif
+
+typedef struct _GstBuffer GstBuffer;
 typedef struct _GstElement GstElement;
-typedef struct _GstGLContext GstGLContext;
-typedef struct _GstGLDisplay GstGLDisplay;
 typedef struct _GstMessage GstMessage;
 typedef struct _GstStreamVolume GstStreamVolume;
-typedef struct _GstVideoInfo GstVideoInfo;
 typedef struct _WebKitVideoSink WebKitVideoSink;
-
-typedef struct _GstMiniObject GstMiniObject;
-
-typedef struct _GstEGLImageMemoryPool GstEGLImageMemoryPool;
-typedef struct _GstEGLImageMemory GstEGLImageMemory;
-typedef struct _EGLDetails EGLDetails;
 
 namespace WebCore {
 
-class BitmapTextureGL;
+class FullscreenVideoControllerGStreamer;
 class GraphicsContext;
 class IntSize;
 class IntRect;
+class GStreamerGWorld;
 
 class MediaPlayerPrivateGStreamerBase : public MediaPlayerPrivateInterface
-#if USE(TEXTURE_MAPPER_GL) && !USE(COORDINATED_GRAPHICS)
+#if USE(ACCELERATED_COMPOSITING) && USE(TEXTURE_MAPPER_GL)
     , public TextureMapperPlatformLayer
-#elif USE(COORDINATED_GRAPHICS_THREADED)
-    , public TextureMapperPlatformLayerProxyProvider
 #endif
 {
 
 public:
-    virtual ~MediaPlayerPrivateGStreamerBase();
+    ~MediaPlayerPrivateGStreamerBase();
 
     IntSize naturalSize() const;
 
@@ -81,11 +79,6 @@ public:
     float volume() const;
     void volumeChanged();
     void notifyPlayerOfVolumeChange();
-
-#if USE(GSTREAMER_GL)
-    bool ensureGstGLContext();
-#endif
-    void handleNeedContextMessage(GstMessage*);
 
     bool supportsMuting() const { return true; }
     void setMuted(bool);
@@ -102,11 +95,18 @@ public:
 
     void triggerDrain();
 
-    void triggerRepaint(GstSample*);
-    void paint(GraphicsContext*, const FloatRect&);
+    void triggerRepaint(GstBuffer*);
+    void paint(GraphicsContext*, const IntRect&);
+    bool copyVideoTextureToPlatformTexture(GraphicsContext3D*, Platform3DObject, GC3Dint, GC3Denum, GC3Denum, bool, bool);
 
     virtual bool hasSingleSecurityOrigin() const { return true; }
     virtual float maxTimeLoaded() const { return 0.0; }
+
+#if USE(NATIVE_FULLSCREEN_VIDEO)
+    void enterFullscreen();
+    void exitFullscreen();
+    bool canEnterFullscreen() const { return true; }
+#endif
 
     bool supportsFullscreen() const;
     PlatformMedia platformMedia() const;
@@ -121,77 +121,67 @@ public:
     unsigned audioDecodedByteCount() const;
     unsigned videoDecodedByteCount() const;
 
-#if USE(TEXTURE_MAPPER_GL) && !USE(COORDINATED_GRAPHICS)
+#if USE(ACCELERATED_COMPOSITING) && USE(TEXTURE_MAPPER_GL)
     virtual PlatformLayer* platformLayer() const { return const_cast<MediaPlayerPrivateGStreamerBase*>(this); }
-#if PLATFORM(WIN_CAIRO)
-    // FIXME: Accelerated rendering has not been implemented for WinCairo yet.
-    virtual bool supportsAcceleratedRendering() const { return false; }
-#else
     virtual bool supportsAcceleratedRendering() const { return true; }
-#endif
     virtual void paintToTextureMapper(TextureMapper*, const FloatRect&, const TransformationMatrix&, float);
+#if USE(GRAPHICS_SURFACE)
+    virtual IntSize platformLayerSize() const;
+    virtual uint32_t copyToGraphicsSurface();
+    virtual GraphicsSurfaceToken graphicsSurfaceToken() const;
+    virtual GraphicsSurface::Flags graphicsSurfaceFlags() const { return  GraphicsSurface::SupportsTextureTarget | GraphicsSurface::SupportsSharing | GraphicsSurface::SupportsCopyFromTexture | GraphicsSurface::IsVideo; }
+#endif
 #endif
 
-#if USE(COORDINATED_GRAPHICS_THREADED)
-    virtual PlatformLayer* platformLayer() const { return const_cast<MediaPlayerPrivateGStreamerBase*>(this); }
-    virtual bool supportsAcceleratedRendering() const { return true; }
-#endif
+    GstElement* pipeline() const { return m_pipeline; }
 
 protected:
     MediaPlayerPrivateGStreamerBase(MediaPlayer*);
-    virtual GstElement* createVideoSink();
-
+    GstElement* createVideoSink(GstElement* pipeline);
     void setStreamVolumeElement(GstStreamVolume*);
-    virtual GstElement* createAudioSink() { return 0; }
     virtual GstElement* audioSink() const { return 0; }
-
-    void setPipeline(GstElement*);
-
-    virtual GRefPtr<GstCaps> currentDemuxerCaps() const { return nullptr; }
+    GRefPtr<GstCaps> currentVideoSinkCaps() const;
+    virtual GRefPtr<GstCaps> currentDemuxerCaps() const { return 0; }
 
     MediaPlayer* m_player;
-    GRefPtr<GstElement> m_pipeline;
     GRefPtr<GstStreamVolume> m_volumeElement;
-    GRefPtr<GstElement> m_videoSink;
-    GRefPtr<GstElement> m_fpsSink;
+    GRefPtr<GstElement> m_webkitVideoSink;
+    GRefPtr<GstElement> m_videoSinkBin;
+    GstElement* m_fpsSink;
     MediaPlayer::ReadyState m_readyState;
     MediaPlayer::NetworkState m_networkState;
     bool m_isEndReached;
     IntSize m_size;
-    mutable GMutex m_sampleMutex;
-    GRefPtr<GstSample> m_sample;
-    GSourceWrap::Static m_volumeTimerHandler;
-    GSourceWrap::Static m_muteTimerHandler;
-#if USE(GSTREAMER_GL)
-    GThreadSafeMainLoopSource m_drawTimerHandler;
-    GCond m_drawCondition;
-    GMutex m_drawMutex;
+    GMutex* m_bufferMutex;
+    GstBuffer* m_buffer;
+#if USE(NATIVE_FULLSCREEN_VIDEO)
+    RefPtr<GStreamerGWorld> m_gstGWorld;
+    OwnPtr<FullscreenVideoControllerGStreamer> m_fullscreenVideoController;
 #endif
+    unsigned long m_volumeTimerHandler;
+    unsigned long m_muteTimerHandler;
     unsigned long m_repaintHandler;
     unsigned long m_volumeSignalHandler;
     unsigned long m_muteSignalHandler;
     unsigned long m_drainHandler;
     mutable IntSize m_videoSize;
-    bool m_usingFallbackVideoSink;
-#if USE(TEXTURE_MAPPER_GL) && !USE(COORDINATED_GRAPHICS_MULTIPROCESS)
-    PassRefPtr<BitmapTexture> updateTexture(TextureMapper*);
-    guint m_orientation;
-    void updateTexture(BitmapTextureGL&, GstVideoInfo&);
+
+#if USE(ACCELERATED_COMPOSITING) && USE(TEXTURE_MAPPER_GL) && USE(COORDINATED_GRAPHICS) && defined(GST_API_VERSION_1) && PLATFORM(QT) && USE(EGL)
+    PassRefPtr<BitmapTexture> updateTexture(TextureMapper*, bool offscreen = false);
+    EGLImageKHR m_eglImage;
+    GLuint m_frameTexture;
+    QOpenGLFramebufferObject *m_flipFBO;
+    QOpenGLPaintDevice *m_flipPaintDevice;
+    EGLImageKHR m_flipEGLImage;
 #endif
 
-#if USE(COORDINATED_GRAPHICS_THREADED)
-    virtual RefPtr<TextureMapperPlatformLayerProxy> proxy() const override { return m_platformLayerProxy.copyRef(); }
-    virtual void swapBuffersIfNeeded() override { };
-    void updateOnCompositorThread();
-    GCond m_updateCondition;
-    GMutex m_updateMutex;
-    RefPtr<TextureMapperPlatformLayerProxy> m_platformLayerProxy;
-    RefPtr<GraphicsContext3D> m_context3D;
+#if USE(GRAPHICS_SURFACE)
+    mutable RefPtr<GraphicsSurface> m_surface;
+    GstBuffer* m_lastRenderedBuffer;
+    GstBuffer* m_bufferToUnref;
+    GstBuffer* m_intermediateBuffer;
 #endif
-#if USE(GSTREAMER_GL)
-    GRefPtr<GstGLContext> m_glContext;
-    GRefPtr<GstGLDisplay> m_glDisplay;
-#endif
+    GstElement* m_pipeline;
 };
 }
 

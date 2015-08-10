@@ -81,10 +81,6 @@
 #define PlatformMediaEngineClassName MediaPlayerPrivate
 #endif
 
-#include <iostream>
-using std::cerr;
-using std::endl;
-
 namespace WebCore {
 
 const PlatformMedia NoPlatformMedia = { PlatformMedia::None, {0} };
@@ -272,8 +268,6 @@ static const AtomicString& codecs()
 
 static MediaPlayerFactory* bestMediaEngineForTypeAndCodecs(const String& type, const String& codecs, const String& keySystem, const KURL& url, MediaPlayerFactory* current)
 {
-    cerr << "(MediaPlayer::)bestMediaEngineForTypeAndCodecs enter" << endl;
-
     if (type.isEmpty())
         return 0;
 
@@ -285,10 +279,8 @@ static MediaPlayerFactory* bestMediaEngineForTypeAndCodecs(const String& type, c
     // when used with parameters, e.g. "application/octet-stream;codecs=theora", is a type that the user agent knows 
     // it cannot render.
     if (type == applicationOctetStream()) {
-        if (!codecs.isEmpty()) {
-            cerr << "(MediaPlayer::)bestMediaEngineForTypeAndCodecs returns 0, because codecs isEmpty" << endl;
+        if (!codecs.isEmpty())
             return 0;
-        }
     }
 
     MediaPlayerFactory* engine = 0;
@@ -313,7 +305,6 @@ static MediaPlayerFactory* bestMediaEngineForTypeAndCodecs(const String& type, c
         }
     }
 
-    cerr << "(MediaPlayer::)bestMediaEngineForTypeAndCodecs exit, returning engine" << endl;
     return engine;
 }
 
@@ -423,10 +414,8 @@ void MediaPlayer::loadWithNextMediaEngine(MediaPlayerFactory* current)
 {
     MediaPlayerFactory* engine = 0;
 
-    if (!m_contentMIMEType.isEmpty()) {
-        cerr << "Calling bestMediaEngineForTypeAndCodecs from MediaPlayer::loadWithNextMediaEngine (l427)" << endl;
+    if (!m_contentMIMEType.isEmpty())
         engine = bestMediaEngineForTypeAndCodecs(m_contentMIMEType, m_contentTypeCodecs, m_keySystem, m_url, current);
-    }
 
     // If no MIME type is specified or the type was inferred from the file extension, just use the next engine.
     if (!engine && (m_contentMIMEType.isEmpty() || m_contentMIMETypeWasInferredFromExtension))
@@ -769,7 +758,6 @@ MediaPlayer::SupportsType MediaPlayer::supportsType(const ContentType& contentTy
     if (type == applicationOctetStream())
         return IsNotSupported;
 
-    cerr << "Calling bestMediaEngineForTypeAndCodecs from MediaPlayer::supportsType (l772)" << endl;
     MediaPlayerFactory* engine = bestMediaEngineForTypeAndCodecs(type, typeCodecs, system, url);
     if (!engine)
         return IsNotSupported;
@@ -974,7 +962,6 @@ void MediaPlayer::networkStateChanged()
     if (m_private->networkState() >= FormatError
         && m_private->readyState() < HaveMetadata
         && installedMediaEngines().size() > 1) {
-        cerr << "Calling bestMediaEngineForTypeAndCodecs (maybe) from MediaPlayer::networkStateChanged (l977)" << endl;
         if (m_contentMIMEType.isEmpty() || bestMediaEngineForTypeAndCodecs(m_contentMIMEType, m_contentTypeCodecs, m_keySystem, m_url, m_currentMediaEngine)) {
             m_reloadTimer.startOneShot(0);
             return;

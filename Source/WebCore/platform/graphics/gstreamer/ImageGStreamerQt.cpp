@@ -30,26 +30,13 @@
 
 #include <wtf/gobject/GOwnPtr.h>
 
-#include "GStreamerUtilities.h"
-
-#include <gst/gstbuffer.h>
-
 using namespace WebCore;
 
-ImageGStreamer::ImageGStreamer(GstSample* sample)
+ImageGStreamer::ImageGStreamer(GstBuffer* buffer, GstCaps* caps)
+#ifdef GST_API_VERSION_1
+    : m_buffer(buffer)
+#endif
 {
-    GstCaps* caps = gst_sample_get_caps(sample);
-    GstVideoInfo videoInfo;
-    gst_video_info_init(&videoInfo);
-    if (!gst_video_info_from_caps(&videoInfo, caps))
-        return;
-
-    // Right now the TextureMapper only supports chromas with one plane
-    ASSERT(GST_VIDEO_INFO_N_PLANES(&videoInfo) == 1);
-
-    GstBuffer* buffer = gst_sample_get_buffer(sample);
-
-
     GstVideoFormat format;
     IntSize size;
     int pixelAspectRatioNumerator, pixelAspectRatioDenominator, stride;

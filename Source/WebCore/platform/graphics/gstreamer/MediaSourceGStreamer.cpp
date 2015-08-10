@@ -45,10 +45,6 @@
 #include "NotImplemented.h"
 #include "TimeRanges.h"
 
-#include <iostream>
-using std::cerr;
-using std::endl;
-
 namespace WebCore {
 
 void MediaSourceGStreamer::open(MediaSourcePrivateClient* mediaSource, WebKitMediaSrc* src, MediaPlayerPrivateGStreamer* playerPrivate)
@@ -81,13 +77,9 @@ MediaSourceGStreamer::AddStatus MediaSourceGStreamer::addSourceBuffer(const Cont
     // if (MediaPlayerPrivateGStreamer::supportsType(parameters) == MediaPlayer::IsNotSupported)
     //     return NotSupported;
 
-    cerr << "MediaSourceGStreamer::addSourceBuffer entered" << endl;
-
     RefPtr<SourceBufferPrivateGStreamer> buffer = SourceBufferPrivateGStreamer::create(this, m_client, contentType);
     m_sourceBuffers.add(buffer.get());
     sourceBufferPrivate = buffer;
-
-    cerr << "MediaSourceGStreamer::addSourceBuffer about to exit by returning call to MediaSourceClientGStreamer::addSourceBuffer" << endl;
     return m_client->addSourceBuffer(buffer, contentType);
 }
 
