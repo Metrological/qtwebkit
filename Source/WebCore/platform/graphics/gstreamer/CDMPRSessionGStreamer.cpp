@@ -96,13 +96,9 @@ class DRMInitialisation
             }
             else
             {
-                cerr << "Initing DxDrmClient" << endl;
-
                 _status = DxDrmClient_Init();
                 if (_status != DX_SUCCESS) 
                 {
-                    cerr << "Initing DxDrmClient failed" << endl;
-
                     GST_WARNING("failed to initialize the DxDrmClient (error: %d)", _status);
                 }
 
