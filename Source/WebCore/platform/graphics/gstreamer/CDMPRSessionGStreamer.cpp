@@ -206,10 +206,7 @@ CDMPRSessionGStreamer::~CDMPRSessionGStreamer()
         g_DRMInitialisation.printError(status);
         errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
     } else {
-        //unsigned long challengeLength = MAX_CHALLENGE_LEN;
-
-#warning Using an unsigned int where there used to be an unsigned long.
-        unsigned int challengeLength = MAX_CHALLENGE_LEN;
+        uint32_t challengeLength = MAX_CHALLENGE_LEN;
         unsigned char* challenge = static_cast<unsigned char*> (g_malloc0(challengeLength));
 
         // Get challenge
@@ -243,8 +240,6 @@ CDMPRSessionGStreamer::~CDMPRSessionGStreamer()
 {
     GST_MEMDUMP("response received :", key->data(), key->byteLength());
 
-#warning Using bool where to used to be an unsigned long.
-    //unsigned long isAckRequired;
     bool isAckRequired;
     HDxResponseResult responseResult = nullptr;
     EDxDrmStatus status = DX_ERROR_CONTENT_NOT_RECOGNIZED;
