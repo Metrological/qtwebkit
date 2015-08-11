@@ -81,6 +81,10 @@
 #define PlatformMediaEngineClassName MediaPlayerPrivate
 #endif
 
+#include <iostream>
+using std::cerr;
+using std::endl;
+
 namespace WebCore {
 
 const PlatformMedia NoPlatformMedia = { PlatformMedia::None, {0} };
@@ -501,7 +505,13 @@ void MediaPlayer::pause()
 #if ENABLE(ENCRYPTED_MEDIA)
 MediaPlayer::MediaKeyException MediaPlayer::generateKeyRequest(const String& keySystem, const unsigned char* initData, unsigned initDataLength)
 {
-    return m_private->generateKeyRequest(keySystem.lower(), initData, initDataLength);
+    cerr << "MediaPlayer::generateKeyRequest enter" << endl;
+
+    MediaPlayer::MediaKeyException output = m_private->generateKeyRequest(keySystem.lower(), initData, initDataLength);
+
+    cerr << "MediaPlayer::generateKeyRequest exit" << endl;
+
+    return output;
 }
 
 MediaPlayer::MediaKeyException MediaPlayer::addKey(const String& keySystem, const unsigned char* key, unsigned keyLength, const unsigned char* initData, unsigned initDataLength, const String& sessionId)
@@ -1067,8 +1077,13 @@ void MediaPlayer::keyMessage(const String& keySystem, const String& sessionId, c
 
 bool MediaPlayer::keyNeeded(const String& keySystem, const String& sessionId, const unsigned char* initData, unsigned initDataLength)
 {
+    cerr << "MediaPlayer::keyNeeded (4) enter" << endl;
+
     if (m_mediaPlayerClient)
         return m_mediaPlayerClient->mediaPlayerKeyNeeded(this, keySystem, sessionId, initData, initDataLength);
+
+    cerr << "MediaPlayer::keyNeeded (4) exit" << endl;
+
     return false;
 }
 #endif
@@ -1076,8 +1091,12 @@ bool MediaPlayer::keyNeeded(const String& keySystem, const String& sessionId, co
 #if ENABLE(ENCRYPTED_MEDIA_V2)
 bool MediaPlayer::keyNeeded(Uint8Array* initData)
 {
+    cerr << "MediaPlayer::keyNeeded (1) enter" << endl;
+
     if (m_mediaPlayerClient)
         return m_mediaPlayerClient->mediaPlayerKeyNeeded(this, initData);
+
+    cerr << "MediaPlayer::keyNeeded (1) exit" << endl;
     return false;
 }
 #endif

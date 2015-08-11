@@ -37,6 +37,7 @@
 
 #include <dxdrm/DxDrmClient.h>
 #include <dxdrm/DxDrmDebugApi.h>
+#include <dxdrm/DxDrmStream.h>
 
 #include <gst/base/gstbytereader.h>
 
@@ -48,7 +49,49 @@ GST_DEBUG_CATEGORY_EXTERN(webkit_media_playready_decrypt_debug_category);
 
 #define MAX_CHALLENGE_LEN 64000
 
+#include <iostream>
+using std::cerr;
+using std::endl;
+
 namespace WebCore {
+
+static void tryToFindWrmHeader(unsigned char* data, int dataByteLength)
+{
+    cerr << "tryToFindWrmHeader enter" << endl;
+
+    char * beginBuffer = new char[dataByteLength / 2 + 1];
+    for (int i = 0; i < (dataByteLength / 2); i++) {
+        beginBuffer[i] = (char)data[i * 2];
+    }
+    beginBuffer[dataByteLength / 2] = '\0';
+
+    cerr << "Begin buffer: " << beginBuffer << endl;
+
+    delete [] beginBuffer;
+
+    for (int i = 0; i < (dataByteLength - 1); i++) {
+        uint16_t* uintPointer = (uint16_t*)(data + i);
+        uint16_t value = *uintPointer;
+
+        if (value == 1) {
+            cerr << "Found at: " << i << endl;
+        }
+
+        // Try big endian
+        unsigned char beBuffer[2];
+        beBuffer[0] = data[i + 1];
+        beBuffer[1] = data[i];
+
+        uint16_t* uintPointer2 = (uint16_t*)beBuffer;
+        uint16_t value2 = *uintPointer2;
+
+        if (value2 == 1) {
+            cerr << "Be found at: " << i << endl;
+        }
+    }
+
+    cerr << "tryToFindWrmHeader exit" << endl;
+}
 
 static const guint8* extractWrmHeader(Uint8Array* initData, guint16* recordLength)
 {
@@ -57,10 +100,14 @@ static const guint8* extractWrmHeader(Uint8Array* initData, guint16* recordLengt
     guint16 recordCount;
     const guint8* data;
 
+    tryToFindWrmHeader(initData->data(), initData->byteLength());
+
     gst_byte_reader_init(&reader, initData->data(), initData->byteLength());
 
     gst_byte_reader_get_uint32_le(&reader, &length);
     gst_byte_reader_get_uint16_le(&reader, &recordCount);
+
+    cerr << "Record count: " << recordCount << endl;
 
     for (int i = 0; i < recordCount; i++) {
         guint16 type;
@@ -68,11 +115,17 @@ static const guint8* extractWrmHeader(Uint8Array* initData, guint16* recordLengt
         gst_byte_reader_get_uint16_le(&reader, recordLength);
 
         gst_byte_reader_get_data(&reader, *recordLength, &data);
+
         // 0x1 => rights management header
-        if (type == 0x1)
+        //cerr << "Type: " << type << endl;
+
+        if (type == 0x1) {
+            cerr << "extractWrmHeader, returning data, record length: " << recordLength << endl;
             return data;
+        }
     }
 
+    cerr << "extractWrmHeader, returning nullptr" << endl;
     return nullptr;
 }
 
@@ -93,9 +146,13 @@ class DRMInitialisation
             }
             else
             {
+                cerr << "Initing DxDrmClient" << endl;
+
                 _status = DxDrmClient_Init();
                 if (_status != DX_SUCCESS) 
                 {
+                    cerr << "Initing DxDrmClient failed" << endl;
+
                     GST_WARNING("failed to initialize the DxDrmClient (error: %d)", _status);
                 }
 
@@ -192,25 +249,41 @@ CDMPRSessionGStreamer::~CDMPRSessionGStreamer()
 
     RefPtr<Uint8Array> result;
 
+    cerr << "CDMPRSessionGStreamer::generateKeyRequest enter" << endl;
+
     // Instantiate Discretix DRM client from the parsed WRMHEADER.
-    guint16 recordLength;
-    const guint8* data = extractWrmHeader(initData, &recordLength);
-    EDxDrmStatus status = DxDrmClient_OpenDrmStreamFromData(&m_DxDrmStream, data, recordLength);
+    //guint16 recordLength;
+    //const guint8* data = extractWrmHeader(initData, &recordLength);
+    //EDxDrmStatus status = DxDrmClient_OpenDrmStreamFromData(&m_DxDrmStream, data, recordLength);
+    EDxDrmStatus status = DxDrmClient_OpenDrmStreamFromData(&m_DxDrmStream, initData->data(), initData->byteLength());
 
     if (status != DX_SUCCESS) {
+        cerr << "CDMPRSessionGStreamer::generateKeyRequest error 1, status: " << status << endl;
+
         GST_WARNING("failed creating DxDrmClient from initData (error: %d)", status);
         g_DRMInitialisation.printError(status);
         errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
     } else {
-        unsigned long challengeLength = MAX_CHALLENGE_LEN;
+        cerr << "CDMPRSessionGStreamer::generateKeyRequest success 1" << endl;
+
+        //unsigned long challengeLength = MAX_CHALLENGE_LEN;
+
+#warning Using an unsigned int where there used to be an unsigned long.
+        unsigned int challengeLength = MAX_CHALLENGE_LEN;
         unsigned char* challenge = static_cast<unsigned char*> (g_malloc0(challengeLength));
+
+        cerr << "Sizeof unsigned int: " << sizeof(unsigned int) << ", sizeof unsigned long: " << sizeof(unsigned long) << endl;
 
         // Get challenge
         status = DxDrmStream_GetLicenseChallenge(m_DxDrmStream, challenge, &challengeLength);
         if (status != DX_SUCCESS) {
+            cerr << "CDMPRSessionGStreamer::generateKeyRequest error 2" << endl;
+
             GST_WARNING("failed to generate challenge request (%d)", status);
             errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
         } else {
+            cerr << "CDMPRSessionGStreamer::generateKeyRequest success 2" << endl;
+
             // Get License URL
             destinationURL = static_cast<const char *>(DxDrmStream_GetTextAttribute(m_DxDrmStream, DX_ATTR_SILENT_URL, DX_ACTIVE_CONTENT));
             GST_DEBUG("destination URL : %s", destinationURL.utf8().data());
@@ -226,6 +299,8 @@ CDMPRSessionGStreamer::~CDMPRSessionGStreamer()
 
     systemCode = status;
 
+    cerr << "CDMPRSessionGStreamer::generateKeyRequest exit" << endl;
+
     return result;
 }
 
@@ -234,32 +309,43 @@ CDMPRSessionGStreamer::~CDMPRSessionGStreamer()
 //
 /* virtual */ bool CDMPRSessionGStreamer::update(Uint8Array* key, RefPtr<Uint8Array>& nextMessage, unsigned short& errorCode, unsigned long& systemCode)
 {
+    cerr << "CDMPRSessionGStreamer::update enter" << endl;
+
     GST_MEMDUMP("response received :", key->data(), key->byteLength());
 
-    unsigned long isAckRequired;
+#warning Using bool where to used to be an unsigned long.
+    //unsigned long isAckRequired;
+    bool isAckRequired;
     HDxResponseResult responseResult = nullptr;
     EDxDrmStatus status = DX_ERROR_CONTENT_NOT_RECOGNIZED;
 
     if (m_state == PHASE_INITIAL)
     {
+        cerr << "CDMPRSessionGStreamer::update INITIAL" << endl;
+
         // Server replied to our license request
         status = DxDrmStream_ProcessLicenseResponse(m_DxDrmStream, key->data(), key->byteLength(), &responseResult, &isAckRequired);
 
         if (status  == DX_SUCCESS) {
+            cerr << "CDMPRSessionGStreamer::update INITIAL SUCCESS" << endl;
+
             // Create a deep copy of the key.
             m_key = key->buffer();
-            m_state = (isAckRequired != 0 ? PHASE_ACKNOWLEDGE : PHASE_PROVISIONED);
+            m_state = (isAckRequired ? PHASE_ACKNOWLEDGE : PHASE_PROVISIONED);
         }
 
     } else if (m_state == PHASE_ACKNOWLEDGE) {
+        cerr << "CDMPRSessionGStreamer::update ACK" << endl;
 
         // Server replied to our license response acknowledge
         status = DxDrmClient_ProcessServerResponse(key->data(), key->byteLength(), DX_RESPONSE_LICENSE_ACK, &responseResult, &isAckRequired);
 
         if (status  == DX_SUCCESS) {
             // Create a deep copy of the key.
+            cerr << "CDMPRSessionGStreamer::update ACK SUCCESS" << endl;
+
             m_key   = key->buffer();
-            m_state = (isAckRequired != 0 ? PHASE_ACKNOWLEDGE : PHASE_PROVISIONED);
+            m_state = (isAckRequired ? PHASE_ACKNOWLEDGE : PHASE_PROVISIONED);
 
             if (m_state == PHASE_ACKNOWLEDGE) {
                 GST_WARNING("Acknowledging an Ack. Strange situation.");
@@ -275,12 +361,15 @@ CDMPRSessionGStreamer::~CDMPRSessionGStreamer()
         GST_WARNING("failed processing license response (%d)", status);
         errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
     } else if (m_state == PHASE_PROVISIONED) {
+        cerr << "CDMPRSessionGStreamer::update PROV" << endl;
 
         status = DxDrmStream_SetIntent(m_DxDrmStream, DX_INTENT_AUTO_PLAY, DX_AUTO_NO_UI);
         if (status != DX_SUCCESS) {
             GST_WARNING("DX: ERROR - opening stream failed because there are no rights (license) to play the content");
         } else {
             GST_INFO("DX: playback rights found");
+
+            cerr << "CDMPRSessionGStreamer::update SUCCESS" << endl;
 
             /* Taken from the "Decryptor, not used there... 
             status =  DxDrmStream_GetFlags(m_DxDrmStream, DX_FLAG_CAN_PLAY | DX_FLAG_HAS_FUTURE_RIGHTS,
@@ -291,13 +380,19 @@ CDMPRSessionGStreamer::~CDMPRSessionGStreamer()
             if (status != DX_SUCCESS) {
                 GST_WARNING("DX: Content consumption failed");
             } else {
+                cerr << "CDMPRSessionGStreamer::update SUCCESS SUCCESS" << endl;
+
                 GST_INFO("DX: Stream was opened and is ready for playback");
                 m_player->signalDRM();
             }
         }
 
     } else if (m_state == PHASE_ACKNOWLEDGE) {
-        unsigned long challengeLength = MAX_CHALLENGE_LEN;
+        cerr << "CDMPRSessionGStreamer::update ACK 2" << endl;
+
+#warning using unsigned int where used to be an unsigned long.
+        //unsigned long challengeLength = MAX_CHALLENGE_LEN;
+        unsigned int challengeLength = MAX_CHALLENGE_LEN;
         unsigned char* challenge = static_cast<unsigned char*>(g_malloc0(challengeLength));
 
         status = DxDrmClient_GetLicenseAcq_GenerateAck(&responseResult, challenge, &challengeLength);
@@ -307,12 +402,15 @@ CDMPRSessionGStreamer::~CDMPRSessionGStreamer()
 
         GST_MEMDUMP("generated license ack request :", challenge, challengeLength);
 
+        cerr << "CDMPRSessionGStreamer::update Creating next message" << endl;
         nextMessage = Uint8Array::create(challenge, challengeLength);
 
         g_free(challenge);
     }
 
     systemCode = status;
+
+    cerr << "CDMPRSessionGStreamer::update exit" << endl;
 
     return (status == DX_SUCCESS);
 }
@@ -329,6 +427,8 @@ CDMPRSessionGStreamer::~CDMPRSessionGStreamer()
 
 int CDMPRSessionGStreamer::decrypt (GstMapInfo& map, GstMapInfo& boxMap, const unsigned int sampleIndex, const unsigned int trackId)
 {
+    cerr << "CDMPRSessionGStreamer::decrypt exit" << endl;
+
     EDxDrmStatus status = DxDrmStream_ProcessPiffPacket(
         m_DxDrmStream, 
         static_cast<void*>(map.data),
@@ -337,6 +437,8 @@ int CDMPRSessionGStreamer::decrypt (GstMapInfo& map, GstMapInfo& boxMap, const u
         static_cast<unsigned int>(boxMap.size),
         static_cast<unsigned int>(sampleIndex),
         trackId);
+
+    cerr << "CDMPRSessionGStreamer::decrypt exit" << endl;
 
     return (status == DX_DRM_SUCCESS ? 0 : status);
 }
