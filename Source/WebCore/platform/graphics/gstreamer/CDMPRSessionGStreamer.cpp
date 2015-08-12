@@ -298,9 +298,6 @@ CDMPRSessionGStreamer::~CDMPRSessionGStreamer()
         }
 
     } else if (m_state == PHASE_ACKNOWLEDGE) {
-
-#warning using unsigned int where used to be an unsigned long.
-        //unsigned long challengeLength = MAX_CHALLENGE_LEN;
         unsigned int challengeLength = MAX_CHALLENGE_LEN;
         unsigned char* challenge = static_cast<unsigned char*>(g_malloc0(challengeLength));
 

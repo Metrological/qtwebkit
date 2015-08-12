@@ -501,9 +501,7 @@ void MediaPlayer::pause()
 #if ENABLE(ENCRYPTED_MEDIA)
 MediaPlayer::MediaKeyException MediaPlayer::generateKeyRequest(const String& keySystem, const unsigned char* initData, unsigned initDataLength)
 {
-    MediaPlayer::MediaKeyException output = m_private->generateKeyRequest(keySystem.lower(), initData, initDataLength);
-
-    return output;
+    return m_private->generateKeyRequest(keySystem.lower(), initData, initDataLength);
 }
 
 MediaPlayer::MediaKeyException MediaPlayer::addKey(const String& keySystem, const unsigned char* key, unsigned keyLength, const unsigned char* initData, unsigned initDataLength, const String& sessionId)
@@ -1071,7 +1069,6 @@ bool MediaPlayer::keyNeeded(const String& keySystem, const String& sessionId, co
 {
     if (m_mediaPlayerClient)
         return m_mediaPlayerClient->mediaPlayerKeyNeeded(this, keySystem, sessionId, initData, initDataLength);
-
     return false;
 }
 #endif
@@ -1081,7 +1078,6 @@ bool MediaPlayer::keyNeeded(Uint8Array* initData)
 {
     if (m_mediaPlayerClient)
         return m_mediaPlayerClient->mediaPlayerKeyNeeded(this, initData);
-
     return false;
 }
 #endif
@@ -1159,11 +1155,6 @@ void MediaPlayer::removeTextTrack(PassRefPtr<InbandTextTrackPrivate> track)
         return;
 
     m_mediaPlayerClient->mediaPlayerDidRemoveTextTrack(track);
-}
-
-PassRefPtr<PlatformMediaResourceLoader> MediaPlayer::createResourceLoader(std::unique_ptr<PlatformMediaResourceLoaderClient> client)
-{
-    return m_mediaPlayerClient->mediaPlayerCreateResourceLoader(std::move(client));
 }
 
 void MediaPlayer::addVideoTrack(PassRefPtr<VideoTrackPrivate> track)
