@@ -18,8 +18,6 @@
 
 #include <gst/gst.h>
 
-#pragma once
-
 #define LOG_MEDIA_MESSAGE(...) do { \
     GST_DEBUG(__VA_ARGS__); \
     LOG_VERBOSE(Media, __VA_ARGS__); } while (0)
