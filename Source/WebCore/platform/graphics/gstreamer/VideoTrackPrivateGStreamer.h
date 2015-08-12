@@ -34,27 +34,26 @@
 
 namespace WebCore {
 
-class VideoTrackPrivateGStreamer final : public VideoTrackPrivate, public TrackPrivateBaseGStreamer {
+class VideoTrackPrivateGStreamer : public VideoTrackPrivate, public TrackPrivateBaseGStreamer {
 public:
     static PassRefPtr<VideoTrackPrivateGStreamer> create(GRefPtr<GstElement> playbin, gint index, GRefPtr<GstPad> pad)
     {
         return adoptRef(new VideoTrackPrivateGStreamer(playbin, index, pad));
     }
 
-    virtual void disconnect() override;
+    virtual void disconnect() OVERRIDE;
 
-    virtual void setSelected(bool) override;
-    virtual void setActive(bool enabled) override { setSelected(enabled); }
+    virtual void setSelected(bool) OVERRIDE;
+    virtual void setActive(bool enabled) OVERRIDE { setSelected(enabled); }
 
-    virtual int trackIndex() const override { return m_index; }
+    virtual int trackIndex() const OVERRIDE { return m_index; }
 
-    virtual AtomicString id() const override { return m_id; }
-    virtual AtomicString label() const override { return m_label; }
-    virtual AtomicString language() const override { return m_language; }
+    virtual AtomicString id() const OVERRIDE { return m_id; }
+    virtual AtomicString label() const OVERRIDE { return m_label; }
+    virtual AtomicString language() const OVERRIDE { return m_language; }
 
 private:
     VideoTrackPrivateGStreamer(GRefPtr<GstElement> playbin, gint index, GRefPtr<GstPad>);
-
     AtomicString m_id;
     GRefPtr<GstElement> m_playbin;
 };
