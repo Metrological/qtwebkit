@@ -47,7 +47,6 @@
 #include <wtf/Noncopyable.h>
 #include <wtf/PassOwnPtr.h>
 #include <wtf/text/StringHash.h>
-#include "PlatformMediaResourceLoader.h"
 
 #if USE(ACCELERATED_COMPOSITING)
 #include "PlatformLayer.h"
@@ -102,31 +101,6 @@ struct PlatformMedia {
         AVPlayer* avfMediaPlayer;
         AVCFPlayer* avcfMediaPlayer;
     } media;
-};
-
-struct MediaEngineSupportParameters {
-    String type;
-    String codecs;
-    KURL url;
-#if ENABLE(ENCRYPTED_MEDIA)
-    String keySystem;
-#endif
-#if ENABLE(MEDIA_SOURCE)
-    bool isMediaSource;
-#endif
-#if ENABLE(MEDIA_STREAM)
-    bool isMediaStream;
-#endif
-
-    MediaEngineSupportParameters()
-#if ENABLE(MEDIA_SOURCE)
-        : isMediaSource(false)
-#endif
-    {
-#if ENABLE(MEDIA_STREAM)
-        isMediaStream = false;
-#endif
-    }
 };
 
 extern const PlatformMedia NoPlatformMedia;
@@ -248,7 +222,6 @@ public:
     virtual HostWindow* mediaPlayerHostWindow() { return 0; }
     virtual IntRect mediaPlayerWindowClipRect() { return IntRect(); }
     virtual CachedResourceLoader* mediaPlayerCachedResourceLoader() { return 0; }
-    virtual RefPtr<PlatformMediaResourceLoader> mediaPlayerCreateResourceLoader(std::unique_ptr<PlatformMediaResourceLoaderClient>) { return nullptr; }
 
 #if ENABLE(VIDEO_TRACK)
     virtual void mediaPlayerDidAddAudioTrack(PassRefPtr<AudioTrackPrivate>) { }
@@ -420,7 +393,6 @@ public:
     void repaint();
 
     MediaPlayerClient* mediaPlayerClient() const { return m_mediaPlayerClient; }
-    MediaPlayerClient& client() const { return *m_mediaPlayerClient; }
     void clearMediaPlayerClient() { m_mediaPlayerClient = 0; }
 
     bool hasAvailableVideoFrame() const;
@@ -518,8 +490,6 @@ public:
     String languageOfPrimaryAudioTrack() const;
 
     size_t extraMemoryCost() const;
-
-    PassRefPtr<PlatformMediaResourceLoader> createResourceLoader(std::unique_ptr<PlatformMediaResourceLoaderClient>);
 
 private:
     MediaPlayer(MediaPlayerClient*);
