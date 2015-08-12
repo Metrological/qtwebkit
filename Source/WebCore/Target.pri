@@ -3247,7 +3247,6 @@ enable?(MEDIA_SOURCE) {
             platform/audio/gstreamer/AudioSourceProviderGStreamer.h
        SOURCES += \
             platform/graphics/gstreamer/WebKitMediaSourceGStreamer.cpp \
-#            platform/audio/gstreamer/AudioSourceProviderGStreamer.cpp \
             platform/graphics/gstreamer/WebKitMediaAesCtr.c \
             platform/graphics/gstreamer/SourceBufferPrivateGStreamer.cpp \
             platform/graphics/gstreamer/MediaSourceGStreamer.cpp
