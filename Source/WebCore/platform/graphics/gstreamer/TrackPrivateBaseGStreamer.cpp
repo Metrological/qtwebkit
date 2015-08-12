@@ -37,7 +37,6 @@
 #include <gst/tag/tag.h>
 #include <wtf/gobject/GOwnPtr.h>
 #include <wtf/text/CString.h>
-#include <wtf/MainThread.h>
 
 GST_DEBUG_CATEGORY_EXTERN(webkit_media_player_debug);
 #define GST_CAT_DEFAULT webkit_media_player_debug
@@ -72,8 +71,6 @@ TrackPrivateBaseGStreamer::TrackPrivateBaseGStreamer(TrackPrivateBase* owner, gi
     : m_index(index)
     , m_pad(pad)
     , m_owner(owner)
-    , m_activeTimerHandler("[WebKit] TrackPrivateBaseGStreamer::notifyTrackOfActiveChanged", std::function<void()>(std::bind(&TrackPrivateBaseGStreamer::notifyTrackOfActiveChanged, this)))
-    , m_tagTimerHandler("[WebKit] TrackPrivateBaseGStreamer::notifyTrackOfTagsChanged", std::function<void()>(std::bind(&TrackPrivateBaseGStreamer::notifyTrackOfTagsChanged, this)))
 {
     ASSERT(m_pad);
 
