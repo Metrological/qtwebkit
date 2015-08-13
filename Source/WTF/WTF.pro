@@ -246,7 +246,7 @@ SOURCES += \
     unicode/CollatorDefault.cpp \
     unicode/icu/CollatorICU.cpp \
     unicode/UTF8.cpp \
-    glib/GSourceWrap.cpp \
+#    glib/GSourceWrap.cpp \
     glib/GMainLoopSource.cpp
 
 unix: SOURCES += \
