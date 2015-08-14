@@ -179,10 +179,7 @@ HEADERS += \
     VectorTraits.h \
     VMTags.h \
     WTFThreadData.h \
-    WeakPtr.h \
-    glib/GRefPtr.h \
-    glib/GSourceWrap.h \
-    glib/GMutexLocker.h
+    WeakPtr.h
 
 unix: HEADERS += ThreadIdentifierDataPthreads.h
 
@@ -245,9 +242,7 @@ SOURCES += \
     text/WTFString.cpp \
     unicode/CollatorDefault.cpp \
     unicode/icu/CollatorICU.cpp \
-    unicode/UTF8.cpp 
-#    glib/GSourceWrap.cpp \
-#    glib/GMainLoopSource.cpp
+    unicode/UTF8.cpp
 
 unix: SOURCES += \
     OSAllocatorPosix.cpp \

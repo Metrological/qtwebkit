@@ -199,6 +199,8 @@ enable?(ENCRYPTED_MEDIA_V2) {
     use?(DXDRM) {
         LIBS += -lDxDrm
     }
+
+    LIBS += -lssl -lcrypto
     DEFINES += ENABLE_ENCRYPTED_MEDIA
 }
 
@@ -212,8 +214,6 @@ use?(GLIB) {
 }
 
 use?(GSTREAMER) {
-    LIBS += -lssl -lcrypto
-
     use?(GSTREAMER010) {
         PKGCONFIG += gstreamer-0.10 gstreamer-app-0.10 gstreamer-base-0.10 gstreamer-interfaces-0.10 gstreamer-pbutils-0.10 gstreamer-plugins-base-0.10 gstreamer-video-0.10 gstreamer-egl-0.10
     } else {
