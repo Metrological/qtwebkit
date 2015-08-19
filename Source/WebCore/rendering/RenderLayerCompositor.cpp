@@ -2159,7 +2159,7 @@ bool RenderLayerCompositor::requiresCompositingForFrame(RenderObject* renderer) 
     
     RenderPart* frameRenderer = toRenderPart(renderer);
 
-    if (!frameRenderer->requiresAcceleratedCompositing())
+    if (!frameRenderer->requiresAcceleratedCompositing() || frameRenderer->style()->visibility() == HIDDEN)
         return false;
 
     m_reevaluateCompositingAfterLayout = true;
