@@ -30,8 +30,7 @@
 #include "ResourceRequestBase.h"
 #include <libsoup/soup.h>
 
-// HTTPHeaderNames. TODO: move to network.
-#include "../../graphics/gstreamer/HTTPHeaderNames.h"
+#include <HTTPHeaderNames.h>
 
 namespace WebCore {
 

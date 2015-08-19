@@ -29,7 +29,7 @@
 #include <wtf/text/StringBuilder.h>
 #include <wtf/text/WTFString.h>
 
-#include "../../graphics/gstreamer/HTTPHeaderNames.h"
+#include <HTTPHeaderNames.h>
 
 using namespace std;
 

@@ -34,7 +34,7 @@
 #include <wtf/text/AtomicString.h>
 #include <wtf/text/AtomicStringHash.h>
 #include <wtf/text/StringHash.h>
-#include "WebCore/platform/graphics/gstreamer/HTTPHeaderNames.h"
+#include <HTTPHeaderNames.h>
 
 namespace WebCore {
 
