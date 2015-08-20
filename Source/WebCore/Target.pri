@@ -3383,7 +3383,8 @@ enable?(ENCRYPTED_MEDIA_V2) {
             platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp \ 
             platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp \
             platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp \
-            platform/network/HTTPHeaderNames.cpp
+            platform/network/HTTPHeaderNames.cpp \
+            platform/graphics/gstreamer/DiscretixSession.cpp
     }
 }
 
