@@ -50,6 +50,8 @@ public:
     };
     typedef unsigned short MediaKeyErrorCode;
     virtual void sendError(MediaKeyErrorCode, unsigned long systemCode) = 0;
+
+    virtual String mediaKeysStorageDirectory() const = 0;
 };
 
 enum CDMSessionType {
@@ -71,6 +73,7 @@ public:
     virtual PassRefPtr<Uint8Array> generateKeyRequest(const String& mimeType, Uint8Array* initData, String& destinationURL, unsigned short& errorCode, unsigned long& systemCode) = 0;
     virtual void releaseKeys() = 0;
     virtual bool update(Uint8Array*, RefPtr<Uint8Array>& nextMessage, unsigned short& errorCode, unsigned long& systemCode) = 0;
+    virtual RefPtr<ArrayBuffer> cachedKeyForKeyID(const String&) const { return nullptr; }
 };
 
 }

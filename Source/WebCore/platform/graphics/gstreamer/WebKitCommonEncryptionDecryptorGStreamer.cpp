@@ -51,7 +51,7 @@ static GstStaticPadTemplate sinkTemplate = GST_STATIC_PAD_TEMPLATE("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS("application/x-cenc, original-media-type=(string)video/x-h264, protection-system=(string)" CLEAR_KEY_PROTECTION_SYSTEM_ID "; "
-    "application/x-cenc, original-media-type=(string)audio/mpeg, protection-system=(string)" CLEAR_KEY_PROTECTION_SYSTEM_ID "; "));
+    "application/x-cenc, original-media-type=(string)audio/mpeg, protection-system=(string)" CLEAR_KEY_PROTECTION_SYSTEM_ID));
 
 static GstStaticPadTemplate srcTemplate = GST_STATIC_PAD_TEMPLATE("src",
     GST_PAD_SRC,
@@ -91,28 +91,6 @@ static void webkit_media_common_encryption_decrypt_init(WebKitMediaCommonEncrypt
     gst_base_transform_set_in_place(base, TRUE);
     gst_base_transform_set_passthrough(base, FALSE);
     gst_base_transform_set_gap_aware(base, FALSE);
-}
-
-/*
-  Append new_structure to dest, but only if it does not already exist in res.
-  This function takes ownership of new_structure.
-*/
-static bool webkitMediaCommonEncryptionDecryptCapsAppendIfNotDuplicate(GstCaps* destination, GstStructure* structure)
-{
-    bool duplicate = false;
-    unsigned size = gst_caps_get_size(destination);
-    for (unsigned index = 0; !duplicate && index < size; ++index) {
-        GstStructure* s = gst_caps_get_structure(destination, index);
-        if (gst_structure_is_equal(s, structure))
-            duplicate = true;
-    }
-
-    if (!duplicate)
-        gst_caps_append_structure(destination, structure);
-    else
-        gst_structure_free(structure);
-
-    return duplicate;
 }
 
 /*
@@ -175,11 +153,22 @@ static GstCaps* webkitMediaCommonEncryptionDecryptTransformCaps(GstBaseTransform
                 "original-media-type", G_TYPE_STRING, gst_structure_get_name(in), nullptr);
 
             gst_structure_set_name(out, "application/x-cenc");
-
             gst_structure_free(tmp);
         }
 
-        webkitMediaCommonEncryptionDecryptCapsAppendIfNotDuplicate(transformedCaps, out);
+        bool duplicate = false;
+        unsigned size = gst_caps_get_size(transformedCaps);
+
+        for (unsigned index = 0; !duplicate && index < size; ++index) {
+            GstStructure* s = gst_caps_get_structure(transformedCaps, index);
+            if (gst_structure_is_equal(s, out))
+                duplicate = true;
+        }
+
+        if (!duplicate)
+            gst_caps_append_structure(transformedCaps, out);
+        else
+            gst_structure_free(out);
     }
 
     if (filter) {
@@ -382,7 +371,7 @@ static gboolean webkitMediaCommonEncryptionDecryptSinkEventHandler(GstBaseTransf
             gst_element_post_message(GST_ELEMENT(self),
                 gst_message_new_element(GST_OBJECT(self),
                     gst_structure_new("drm-key-needed", "data", GST_TYPE_BUFFER, buffer,
-                        "key-system-id", G_TYPE_STRING, systemId, nullptr)));
+                        "key-system-id", G_TYPE_STRING, "org.w3.clearkey", nullptr)));
         }
 
         gst_event_unref(event);

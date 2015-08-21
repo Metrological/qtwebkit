@@ -261,6 +261,11 @@ namespace WebCore {
         static bool lowPowerVideoAudioBufferSizeEnabled() { return gLowPowerVideoAudioBufferSizeEnabled; }
         static void setLowPowerVideoAudioBufferSizeEnabled(bool);
 
+#if ENABLE(ENCRYPTED_MEDIA_V2)
+    void setMediaKeysStorageDirectory(const String& directory) { m_mediaKeysStorageDirectory = directory; }
+    const String& mediaKeysStorageDirectory() const { return m_mediaKeysStorageDirectory; }
+#endif
+
     private:
         explicit Settings(Page*);
 
@@ -341,6 +346,10 @@ namespace WebCore {
         static bool gShouldRespectPriorityInCSSAttributeSetters;
 
         static double gHiddenPageDOMTimerAlignmentInterval;
+
+#if ENABLE(ENCRYPTED_MEDIA_V2)
+    String m_mediaKeysStorageDirectory;
+#endif
 
         static bool gLowPowerVideoAudioBufferSizeEnabled;
     };

@@ -30,11 +30,14 @@
 
 #include "CDM.h"
 #include "CDMSession.h"
+#include "Document.h"
 #include "Event.h"
 #include "GenericEventQueue.h"
 #include "MediaKeyError.h"
 #include "MediaKeyMessageEvent.h"
 #include "MediaKeys.h"
+#include "Settings.h"
+#include "FileSystem.h"
 
 namespace WebCore {
 
@@ -192,6 +195,27 @@ void MediaKeySession::addKeyTimerFired(Timer<MediaKeySession>*)
             // NOTE: no-op
         }
     }
+}
+
+String MediaKeySession::mediaKeysStorageDirectory() const
+{
+    Document* document = dynamic_cast<Document*>(scriptExecutionContext());
+    if (!document)
+        return emptyString();
+
+    Settings* settings = document->settings();
+    if (!settings)
+        return emptyString();
+
+    String storageDirectory = settings->mediaKeysStorageDirectory();
+    if (storageDirectory.isEmpty())
+        return emptyString();
+
+    SecurityOrigin* origin = document->securityOrigin();
+    if (!origin)
+        return emptyString();
+
+    return pathByAppendingComponent(storageDirectory, origin->databaseIdentifier());
 }
 
 bool MediaKeySession::hasPendingActivity() const
