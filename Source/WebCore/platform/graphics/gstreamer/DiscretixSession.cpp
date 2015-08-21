@@ -125,9 +125,11 @@ PassRefPtr<Uint8Array> DiscretixSession::dxdrmGenerateKeyRequest(Uint8Array* ini
     RefPtr<Uint8Array> result;
 
     // Instantiate Discretix DRM client from the parsed WRMHEADER.
-    guint16 recordLength;
-    const guint8* data = extractWrmHeader(initData, &recordLength);
-    EDxDrmStatus status = DxDrmClient_OpenDrmStreamFromData(&m_DxDrmStream, data, recordLength);
+    //guint16 recordLength;
+    //const guint8* data = extractWrmHeader(initData, &recordLength);
+    //EDxDrmStatus status = DxDrmClient_OpenDrmStreamFromData(&m_DxDrmStream, data, recordLength);
+
+    EDxDrmStatus status = DxDrmClient_OpenDrmStreamFromData(&m_DxDrmStream, initData->data(), initData->byteLength());
 
     GST_DEBUG("generating key request");
     if (status != DX_SUCCESS) {
