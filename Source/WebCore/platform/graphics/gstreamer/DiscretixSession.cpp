@@ -38,32 +38,6 @@ GST_DEBUG_CATEGORY_EXTERN(webkit_media_playready_decrypt_debug_category);
 
 namespace WebCore {
 
-static const guint8* extractWrmHeader(Uint8Array* initData, guint16* recordLength)
-{
-    GstByteReader reader;
-    guint32 length;
-    guint16 recordCount;
-    const guint8* data;
-
-    gst_byte_reader_init(&reader, initData->data(), initData->byteLength());
-
-    gst_byte_reader_get_uint32_le(&reader, &length);
-    gst_byte_reader_get_uint16_le(&reader, &recordCount);
-
-    for (int i = 0; i < recordCount; i++) {
-        guint16 type;
-        gst_byte_reader_get_uint16_le(&reader, &type);
-        gst_byte_reader_get_uint16_le(&reader, recordLength);
-
-        gst_byte_reader_get_data(&reader, *recordLength, &data);
-        // 0x1 => rights management header
-        if (type == 0x1)
-            return data;
-    }
-
-    return nullptr;
-}
-
 void reportError(const EDxDrmStatus status)
 {
     switch (status) {
@@ -123,11 +97,6 @@ DiscretixSession::~DiscretixSession()
 PassRefPtr<Uint8Array> DiscretixSession::dxdrmGenerateKeyRequest(Uint8Array* initData, String& destinationURL, unsigned short& errorCode, unsigned long& systemCode)
 {
     RefPtr<Uint8Array> result;
-
-    // Instantiate Discretix DRM client from the parsed WRMHEADER.
-    //guint16 recordLength;
-    //const guint8* data = extractWrmHeader(initData, &recordLength);
-    //EDxDrmStatus status = DxDrmClient_OpenDrmStreamFromData(&m_DxDrmStream, data, recordLength);
 
     EDxDrmStatus status = DxDrmClient_OpenDrmStreamFromData(&m_DxDrmStream, initData->data(), initData->byteLength());
 
