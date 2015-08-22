@@ -87,7 +87,7 @@ PassRefPtr<Uint8Array> CDMSessionGStreamer::generateKeyRequest(const String& mim
     gpointer challenge = g_malloc0 (challenge_length);
     
     // Get challenge
-    status = DxDrmStream_GetLicenseChallenge (m_DxDrmStream, challenge, (DxUint32 *) &challenge_length);
+    status = DxDrmStream_GetLicenseChallenge (m_DxDrmStream, challenge, &challenge_length);
     if (status != DX_SUCCESS) {
       GST_WARNING ("failed to generate challenge request (%d)", status);
       g_free (challenge);
@@ -122,7 +122,7 @@ bool CDMSessionGStreamer::update(Uint8Array* key, RefPtr<Uint8Array>& nextMessag
     GST_MEMDUMP ("response received :", key->data (), key->byteLength ());
     
     bool ret = false;
-    DxBool isAckRequired = false;
+    bool isAckRequired = false;
     HDxResponseResult responseResult = NULL;
     EDxDrmStatus status;
 
@@ -147,7 +147,7 @@ bool CDMSessionGStreamer::update(Uint8Array* key, RefPtr<Uint8Array>& nextMessag
       guint32 challenge_length = MAX_CHALLENGE_LEN;
       gpointer challenge = g_malloc0 (challenge_length);
       
-      status = DxDrmClient_GetLicenseAcq_GenerateAck (&responseResult, challenge, (DxUint32 *) &challenge_length);
+      status = DxDrmClient_GetLicenseAcq_GenerateAck (&responseResult, challenge, &challenge_length);
       if (status != DX_SUCCESS) {
         GST_WARNING ("failed generating license ack challenge (%d) response result %p", status, responseResult);
         g_free (challenge);
