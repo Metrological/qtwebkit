@@ -42,6 +42,8 @@
 #include <wtf/gobject/GOwnPtr.h>
 #include <wtf/text/CString.h>
 #include "CDMPRSessionGStreamer.h"
+#include "DiscretixSession.h"
+#include "WebKitPlayReadyDecryptorGStreamer.h"
 
 #ifdef GST_API_VERSION_1
 #include <gst/audio/streamvolume.h>
@@ -80,6 +82,10 @@ static const gint64 gPercentMax = 100;
 
 GST_DEBUG_CATEGORY_EXTERN(webkit_media_player_debug);
 #define GST_CAT_DEFAULT webkit_media_player_debug
+
+#if ENABLE(ENCRYPTED_MEDIA)
+#include "WebKitCommonEncryptionDecryptorGStreamer.h"
+#endif
 
 using namespace std;
 
@@ -210,6 +216,18 @@ bool initializeGStreamerAndRegisterWebKitElements()
         GST_DEBUG_CATEGORY_INIT(webkit_media_player_debug, "webkitmediaplayer", 0, "WebKit media player");
         gst_element_register(0, "webkitwebsrc", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_WEB_SRC);
     }
+
+#if ENABLE(ENCRYPTED_MEDIA)
+    GRefPtr<GstElementFactory> cencDecryptorFactory = gst_element_factory_find("webkitcencdec");
+    if (!cencDecryptorFactory)
+        gst_element_register(0, "webkitcencdec", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_CENC_DECRYPT);
+#endif
+
+#if USE(DXDRM)
+    GRefPtr<GstElementFactory> playReadyDecryptorFactory = gst_element_factory_find("webkitplayreadydec");
+    if (!playReadyDecryptorFactory)
+        gst_element_register(0, "webkitplayreadydec", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_PLAYREADY_DECRYPT);
+#endif
 
 #if ENABLE(MEDIA_SOURCE)
     GRefPtr<GstElementFactory> WebKitMediaSrcFactory = gst_element_factory_find("webkitmediasrc");

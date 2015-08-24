@@ -21,7 +21,24 @@
 
 #include "config.h"
 
+#if (ENABLE(ENCRYPTED_MEDIA))
+   #warning ENABLE(ENCRYPTED_MEDIA)
+#endif
+
+#if (ENABLE(ENCRYPTED_MEDIA_V2))
+   #warning ENABLE(ENCRYPTED_MEDIA_V2)
+#endif
+
+#if (USE(GSTREAMER))
+   #warning USE(GSTREAMER)
+#endif
+
+#if (USE(DXDRM))
+   #warning USE(DXDRM)
+#endif
+
 #if (ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)) && USE(GSTREAMER) && USE(DXDRM)
+
 #include "WebKitPlayReadyDecryptorGStreamer.h"
 
 #include "DiscretixSession.h"
@@ -37,6 +54,7 @@ struct _WebKitMediaPlayReadyDecrypt {
     GMutex mutex;
     GCond condition;
 
+    GstBuffer* initDataBuffer;
     GMutex decryptMutex;
     GCond decryptCondition;
     GstBuffer* currentBuffer;
@@ -46,8 +64,6 @@ struct _WebKitMediaPlayReadyDecrypt {
 struct _WebKitMediaPlayReadyDecryptClass {
     GstBaseTransformClass parentClass;
 };
-
-static bool keyRequested = false;
 
 static GstCaps* webkitMediaPlayReadyDecryptTransformCaps(GstBaseTransform*, GstPadDirection, GstCaps*, GstCaps* filter);
 static GstFlowReturn webkitMediaPlayReadyDecryptTransformInPlace(GstBaseTransform*, GstBuffer*);
@@ -286,7 +302,6 @@ gboolean performDecryption(gpointer userData)
     }
 
     GST_TRACE_OBJECT(self, "decrypt sample %u", sampleIndex);
-    GST_DEBUG_OBJECT(self, "session: %p", self->sessionMetaData);
     if ((errorCode = self->sessionMetaData->decrypt(static_cast<void*>(map.data), static_cast<uint32_t>(map.size),
         static_cast<void*>(boxMap.data), static_cast<uint32_t>(boxMap.size), static_cast<uint32_t>(sampleIndex), trackID))) {
         GST_WARNING_OBJECT(self, "ERROR - packet decryption failed [%d]", errorCode);
@@ -331,6 +346,17 @@ static GstFlowReturn webkitMediaPlayReadyDecryptTransformInPlace(GstBaseTransfor
 
 }
 
+static gboolean requestKey(gpointer userData)
+{
+    WebKitMediaPlayReadyDecrypt* self = WEBKIT_MEDIA_PLAYREADY_DECRYPT(userData);
+    gst_element_post_message(GST_ELEMENT(self),
+        gst_message_new_element(GST_OBJECT(self),
+            gst_structure_new("drm-key-needed", "data", GST_TYPE_BUFFER, self->initDataBuffer,
+                "key-system-id", G_TYPE_STRING, "com.microsoft.playready", nullptr)));
+
+    return G_SOURCE_REMOVE;
+}
+
 static gboolean webkitMediaPlayReadyDecryptSinkEventHandler(GstBaseTransform* trans, GstEvent* event)
 {
     gboolean result = FALSE;
@@ -340,11 +366,10 @@ static gboolean webkitMediaPlayReadyDecryptSinkEventHandler(GstBaseTransform* tr
     switch (GST_EVENT_TYPE(event)) {
     case GST_EVENT_PROTECTION: {
         const gchar* systemId;
-        GstBuffer* buffer = nullptr;
         const gchar* origin;
 
         GST_INFO_OBJECT(self, "received protection event");
-        gst_event_parse_protection(event, &systemId, &buffer, &origin);
+        gst_event_parse_protection(event, &systemId, &self->initDataBuffer, &origin);
         GST_INFO_OBJECT(self, "systemId: %s", systemId);
         if (!g_str_equal(systemId, PLAYREADY_PROTECTION_SYSTEM_ID)
             || !g_str_has_prefix(origin, "smooth-streaming")) {
@@ -353,13 +378,7 @@ static gboolean webkitMediaPlayReadyDecryptSinkEventHandler(GstBaseTransform* tr
             break;
         }
 
-        if (!keyRequested) {
-            keyRequested = true;
-            gst_element_post_message(GST_ELEMENT(self),
-                gst_message_new_element(GST_OBJECT(self),
-                    gst_structure_new("drm-key-needed", "data", GST_TYPE_BUFFER, buffer,
-                        "key-system-id", G_TYPE_STRING, "com.microsoft.playready", nullptr)));
-        }
+        g_timeout_add(0, requestKey, self);
 
         gst_event_unref(event);
         result = TRUE;
