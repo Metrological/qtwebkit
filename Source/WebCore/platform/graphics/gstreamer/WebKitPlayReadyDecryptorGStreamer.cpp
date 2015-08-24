@@ -21,22 +21,6 @@
 
 #include "config.h"
 
-#if (ENABLE(ENCRYPTED_MEDIA))
-   #warning ENABLE(ENCRYPTED_MEDIA)
-#endif
-
-#if (ENABLE(ENCRYPTED_MEDIA_V2))
-   #warning ENABLE(ENCRYPTED_MEDIA_V2)
-#endif
-
-#if (USE(GSTREAMER))
-   #warning USE(GSTREAMER)
-#endif
-
-#if (USE(DXDRM))
-   #warning USE(DXDRM)
-#endif
-
 #if (ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)) && USE(GSTREAMER) && USE(DXDRM)
 
 #include "WebKitPlayReadyDecryptorGStreamer.h"
