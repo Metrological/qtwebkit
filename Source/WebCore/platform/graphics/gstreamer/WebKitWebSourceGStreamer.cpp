@@ -124,6 +124,10 @@ struct _WebKitWebSrcPrivate {
     GstAppSrc* appsrc;
     GstPad* srcpad;
     gchar* uri;
+    bool keepAlive;
+    GstStructure* extraHeaders;
+    bool compress;
+    gchar* httpMethod;
 
     WebCore::MediaPlayer* player;
 
@@ -153,19 +157,18 @@ struct _WebKitWebSrcPrivate {
     gchar* iradioGenre;
     gchar* iradioUrl;
     gchar* iradioTitle;
-
-    // TRUE if appsrc's version is >= 0.10.27, see
-    // https://bugzilla.gnome.org/show_bug.cgi?id=609423
-    gboolean haveAppSrc27;
 };
 
 enum {
-    PROP_IRADIO_MODE = 1,
-    PROP_IRADIO_NAME,
+    PROP_IRADIO_NAME = 1,
     PROP_IRADIO_GENRE,
     PROP_IRADIO_URL,
     PROP_IRADIO_TITLE,
-    PROP_LOCATION
+    PROP_LOCATION,
+    PROP_KEEP_ALIVE,
+    PROP_EXTRA_HEADERS,
+    PROP_COMPRESS,
+    PROP_METHOD
 };
 
 static GstStaticPadTemplate srcTemplate = GST_STATIC_PAD_TEMPLATE("src",
@@ -219,18 +222,10 @@ static void webkit_web_src_class_init(WebKitWebSrcClass* klass)
 
     gst_element_class_add_pad_template(eklass,
                                        gst_static_pad_template_get(&srcTemplate));
-    setGstElementClassMetadata(eklass, "WebKit Web source element", "Source", "Handles HTTP/HTTPS uris",
+    gst_element_class_set_metadata(eklass, "WebKit Web source element", "Source", "Handles HTTP/HTTPS uris",
                                "Sebastian Dröge <sebastian.droege@collabora.co.uk>");
 
     // icecast stuff
-    g_object_class_install_property(oklass,
-                                    PROP_IRADIO_MODE,
-                                    g_param_spec_boolean("iradio-mode",
-                                                         "iradio-mode",
-                                                         "Enable internet radio mode (extraction of shoutcast/icecast metadata)",
-                                                         FALSE,
-                                                         (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
-
     g_object_class_install_property(oklass,
                                     PROP_IRADIO_NAME,
                                     g_param_spec_string("iradio-name",
@@ -273,6 +268,23 @@ static void webkit_web_src_class_init(WebKitWebSrcClass* klass)
                                                         "Location to read from",
                                                         0,
                                                         (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
+
+    g_object_class_install_property(oklass, PROP_KEEP_ALIVE,
+        g_param_spec_boolean("keep-alive", "keep-alive", "Use HTTP persistent connections",
+            FALSE, static_cast<GParamFlags>(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
+
+    g_object_class_install_property(oklass, PROP_EXTRA_HEADERS,
+        g_param_spec_boxed("extra-headers", "Extra Headers", "Extra headers to append to the HTTP request",
+            GST_TYPE_STRUCTURE, static_cast<GParamFlags>(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
+
+    g_object_class_install_property(oklass, PROP_COMPRESS,
+        g_param_spec_boolean("compress", "Compress", "Allow compressed content encodings",
+            FALSE, static_cast<GParamFlags>(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
+
+    g_object_class_install_property(oklass, PROP_METHOD,
+        g_param_spec_string("method", "method", "The HTTP method to use (default: GET)",
+            nullptr, static_cast<GParamFlags>(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
+
     eklass->change_state = webKitWebSrcChangeState;
 
     g_type_class_add_private(klass, sizeof(WebKitWebSrcPrivate));
@@ -283,15 +295,13 @@ static void webkit_web_src_init(WebKitWebSrc* src)
     WebKitWebSrcPrivate* priv = WEBKIT_WEB_SRC_GET_PRIVATE(src);
 
     src->priv = priv;
+    new (priv) WebKitWebSrcPrivate();
 
     priv->appsrc = GST_APP_SRC(gst_element_factory_make("appsrc", 0));
     if (!priv->appsrc) {
         GST_ERROR_OBJECT(src, "Failed to create appsrc");
         return;
     }
-
-    GstElementFactory* factory = GST_ELEMENT_FACTORY(GST_ELEMENT_GET_CLASS(priv->appsrc)->elementfactory);
-    priv->haveAppSrc27 = gst_plugin_feature_check_version(GST_PLUGIN_FEATURE(factory), 0, 10, 27);
 
     gst_bin_add(GST_BIN(src), GST_ELEMENT(priv->appsrc));
 
@@ -329,8 +339,7 @@ static void webkit_web_src_init(WebKitWebSrc* src)
     // likely that libsoup already provides new data before
     // the queue is really empty.
     // This might need tweaking for ports not using libsoup.
-    if (priv->haveAppSrc27)
-        g_object_set(priv->appsrc, "min-percent", 20, NULL);
+    g_object_set(priv->appsrc, "min-percent", 20, NULL);
 
     gst_app_src_set_caps(priv->appsrc, 0);
     gst_app_src_set_size(priv->appsrc, -1);
@@ -355,6 +364,7 @@ static void webKitWebSrcFinalize(GObject* object)
     WebKitWebSrcPrivate* priv = src->priv;
 
     g_free(priv->uri);
+    priv->~WebKitWebSrcPrivate();
 
     GST_CALL_PARENT(G_OBJECT_CLASS, finalize, (object));
 }
@@ -362,20 +372,37 @@ static void webKitWebSrcFinalize(GObject* object)
 static void webKitWebSrcSetProperty(GObject* object, guint propID, const GValue* value, GParamSpec* pspec)
 {
     WebKitWebSrc* src = WEBKIT_WEB_SRC(object);
-    WebKitWebSrcPrivate* priv = src->priv;
 
     switch (propID) {
-    case PROP_IRADIO_MODE: {
-        WebCore::GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
-        priv->iradioMode = g_value_get_boolean(value);
-        break;
-    }
+//    case PROP_IRADIO_MODE: {
+//        WebCore::GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
+//        priv->iradioMode = g_value_get_boolean(value);
+//        break;
+//    }
     case PROP_LOCATION:
 #ifdef GST_API_VERSION_1
         gst_uri_handler_set_uri(reinterpret_cast<GstURIHandler*>(src), g_value_get_string(value), 0);
 #else
         gst_uri_handler_set_uri(reinterpret_cast<GstURIHandler*>(src), g_value_get_string(value));
 #endif
+        break;
+    case PROP_KEEP_ALIVE:
+        src->priv->keepAlive = g_value_get_boolean(value);
+        break;
+    case PROP_EXTRA_HEADERS: {
+        const GstStructure* s = gst_value_get_structure(value);
+        // TODO: sander, used to be smart pointer
+        //src->priv->extraHeaders.reset(s ? gst_structure_copy(s) : nullptr);
+        src->priv->extraHeaders = s ? gst_structure_copy(s) : nullptr;
+        break;
+    }
+    case PROP_COMPRESS:
+        src->priv->compress = g_value_get_boolean(value);
+        break;
+    case PROP_METHOD:
+        // TODO: sander, used to be smart pointer
+        //src->priv->httpMethod.reset(g_value_dup_string(value));
+        src->priv->httpMethod = g_value_dup_string(value);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propID, pspec);
@@ -390,9 +417,9 @@ static void webKitWebSrcGetProperty(GObject* object, guint propID, GValue* value
 
     WebCore::GMutexLocker locker(GST_OBJECT_GET_LOCK(src));
     switch (propID) {
-    case PROP_IRADIO_MODE:
-        g_value_set_boolean(value, priv->iradioMode);
-        break;
+//    case PROP_IRADIO_MODE:
+//        g_value_set_boolean(value, priv->iradioMode);
+//        break;
     case PROP_IRADIO_NAME:
         g_value_set_string(value, priv->iradioName);
         break;
@@ -407,6 +434,22 @@ static void webKitWebSrcGetProperty(GObject* object, guint propID, GValue* value
         break;
     case PROP_LOCATION:
         g_value_set_string(value, priv->uri);
+        break;
+    case PROP_KEEP_ALIVE:
+        g_value_set_boolean(value, priv->keepAlive);
+        break;
+    case PROP_EXTRA_HEADERS:
+        // TODO, sander: was a smart pointer
+        //gst_value_set_structure(value, priv->extraHeaders.get());
+        gst_value_set_structure(value, priv->extraHeaders);
+        break;
+    case PROP_COMPRESS:
+        g_value_set_boolean(value, priv->compress);
+        break;
+    case PROP_METHOD:
+        // TODO, sander: was a smart pointer
+        //g_value_set_string(value, priv->httpMethod.get());
+        g_value_set_string(value, priv->httpMethod);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propID, pspec);
@@ -1050,12 +1093,10 @@ void StreamingClient::handleResponseReceived(const ResourceResponse& response, C
         gst_app_src_set_size(priv->appsrc, length);
 
 #ifndef GST_API_VERSION_1
-        if (!priv->haveAppSrc27) {
-            gst_segment_set_duration(&GST_BASE_SRC(priv->appsrc)->segment, GST_FORMAT_BYTES, length);
-            gst_element_post_message(GST_ELEMENT(priv->appsrc),
-                gst_message_new_duration(GST_OBJECT(priv->appsrc),
-                    GST_FORMAT_BYTES, length));
-        }
+        gst_segment_set_duration(&GST_BASE_SRC(priv->appsrc)->segment, GST_FORMAT_BYTES, length);
+        gst_element_post_message(GST_ELEMENT(priv->appsrc),
+            gst_message_new_duration(GST_OBJECT(priv->appsrc),
+                GST_FORMAT_BYTES, length));
 #endif
     } else
         gst_app_src_set_size(priv->appsrc, -1);

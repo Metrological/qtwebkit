@@ -30,6 +30,10 @@
 #include <gst/base/gstbasetransform.h>
 #include <gst/base/gstbytereader.h>
 
+#include <iostream>
+
+using namespace std;
+
 struct _WebKitMediaPlayReadyDecrypt {
     GstBaseTransform parent;
     WebCore::DiscretixSession* sessionMetaData;
@@ -148,6 +152,8 @@ static bool webkitMediaPlayReadyDecryptCapsAppendIfNotDuplicate(GstCaps* destina
 
 static GstCaps* webkitMediaPlayReadyDecryptTransformCaps(GstBaseTransform* base, GstPadDirection direction, GstCaps* caps, GstCaps* filter)
 {
+    //cerr << "webkitMediaPlayReadyDecryptTransformCaps enter" << endl;
+
     g_return_val_if_fail(direction != GST_PAD_UNKNOWN, nullptr);
     GstCaps* transformedCaps = gst_caps_new_empty();
 
@@ -205,6 +211,7 @@ static GstCaps* webkitMediaPlayReadyDecryptTransformCaps(GstBaseTransform* base,
             gst_structure_free(tmp);
         }
 
+        //cerr << "webkitMediaPlayReadyDecryptTransformCaps append caps if not duplicate" << endl;
         webkitMediaPlayReadyDecryptCapsAppendIfNotDuplicate(transformedCaps, out);
     }
 
@@ -218,11 +225,16 @@ static GstCaps* webkitMediaPlayReadyDecryptTransformCaps(GstBaseTransform* base,
     }
 
     GST_LOG_OBJECT(base, "returning %" GST_PTR_FORMAT, transformedCaps);
+
+    //cerr << "webkitMediaPlayReadyDecryptTransformCaps exit" << endl;
+
     return transformedCaps;
 }
 
 gboolean performDecryption(gpointer userData)
 {
+    cerr << "performDecryption enter" << endl;
+
     WebKitMediaPlayReadyDecrypt* self = WEBKIT_MEDIA_PLAYREADY_DECRYPT(userData);
     GstFlowReturn result = GST_FLOW_OK;
     GstMapInfo map;

@@ -81,6 +81,9 @@
 #define PlatformMediaEngineClassName MediaPlayerPrivate
 #endif
 
+#include <iostream>
+using namespace std;
+
 namespace WebCore {
 
 const PlatformMedia NoPlatformMedia = { PlatformMedia::None, {0} };
@@ -938,13 +941,19 @@ void MediaPlayer::clearMediaCacheForSite(const String& site)
 
 bool MediaPlayer::supportsKeySystem(const String& keySystem, const String& mimeType)
 {
+    cerr << "MediaPlayer::supportsKeySystem enter" << endl;
+
     Vector<MediaPlayerFactory*>& engines = installedMediaEngines();
     unsigned size = engines.size();
     for (unsigned i = 0; i < size; i++) {
         if (engines[i]->supportsKeySystem && engines[i]->supportsKeySystem(keySystem, mimeType)) {
+            cerr << "MediaPlayer::supportsKeySystem exit return true" << endl;
             return true;
         }
     }
+
+    cerr << "MediaPlayer::supportsKeySystem exit return false" << endl;
+
     return false;
 }
 

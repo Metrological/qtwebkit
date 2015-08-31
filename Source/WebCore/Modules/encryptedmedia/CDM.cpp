@@ -35,6 +35,9 @@
 #include "MediaKeys.h"
 #include <wtf/text/WTFString.h>
 
+#include <iostream>
+using namespace std;
+
 namespace WebCore {
 
 struct CDMFactory {
@@ -88,8 +91,16 @@ bool CDM::supportsKeySystem(const String& keySystem)
 
 bool CDM::keySystemSupportsMimeType(const String& keySystem, const String& mimeType)
 {
-    if (CDMFactory* factory = CDMFactoryForKeySystem(keySystem))
-        return factory->supportsKeySystemAndMimeType(keySystem, mimeType);
+    cerr << "CDM::keySystemSupportsMimeType enter" << endl;
+
+    if (CDMFactory* factory = CDMFactoryForKeySystem(keySystem)) {
+        bool result = factory->supportsKeySystemAndMimeType(keySystem, mimeType);
+        cerr << "CDM::keySystemSupportsMimeType exit in if, result: " << result << endl;
+        return result;
+    }
+
+    cerr << "CDM::keySystemSupportsMimeType exit return false" << endl;
+
     return false;
 }
 

@@ -87,6 +87,8 @@ GST_DEBUG_CATEGORY_EXTERN(webkit_media_player_debug);
 #include "WebKitCommonEncryptionDecryptorGStreamer.h"
 #endif
 
+#include <iostream>
+
 using namespace std;
 
 namespace WebCore {
@@ -198,42 +200,64 @@ PassRefPtr<MediaPlayerPrivateInterface> MediaPlayerPrivateGStreamer::create(Medi
 
 void MediaPlayerPrivateGStreamer::registerMediaEngine(MediaEngineRegistrar registrar)
 {
-    if (isAvailable())
+    if (isAvailable()) {
 #if ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)
         registrar(create, getSupportedTypes, extendedSupportsType, 0, 0, 0, supportsKeySystem);
 #else
         registrar(create, getSupportedTypes, supportsType, 0, 0, 0, supportsKeySystem);
 #endif
+    }
 }
 
 bool initializeGStreamerAndRegisterWebKitElements()
 {
-    if (!initializeGStreamer())
+    cerr << "initializeGStreamerAndRegisterWebKitElements enter" << endl;
+
+    if (!initializeGStreamer()) {
+        cerr << "initializeGStreamerAndRegisterWebKitElements exit because gstreamer init fails" << endl;
         return false;
+    }
+
+    gboolean registerResult;
 
     GRefPtr<GstElementFactory> srcFactory = gst_element_factory_find("webkitwebsrc");
     if (!srcFactory) {
         GST_DEBUG_CATEGORY_INIT(webkit_media_player_debug, "webkitmediaplayer", 0, "WebKit media player");
-        gst_element_register(0, "webkitwebsrc", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_WEB_SRC);
+        cerr << "Registering webkitwebsrc" << endl;
+        registerResult = gst_element_register(0, "webkitwebsrc", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_WEB_SRC);
+        cerr << "Returned " << registerResult << endl;
     }
 
 #if ENABLE(ENCRYPTED_MEDIA)
     GRefPtr<GstElementFactory> cencDecryptorFactory = gst_element_factory_find("webkitcencdec");
-    if (!cencDecryptorFactory)
-        gst_element_register(0, "webkitcencdec", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_CENC_DECRYPT);
+    if (!cencDecryptorFactory) {
+        cerr << "Registering webkitcencdec" << endl;
+        registerResult = gst_element_register(0, "webkitcencdec", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_CENC_DECRYPT);
+        cerr << "Returned " << registerResult << endl;
+    }
 #endif
 
 #if USE(DXDRM)
+    cerr << "About to find factory for webkitplayreadydec" << endl;
     GRefPtr<GstElementFactory> playReadyDecryptorFactory = gst_element_factory_find("webkitplayreadydec");
-    if (!playReadyDecryptorFactory)
-        gst_element_register(0, "webkitplayreadydec", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_PLAYREADY_DECRYPT);
+    if (!playReadyDecryptorFactory) {
+        cerr << "Registering webkitplayreadydec" << endl;
+        registerResult = gst_element_register(0, "webkitplayreadydec", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_PLAYREADY_DECRYPT);
+        cerr << "Returned " << registerResult << endl;
+    }
 #endif
 
 #if ENABLE(MEDIA_SOURCE)
     GRefPtr<GstElementFactory> WebKitMediaSrcFactory = gst_element_factory_find("webkitmediasrc");
-    if (!WebKitMediaSrcFactory)
-        gst_element_register(0, "webkitmediasrc", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_SRC);
+    if (!WebKitMediaSrcFactory) {
+        cerr << "Registering webkitmediasrc" << endl;
+        registerResult = gst_element_register(0, "webkitmediasrc", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_SRC);
+        cerr << "Returned " << registerResult << endl;
+    }
 #endif
+
+    cerr << "initializeGStreamerAndRegisterWebKitElements exit with true" << endl;
+
     return true;
 }
 
@@ -368,6 +392,9 @@ MediaPlayerPrivateGStreamer::~MediaPlayerPrivateGStreamer()
 
 void MediaPlayerPrivateGStreamer::load(const String& urlString)
 {
+    cerr << "MediaPlayerPrivateGStreamer::load enter: "  << urlString.characters() << endl;
+
+    cerr << "MediaPlayerPrivateGStreamer::load about to initializeGStreamerAndRegisterWebKitElements" << endl;
     if (!initializeGStreamerAndRegisterWebKitElements())
         return;
 
@@ -380,17 +407,23 @@ void MediaPlayerPrivateGStreamer::load(const String& urlString)
     if (kurl.isLocalFile())
         cleanURL = cleanURL.substring(0, kurl.pathEnd());
 
-    if (!m_playBin)
+    cerr << "MediaPlayerPrivateGStreamer::load about to check playbin" << endl;
+
+    if (!m_playBin) {
+        cerr << "MediaPlayerPrivateGStreamer::load creating GST playbin" << endl;
         createGSTPlayBin();
+    }
 
     ASSERT(m_playBin);
     
 #if ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)
     // Potentially unblock GStreamer thread for DRM license acquisition.
+    cerr << "MediaPlayerPrivateGStreamer::load signalling key semaphore" << endl;
     m_drmKeySemaphore.signal ();
 #endif
 
     m_url = KURL(KURL(), cleanURL);
+    cerr << "MediaPlayerPrivateGStreamer::load setting uri (\"" << cleanURL.utf8().data() << "\" on playbin" << endl;
     g_object_set(m_playBin.get(), "uri", cleanURL.utf8().data(), NULL);
 
     INFO_MEDIA_MESSAGE("Load %s", cleanURL.utf8().data());
@@ -410,6 +443,8 @@ void MediaPlayerPrivateGStreamer::load(const String& urlString)
 
     if (!m_delayingLoad)
         commitLoad();
+
+    cerr << "MediaPlayerPrivateGStreamer::load exit" << endl;
 }
 
 #if ENABLE(MEDIA_SOURCE)
@@ -470,6 +505,8 @@ float MediaPlayerPrivateGStreamer::playbackPosition() const
 
 bool MediaPlayerPrivateGStreamer::changePipelineState(GstState newState)
 {
+    cerr << "MediaPlayerPrivateGStreamer::changePipelineState enter " << newState << endl;
+
     ASSERT(newState == GST_STATE_PLAYING || newState == GST_STATE_PAUSED);
 
     GstState currentState;
@@ -479,6 +516,9 @@ bool MediaPlayerPrivateGStreamer::changePipelineState(GstState newState)
     if (currentState == newState || pending == newState) {
         LOG_MEDIA_MESSAGE("Rejected state change to %s from %s with %s pending", gst_element_state_get_name(newState),
             gst_element_state_get_name(currentState), gst_element_state_get_name(pending));
+
+        cerr << "MediaPlayerPrivateGStreamer::changePipelineState exit with true (1)" << endl;
+
         return true;
     }
 
@@ -489,8 +529,12 @@ bool MediaPlayerPrivateGStreamer::changePipelineState(GstState newState)
     GstState pausedOrPlaying = newState == GST_STATE_PLAYING ? GST_STATE_PAUSED : GST_STATE_PLAYING;
     if (currentState != pausedOrPlaying && setStateResult == GST_STATE_CHANGE_FAILURE) {
         loadingFailed(MediaPlayer::Empty);
+        cerr << "MediaPlayerPrivateGStreamer::changePipelineState exit with false (2)" << endl;
         return false;
     }
+
+    cerr << "MediaPlayerPrivateGStreamer::changePipelineState exit with true (3)" << endl;
+
     return true;
 }
 
@@ -1257,8 +1301,11 @@ void MediaPlayerPrivateGStreamer::handleSyncMessage(GstMessage* message)
     }
 }
 
+const bool g_bDumpHandleMessage = false;
 void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
 {
+    if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage enter " << endl;
+
     GOwnPtr<GError> err;
     GOwnPtr<gchar> debug;
     MediaPlayer::NetworkState error;
@@ -1286,6 +1333,8 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
     LOG_MEDIA_MESSAGE("Message %s received from element %s", GST_MESSAGE_TYPE_NAME(message), GST_MESSAGE_SRC_NAME(message));
     switch (GST_MESSAGE_TYPE(message)) {
     case GST_MESSAGE_ERROR:
+        if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage GST_MESSAGE_ERROR " << endl;
+
         if (m_resetPipeline)
             break;
         if (m_missingPlugins)
@@ -1321,14 +1370,20 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
             loadingFailed(error);
         break;
     case GST_MESSAGE_EOS:
+        if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage GST_MESSAGE_EOS " << endl;
+
         didEnd();
         break;
     case GST_MESSAGE_ASYNC_DONE:
+        if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage GST_MESSAGE_ASYNC_DONE " << endl;
+
         if (!messageSourceIsPlaybin || m_delayingLoad)
             break;
         asyncStateChangeDone();
         break;
     case GST_MESSAGE_STATE_CHANGED: {
+        if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage GST_MESSAGE_STATE_CHANGED " << endl;
+
         if (!messageSourceIsPlaybin || m_delayingLoad)
             break;
         updateStates();
@@ -1342,6 +1397,8 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
         break;
     }
     case GST_MESSAGE_BUFFERING:
+        if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage GST_MESSAGE_BUFFERING " << endl;
+
         processBufferingStats(message);
         break;
 #ifdef GST_API_VERSION_1
@@ -1349,9 +1406,12 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
 #else
     case GST_MESSAGE_DURATION:
 #endif
+        if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage GST_MESSAGE_DURATION_CHANGED " << endl;
         durationChanged();
         break;
     case GST_MESSAGE_REQUEST_STATE:
+        if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage GST_MESSAGE_REQUEST_STATE " << endl;
+
         gst_message_parse_request_state(message, &requestedState);
         gst_element_get_state(m_playBin.get(), &currentState, NULL, 250);
         if (requestedState < currentState) {
@@ -1363,6 +1423,8 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
         }
         break;
     case GST_MESSAGE_ELEMENT:
+        if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage GST_MESSAGE_ELEMENT " << endl;
+
         if (gst_is_missing_plugin_message(message)) {
             gchar* detail = gst_missing_plugin_message_get_installer_detail(message);
             gchar* detailArray[2] = {detail, 0};
@@ -1382,11 +1444,13 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
         break;
 #if ENABLE(VIDEO_TRACK)
     case GST_MESSAGE_TOC:
+        if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage GST_MESSAGE_TOC " << endl;
         processTableOfContents(message);
         break;
 #endif
 #if ENABLE(MEDIA_SOURCE)
     case GST_MESSAGE_RESET_TIME:
+        if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage GST_MESSAGE_RESET_TIME" << endl;
         if (m_source && WEBKIT_IS_MEDIA_SRC(m_source.get())) {
             StreamType streamType = getStreamType(GST_ELEMENT(GST_MESSAGE_SRC(message)));
             if (streamType == STREAM_TYPE_AUDIO || streamType == STREAM_TYPE_VIDEO)
@@ -1395,10 +1459,13 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
         break;
 #endif
     default:
+        if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage default" << endl;
         LOG_MEDIA_MESSAGE("Unhandled GStreamer message type: %s",
                     GST_MESSAGE_TYPE_NAME(message));
         break;
     }
+
+    if (g_bDumpHandleMessage) cerr << "MediaPlayerPrivateGStreamer::handleMessage exit" << endl;
 }
 
 void MediaPlayerPrivateGStreamer::handlePluginInstallerResult(GstInstallPluginsReturn result)
@@ -2252,16 +2319,24 @@ void MediaPlayerPrivateGStreamer::getSupportedTypes(HashSet<String>& types)
 
 bool MediaPlayerPrivateGStreamer::supportsKeySystem(const String& keySystem, const String& mimeType)
 {
+    cerr << "MediaPlayerPrivateGStreamer::supportsKeySystem enter" << endl;
     GST_DEBUG ("Checking for KeySystem support with %s and type %s", keySystem.utf8().data(), mimeType.utf8().data());
 
 #if USE(DXDRM)
+    cerr << "MediaPlayerPrivateGStreamer::supportsKeySystem checking for playready" << endl;
     if (equalIgnoringCase(keySystem, "com.microsoft.playready") ||
-        equalIgnoringCase(keySystem, "com.youtube.playready"))
+        equalIgnoringCase(keySystem, "com.youtube.playready")) {
+        cerr << "MediaPlayerPrivateGStreamer::supportsKeySystem return true because of playready" << endl;
         return true;
+    }
 #endif
 
-    if (equalIgnoringCase(keySystem, "org.w3.clearkey"))
+    if (equalIgnoringCase(keySystem, "org.w3.clearkey")) {
+        cerr << "MediaPlayerPrivateGStreamer::supportsKeySystem returning true because of clearkey" << endl;
         return true;
+    }
+
+    cerr << "MediaPlayerPrivateGStreamer::supportsKeySystem returning false" << endl;
 
     return false;
 }

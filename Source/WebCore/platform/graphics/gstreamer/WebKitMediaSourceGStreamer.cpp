@@ -44,6 +44,9 @@
 #include <wtf/text/CString.h>
 #include <wtf/gobject/GOwnPtr.h>
 
+#include <iostream>
+using namespace std;
+
 namespace WebCore
 {
 class GStreamerMediaDescription : public MediaDescription {
@@ -1498,6 +1501,8 @@ MediaSourceClientGStreamer::~MediaSourceClientGStreamer()
 
 MediaSourcePrivate::AddStatus MediaSourceClientGStreamer::addSourceBuffer(PassRefPtr<SourceBufferPrivateGStreamer> sourceBufferPrivate, const ContentType&)
 {
+    cerr << "MediaSourceClientGStreamer::addSourceBuffer 1" << endl;
+
     WebKitMediaSrcPrivate* priv = m_src->priv;
 
     if (priv->noMorePads) {
@@ -1507,9 +1512,13 @@ MediaSourcePrivate::AddStatus MediaSourceClientGStreamer::addSourceBuffer(PassRe
 
     GST_DEBUG_OBJECT(m_src.get(), "State %d", (int)GST_STATE(m_src.get()));
 
+    cerr << "MediaSourceClientGStreamer::addSourceBuffer 2" << endl;
+
     GST_OBJECT_LOCK(m_src.get());
     guint numberOfSources = g_list_length(priv->sources);
     GST_OBJECT_UNLOCK(m_src.get());
+
+    cerr << "MediaSourceClientGStreamer::addSourceBuffer 3" << endl;
 
     Source* source = g_new0(Source, 1);
     GOwnPtr<gchar> srcName(g_strdup_printf("src%u", numberOfSources));
@@ -1519,22 +1528,34 @@ MediaSourcePrivate::AddStatus MediaSourceClientGStreamer::addSourceBuffer(PassRe
     source->typefind = gst_element_factory_make("typefind", typefindName.get());
     source->noDataToDecodeTimeoutTag = 0;
 
+    cerr << "MediaSourceClientGStreamer::addSourceBuffer 4" << endl;
+
     gst_app_src_set_callbacks(GST_APP_SRC(source->src), &appsrcCallbacks, source->parent, 0);
     gst_app_src_set_emit_signals(GST_APP_SRC(source->src), FALSE);
     gst_app_src_set_stream_type(GST_APP_SRC(source->src), GST_APP_STREAM_TYPE_SEEKABLE);
 
+    cerr << "MediaSourceClientGStreamer::addSourceBuffer 5" << endl;
+
     g_signal_connect(source->typefind, "have-type", G_CALLBACK(webKitMediaSrcHaveType), source);
     source->sourceBuffer = sourceBufferPrivate.get();
+
+    cerr << "MediaSourceClientGStreamer::addSourceBuffer 6" << endl;
 
     GST_OBJECT_LOCK(m_src.get());
     priv->sources = g_list_prepend(priv->sources, source);
     GST_OBJECT_UNLOCK(m_src.get());
 
+    cerr << "MediaSourceClientGStreamer::addSourceBuffer 7" << endl;
+
     gst_bin_add_many(GST_BIN(m_src.get()), source->src, source->typefind, NULL);
     gst_element_link_pads(source->src, "src", source->typefind, "sink");
 
+    cerr << "MediaSourceClientGStreamer::addSourceBuffer 8" << endl;
+
     gst_element_sync_state_with_parent(source->src);
     gst_element_sync_state_with_parent(source->typefind);
+
+    cerr << "MediaSourceClientGStreamer::addSourceBuffer 9" << endl;
 
     return MediaSourcePrivate::Ok;
 }

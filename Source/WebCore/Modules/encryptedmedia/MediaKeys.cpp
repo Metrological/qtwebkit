@@ -36,6 +36,9 @@
 #include "UUID.h"
 #include <wtf/HashSet.h>
 
+#include <iostream>
+using namespace std;
+
 namespace WebCore {
 
 PassRefPtr<MediaKeys> MediaKeys::create(const String& keySystem, ExceptionCode& ec)
@@ -124,21 +127,30 @@ PassRefPtr<MediaKeySession> MediaKeys::createSession(ScriptExecutionContext* con
 
 bool MediaKeys::isTypeSupported(const String& keySystem, const String& mimeType)
 {
+    cerr << "MediaKeys::isTypeSupported enter" << endl;
+
     // 1. If keySystem contains an unrecognized or unsupported Key System, return false and abort these steps.
     // Key system string comparison is case-sensitive.
-    if (keySystem.isNull() || keySystem.isEmpty() || !CDM::supportsKeySystem(keySystem))
+    if (keySystem.isNull() || keySystem.isEmpty() || !CDM::supportsKeySystem(keySystem)) {
+        cerr << "MediaKeys::isTypeSupported return false (1)" << endl;
         return false;
+    }
 
     // 2. If type is null or an empty string, return true and abort these steps.
-    if (mimeType.isNull() || mimeType.isEmpty())
+    if (mimeType.isNull() || mimeType.isEmpty()) {
+        cerr << "MediaKeys::isTypeSupported return true (2)" << endl;
         return true;
+    }
 
     // 3. If the Key System specified by keySystem does not support decrypting the container and/or codec
     // specified by type, return false and abort these steps.
-    if (!CDM::keySystemSupportsMimeType(keySystem, mimeType))
+    if (!CDM::keySystemSupportsMimeType(keySystem, mimeType)) {
+        cerr << "MediaKeys::isTypeSupported return false (3)" << endl;
         return false;
+    }
 
     // 4. Return true;
+    cerr << "MediaKeys::isTypeSupported return true (4)" << endl;
     return true;
 }
 
