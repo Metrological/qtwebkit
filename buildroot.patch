@@ -1,0 +1,20 @@
+diff --git a/package/qt5/qt5webkit/qt5webkit.mk b/package/qt5/qt5webkit/qt5webkit.mk
+index e5c0954..c3657ba 100644
+--- a/package/qt5/qt5webkit/qt5webkit.mk
++++ b/package/qt5/qt5webkit/qt5webkit.mk
+@@ -92,12 +92,14 @@ endif
+ ifeq ($(BR2_QT5WEBKIT_USE_DXDRM_EME),y)
+ QT5WEBKIT_DEPENDENCIES += dxdrm
+ QT5WEBKIT_CONFIG += \
+-	WEBKIT_CONFIG+=use_dxdrm
++	WEBKIT_CONFIG+=use_dxdrm \
++        WEBKIT_CONFIG+=enable_encrypted_media
+ endif
+ 
+ ifeq ($(BR2_QT5WEBKIT_USE_ENCRYPTED_MEDIA),y)
+ QT5WEBKIT_CONFIG += \
+ 	WEBKIT_CONFIG+=encrypted_media_v2
++	WEBKIT_CONFIG+=encrypted_media
+ endif
+ 
+ ifeq ($(BR2_PACKAGE_LIBSOUP),y)
