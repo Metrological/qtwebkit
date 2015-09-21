@@ -197,7 +197,7 @@ enable?(ENCRYPTED_MEDIA_V2) {
     INCLUDEPATH += \
         $$SOURCE_DIR/Modules/encryptedmedia
     use?(DXDRM) {
-        LIBS += -lDxDrm
+        LIBS += -lprovisionproxy -lDxDrm 
     }
 }
 
