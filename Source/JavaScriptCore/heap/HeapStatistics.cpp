@@ -251,8 +251,8 @@ void HeapStatistics::showObjectStatistics(Heap* heap)
         objectWithOutOfLineStorageCount = static_cast<long>(storageStatistics.objectWithOutOfLineStorageCount());
         objectsWithOutOfLineStoragePercent = objectWithOutOfLineStorageCount * 100 / storageStatistics.objectCount();
     }
-    dataLogF("wasted .property storage: %ldkB (%ld%%)\n", wastedPropertyStorageBytes, wastedPropertyStoragePercent);
-    dataLogF("objects with out-of-line .property storage: %ld (%ld%%)\n", objectWithOutOfLineStorageCount, objectsWithOutOfLineStoragePercent);
+    dataLogF("wasted .property storage: %ldkB (%ld percent)\n", wastedPropertyStorageBytes, wastedPropertyStoragePercent);
+    dataLogF("objects with out-of-line .property storage: %ld (%ld percent)\n", objectWithOutOfLineStorageCount, objectsWithOutOfLineStoragePercent);
 }
 
 #if ENABLE(JS_MEMORY_TRACKING)
