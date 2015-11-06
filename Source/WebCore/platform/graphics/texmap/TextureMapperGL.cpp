@@ -795,6 +795,9 @@ static void swizzleBGRAToRGBA(uint32_t* data, const IntRect& rect, int stride = 
 // internal and external formats need to be BGRA
 static bool driverSupportsExternalTextureBGRA(GraphicsContext3D* context)
 {
+    // Ignore the extension while it doesn't get fixed
+    return false;
+
     if (context->isGLES2Compliant()) {
         static bool supportsExternalTextureBGRA = context->getExtensions()->supports("GL_EXT_texture_format_BGRA8888");
         return supportsExternalTextureBGRA;
