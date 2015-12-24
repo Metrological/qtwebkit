@@ -96,7 +96,7 @@ struct ImageBufferDataPrivateAccelerated : public TextureMapperPlatformLayer, pu
     virtual uint32_t copyToGraphicsSurface();
     virtual GraphicsSurface::Flags graphicsSurfaceFlags() const { return GraphicsSurface::SupportsAlpha | GraphicsSurface::SupportsTextureTarget | GraphicsSurface::SupportsSharing | GraphicsSurface::IsCanvas; }
 #endif
-    void commitChanges() const;
+    void commitChanges(bool changeBind = false) const;
     void draw(GraphicsContext* destContext, ColorSpace styleColorSpace, const FloatRect& destRect,
               const FloatRect& srcRect, CompositeOperator op, BlendMode blendMode, bool useLowQualityScale,
               bool ownContext);
@@ -182,14 +182,21 @@ uint32_t ImageBufferDataPrivateAccelerated::copyToGraphicsSurface()
 }
 #endif
 
-void ImageBufferDataPrivateAccelerated::commitChanges() const
+void ImageBufferDataPrivateAccelerated::commitChanges(bool changeBind) const
 {
     if (!m_fboDirty)
         return;
 
     // this will flush pending QPainter operations and force ensureActiveTarget() to be called on the next paint
-    QOpenGL2PaintEngineEx* acceleratedPaintEngine = static_cast<QOpenGL2PaintEngineEx*>(m_pdev->paintEngine());
-    acceleratedPaintEngine->invalidateState();
+    if (changeBind) {
+        QPainter* painter = m_pdev->paintEngine()->painter();
+        painter->beginNativePainting();
+        painter->endNativePainting();
+    } else {
+        QOpenGL2PaintEngineEx* acceleratedPaintEngine = static_cast<QOpenGL2PaintEngineEx*>(m_pdev->paintEngine());
+        acceleratedPaintEngine->invalidateState();
+    }
+
     m_fboDirty = false;
 }
 
@@ -198,7 +205,7 @@ void ImageBufferDataPrivateAccelerated::draw(GraphicsContext* destContext, Color
                                              bool useLowQualityScale, bool ownContext)
 {
     if (destContext->isAcceleratedContext()) {
-        commitChanges();
+        commitChanges(true);
 
         QOpenGL2PaintEngineEx* acceleratedPaintEngine = static_cast<QOpenGL2PaintEngineEx*>(destContext->platformContext()->paintEngine());
         if (acceleratedPaintEngine) {
