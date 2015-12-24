@@ -137,6 +137,7 @@ HEADERS += \
     StringExtras.h \
     StringHasher.h \
     StringPrintStream.h \
+    SysLog.h \
     TCPackedCache.h \
     TCSpinLock.h \
     TCSystemAlloc.h \
@@ -228,6 +229,7 @@ SOURCES += \
     SHA1.cpp \
     StackBounds.cpp \
     StringPrintStream.cpp \
+    SysLog.cpp \
     TCSystemAlloc.cpp \
     Threading.cpp \
     TypeTraits.cpp \

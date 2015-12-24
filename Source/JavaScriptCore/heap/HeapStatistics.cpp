@@ -39,8 +39,9 @@
 #include <sys/resource.h>
 #endif
 #include <wtf/CurrentTime.h>
-#include <wtf/DataLog.h>
+#include <wtf/SysLog.h>
 #include <wtf/Deque.h>
+
 
 namespace JSC {
 
@@ -80,28 +81,28 @@ void HeapStatistics::logStatistics()
 #error "The HeapStatistics module is not supported on this platform."
 #endif
     if (!vmName || !suiteName || !benchmarkName)
-        dataLogF("HeapStatistics: {\"max_rss\": %ld", usage.ru_maxrss);
+        WTF::sysLogF("HeapStatistics: {\"max_rss\": %ld", usage.ru_maxrss);
     else
-        dataLogF("HeapStatistics: {\"max_rss\": %ld, \"vm_name\": \"%s\", \"suite_name\": \"%s\", \"benchmark_name\": \"%s\"", 
+        WTF::sysLogF("HeapStatistics: {\"max_rss\": %ld, \"vm_name\": \"%s\", \"suite_name\": \"%s\", \"benchmark_name\": \"%s\"", 
             usage.ru_maxrss, vmName, suiteName, benchmarkName); 
 
     if (Options::recordGCPauseTimes()) {
-        dataLogF(", \"pause_times\": [");
+        WTF::sysLogF(", \"pause_times\": [");
         Vector<double>::iterator startIt = s_pauseTimeStarts->begin();
         Vector<double>::iterator endIt = s_pauseTimeEnds->begin();
         if (startIt != s_pauseTimeStarts->end() && endIt != s_pauseTimeEnds->end()) {
-            dataLogF("[%f, %f]", *startIt, *endIt);
+            WTF::sysLogF("[%f, %f]", *startIt, *endIt);
             ++startIt;
             ++endIt;
         }
         while (startIt != s_pauseTimeStarts->end() && endIt != s_pauseTimeEnds->end()) {
-            dataLogF(", [%f, %f]", *startIt, *endIt);
+            WTF::sysLogF(", [%f, %f]", *startIt, *endIt);
             ++startIt;
             ++endIt;
         }
-        dataLogF("], \"start_time\": %f, \"end_time\": %f", s_startTime, s_endTime);
+        WTF::sysLogF("], \"start_time\": %f, \"end_time\": %f", s_startTime, s_endTime);
     }
-    dataLogF("}\n");
+    WTF::sysLogF("}\n");
 }
 
 void HeapStatistics::exitWithFailure()
@@ -233,10 +234,10 @@ inline size_t StorageStatistics::storageCapacity()
 
 void HeapStatistics::showObjectStatistics(Heap* heap)
 {
-    dataLogF("\n=== Heap Statistics: ===\n");
-    dataLogF("size: %ldkB\n", static_cast<long>(heap->m_sizeAfterLastCollect / KB));
-    dataLogF("capacity: %ldkB\n", static_cast<long>(heap->capacity() / KB));
-    dataLogF("pause time: %lfs\n\n", heap->m_lastGCLength);
+    WTF::sysLogF("\n=== Heap Statistics: ===\n");
+    WTF::sysLogF("size: %ldkB\n", static_cast<long>(heap->m_sizeAfterLastCollect / KB));
+    WTF::sysLogF("capacity: %ldkB\n", static_cast<long>(heap->capacity() / KB));
+    WTF::sysLogF("pause time: %lfs\n\n", heap->m_lastGCLength);
 
     StorageStatistics storageStatistics;
     heap->m_objectSpace.forEachLiveCell(storageStatistics);
@@ -251,8 +252,8 @@ void HeapStatistics::showObjectStatistics(Heap* heap)
         objectWithOutOfLineStorageCount = static_cast<long>(storageStatistics.objectWithOutOfLineStorageCount());
         objectsWithOutOfLineStoragePercent = objectWithOutOfLineStorageCount * 100 / storageStatistics.objectCount();
     }
-    dataLogF("wasted .property storage: %ldkB (%ld percent)\n", wastedPropertyStorageBytes, wastedPropertyStoragePercent);
-    dataLogF("objects with out-of-line .property storage: %ld (%ld percent)\n", objectWithOutOfLineStorageCount, objectsWithOutOfLineStoragePercent);
+    WTF::sysLogF("wasted .property storage: %ldkB (%ld percent)\n", wastedPropertyStorageBytes, wastedPropertyStoragePercent);
+    WTF::sysLogF("objects with out-of-line .property storage: %ld (%ld percent)\n", objectWithOutOfLineStorageCount, objectsWithOutOfLineStoragePercent);
 }
 
 #if ENABLE(JS_MEMORY_TRACKING)
@@ -264,12 +265,12 @@ void HeapStatistics::showAllocBacktrace(Heap *heap, size_t size, void *address)
 
     CallFrame *topCallFrame = heap->vm()->topCallFrame->removeHostCallFrameFlag();
     //JSContextRef context = topCallFrame?toRef(topCallFrame):0;
-    dataLogF("\n%zu bytes at %p\n", size, address);
+    WTF::sysLogF("\n%zu bytes at %p\n", size, address);
 
     if (topCallFrame) {
         if (*reinterpret_cast<int32_t*>(topCallFrame) == 0xabadcafe) {
             /* dirty hackish workaround */
-            dataLogF("No backtrace: uninitialised top frame\n");
+            WTF::sysLogF("No backtrace: uninitialised top frame\n");
         } else {
             while (topCallFrame && topCallFrame != CallFrame::noCaller()
                     && !topCallFrame->codeBlock()) {
@@ -277,7 +278,7 @@ void HeapStatistics::showAllocBacktrace(Heap *heap, size_t size, void *address)
                 // getStackTrace() does not support this well, so we'll ignore
                 // the top frame(s) and start from the first one to have a code
                 // block)
-                dataLogF("No codeblock in frame at %p: ignoring it.\n", topCallFrame);
+                WTF::sysLogF("No codeblock in frame at %p: ignoring it.\n", topCallFrame);
                 topCallFrame = topCallFrame->trueCallerFrame();
             }
             if (topCallFrame && topCallFrame != CallFrame::noCaller()) {
@@ -285,7 +286,7 @@ void HeapStatistics::showAllocBacktrace(Heap *heap, size_t size, void *address)
                 heap->m_computingBacktrace = true;
                 RefPtr<OpaqueJSString> backtrace = adoptRef(JSContextCreateBacktrace(context, 50));
                 heap->m_computingBacktrace = false;
-                dataLogF("Backtrace:\n%s\nBacktrace end.\n",
+                WTF::sysLogF("Backtrace:\n%s\nBacktrace end.\n",
                         backtrace->string().utf8().data());
             }
         }

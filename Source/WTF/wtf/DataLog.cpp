@@ -30,8 +30,6 @@
 #include <wtf/WTFThreadData.h>
 #include <wtf/Threading.h>
 
-#include <qdebug.h>
-
 #if OS(UNIX)
 #include <unistd.h>
 #endif
@@ -104,15 +102,7 @@ FilePrintStream& dataFile()
 
 void dataLogFV(const char* format, va_list argList)
 {
-#ifdef QT_BUILD_WITH_SYSLOG
-    QString message;
-
-    message.vsprintf(format, argList);
-    qDebug() << qPrintable(message);
-#else
-
     dataFile().vprintf(format, argList);
-#endif  // QT_BUILD_WITH_SYSLOG
 }
 
 void dataLogF(const char* format, ...)
