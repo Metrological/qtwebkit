@@ -548,6 +548,8 @@ IntSize GraphicsSurface::platformSize() const
 
 PassRefPtr<GraphicsSurface> GraphicsSurface::platformCreate(const IntSize& size, Flags flags, const PlatformGraphicsContext3D shareContext)
 {
+    return PassRefPtr<GraphicsSurface>();
+
     if (flags & SupportsCopyToTexture || flags & SupportsSingleBuffered)
         return PassRefPtr<GraphicsSurface>();
 
@@ -562,6 +564,8 @@ PassRefPtr<GraphicsSurface> GraphicsSurface::platformCreate(const IntSize& size,
 
 PassRefPtr<GraphicsSurface> GraphicsSurface::platformImport(const IntSize& size, Flags flags, const GraphicsSurfaceToken& token)
 {
+    return PassRefPtr<GraphicsSurface>();
+
     if (flags & SupportsCopyToTexture || flags & SupportsSingleBuffered)
         return PassRefPtr<GraphicsSurface>();
 
