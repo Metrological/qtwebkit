@@ -518,7 +518,7 @@ bool GraphicsContext3D::ImageExtractor::extractImage(bool premultiplyAlpha, bool
         m_qtImage = QImage::fromData(reinterpret_cast<const uchar*>(m_image->data()->data()), m_image->data()->size());
     else {
         QPixmap* nativePixmap = m_image->nativeImageForCurrentFrame();
-        if (!nativePixmap)
+        if (!nativePixmap || !nativePixmap->handle())
             return false;
 
         // With QPA, we can avoid a deep copy.
