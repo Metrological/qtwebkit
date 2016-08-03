@@ -222,6 +222,8 @@ public:
         return m_size;
     }
 
+    void logCompilation(const char *format, ...) WTF_ATTRIBUTE_PRINTF(2, 3);
+
 private:
     template <typename T> T applyOffset(T src)
     {
@@ -264,9 +266,10 @@ private:
 };
 
 #define FINALIZE_CODE_IF(condition, linkBufferReference, dataLogFArgumentsForHeading)  \
+    (((linkBufferReference).logCompilation dataLogFArgumentsForHeading), \
     (UNLIKELY((condition))                                              \
      ? ((linkBufferReference).finalizeCodeWithDisassembly dataLogFArgumentsForHeading) \
-     : (linkBufferReference).finalizeCodeWithoutDisassembly())
+     : (linkBufferReference).finalizeCodeWithoutDisassembly()))
 
 // Use this to finalize code, like so:
 //

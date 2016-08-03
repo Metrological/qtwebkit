@@ -223,6 +223,16 @@ void LinkBuffer::dumpCode(void* code, size_t size)
 }
 #endif
 
+
+void LinkBuffer::logCompilation(const char* format, ...)
+{
+    va_list argList;
+    va_start(argList, format);
+    WTF::dataLogFV(format, argList);
+    dataLogF("location: %p, size: %ld\n", m_code, m_size);
+    va_end(argList);
+}
+
 } // namespace JSC
 
 #endif // ENABLE(ASSEMBLER)
