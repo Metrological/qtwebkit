@@ -1034,6 +1034,13 @@ bool FrameView::isEnclosedInCompositingLayer() const
 bool FrameView::flushCompositingStateIncludingSubframes()
 {
 #if USE(ACCELERATED_COMPOSITING)
+    if (needsLayout())
+        return false;
+    for (Frame* child = m_frame->tree()->firstChild(); child; child = child->tree()->traverseNext(m_frame.get())) {
+        if (child->view()->needsLayout())
+            return false;
+    }
+
     bool allFramesFlushed = flushCompositingStateForThisFrame(m_frame.get());
     
     for (Frame* child = m_frame->tree()->firstChild(); child; child = child->tree()->traverseNext(m_frame.get())) {
