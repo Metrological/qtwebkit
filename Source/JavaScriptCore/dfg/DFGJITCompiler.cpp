@@ -270,6 +270,7 @@ bool JITCompiler::compile(JITCode& entry)
     if (m_graph.m_compilation)
         m_disassembler->reportToProfiler(m_graph.m_compilation.get(), linkBuffer);
 
+    linkBuffer.saveCompilationInfo("DFG JIT for %s", m_codeBlock->inferredName().utf8().data());
     entry = JITCode(
         linkBuffer.finalizeCodeWithoutDisassembly(),
         JITCode::DFGJIT);
@@ -365,6 +366,9 @@ bool JITCompiler::compileFunction(JITCode& entry, MacroAssemblerCodePtr& entryWi
         m_disassembler->reportToProfiler(m_graph.m_compilation.get(), linkBuffer);
 
     entryWithArityCheck = linkBuffer.locationOf(arityCheck);
+
+    linkBuffer.saveCompilationInfo("DFG JIT for %s", m_codeBlock->inferredName().utf8().data());
+
     entry = JITCode(
         linkBuffer.finalizeCodeWithoutDisassembly(),
         JITCode::DFGJIT);

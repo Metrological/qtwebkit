@@ -23,6 +23,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <stdio.h>
+
 #include "config.h"
 #include "LinkBuffer.h"
 
@@ -31,6 +36,57 @@
 #include "Options.h"
 
 namespace JSC {
+
+#define COMPILATION_INFO_SIZE 20
+
+struct CompilationInfoEntry {
+    public:
+        CompilationInfoEntry(char* _name, void* _start, size_t _size)
+        {
+            name = _name;
+            start = _start;
+            size = _size;
+        }
+
+        CompilationInfoEntry()
+        {
+            name = 0;
+            start = 0;
+            size = 0;
+        }
+
+        char* name;
+        void* start;
+        size_t size;
+};
+
+class CompilationInfo {
+    public:
+        static struct CompilationInfo& get()
+        {
+            static CompilationInfo singleton;
+            return singleton;
+        }
+        // takes ownership of name
+        void add_entry(char *name, void *start, size_t size)
+        {
+            last++;
+            if (last >= COMPILATION_INFO_SIZE)
+                last = 0;
+
+            if (entries[last].name)
+                free(entries[last].name);
+
+            entries[last] = CompilationInfoEntry(name, start, size);
+        }
+    private:
+        CompilationInfo()
+        {
+            last = COMPILATION_INFO_SIZE + 1;
+        }
+        struct CompilationInfoEntry entries[COMPILATION_INFO_SIZE];
+        size_t last;
+};
 
 LinkBuffer::CodeRef LinkBuffer::finalizeCodeWithoutDisassembly()
 {
@@ -223,14 +279,14 @@ void LinkBuffer::dumpCode(void* code, size_t size)
 }
 #endif
 
-
-void LinkBuffer::logCompilation(const char* format, ...)
+void LinkBuffer::saveCompilationInfo(const char *format, ...)
 {
     va_list argList;
     va_start(argList, format);
-    WTF::dataLogFV(format, argList);
-    dataLogF("location: %p, size: %ld\n", m_code, m_size);
+    char *name;
+    vasprintf(&name, format, argList);   va_end(argList);
     va_end(argList);
+    CompilationInfo::get().add_entry(name, m_code, m_size);
 }
 
 } // namespace JSC

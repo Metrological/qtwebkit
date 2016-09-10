@@ -787,6 +787,7 @@ JITCode JIT::privateCompile(CodePtr* functionEntryArityCheck, JITCompilationEffo
     if (m_compilation)
         m_disassembler->reportToProfiler(m_compilation.get(), patchBuffer);
     
+    patchBuffer.saveCompilationInfo("Baseline JIT for %s", m_codeBlock->inferredName().utf8().data());
     CodeRef result = patchBuffer.finalizeCodeWithoutDisassembly();
     
     m_vm->machineCodeBytesPerBytecodeWordForBaselineJIT.add(
