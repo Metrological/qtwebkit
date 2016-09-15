@@ -75,7 +75,6 @@ public:
     virtual void setShowRepaintCounter(bool) OVERRIDE;
     virtual void flushCompositingState(const FloatRect&);
     virtual void flushCompositingStateForThisLayerOnly();
-    void updateBackingStoreIncludingSubLayers();
     virtual void setName(const String& name);
     virtual bool hasContentsLayer() const { return m_contentsLayer; }
     virtual PlatformLayer* platformLayer() const { return m_contentsLayer; }

@@ -440,21 +440,7 @@ void GraphicsLayerTextureMapper::flushCompositingStateForThisLayerOnly()
     prepareBackingStoreIfNeeded();
     commitLayerChanges();
     m_layer->syncAnimations();
-}
-
-void GraphicsLayerTextureMapper::updateBackingStoreIncludingSubLayers()
-{
-    if (!m_layer->textureMapper())
-        return;
-
     updateBackingStoreIfNeeded();
-
-    if (maskLayer())
-        toGraphicsLayerTextureMapper(maskLayer())->updateBackingStoreIfNeeded();
-    if (replicaLayer())
-        toGraphicsLayerTextureMapper(replicaLayer())->updateBackingStoreIfNeeded();
-    for (size_t i = 0; i < children().size(); ++i)
-        toGraphicsLayerTextureMapper(children()[i])->updateBackingStoreIncludingSubLayers();
 }
 
 void GraphicsLayerTextureMapper::prepareBackingStoreIfNeeded()

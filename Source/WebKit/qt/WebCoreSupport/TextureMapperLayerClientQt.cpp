@@ -87,7 +87,7 @@ void TextureMapperLayerClientQt::syncLayers(Timer<TextureMapperLayerClientQt>*)
     if (m_rootGraphicsLayer)
         syncRootLayer();
 
-    bool didSync = m_frame->frame->view()->flushCompositingStateIncludingSubframes();
+    m_frame->frame->view()->flushCompositingStateIncludingSubframes();
 
     if (!m_rootGraphicsLayer)
         return;
@@ -95,10 +95,7 @@ void TextureMapperLayerClientQt::syncLayers(Timer<TextureMapperLayerClientQt>*)
     if (rootLayer()->descendantsOrSelfHaveRunningAnimations() && !m_syncTimer.isActive())
         m_syncTimer.startOneShot(1.0 / 70.0);
 
-    if (didSync) {
-        toGraphicsLayerTextureMapper(m_rootGraphicsLayer.get())->updateBackingStoreIncludingSubLayers();
-        m_frame->pageAdapter->client->repaintViewport();
-    }
+    m_frame->pageAdapter->client->repaintViewport();
 }
 
 void TextureMapperLayerClientQt::renderCompositedLayers(GraphicsContext* context, const IntRect& clip)
