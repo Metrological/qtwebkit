@@ -1993,7 +1993,7 @@ public:
     Call nearCall()
     {
         /* We need two words for relaxation. */
-        m_assembler.nop();
+        m_assembler.bkpt(); // break if we get here before linjing
         m_assembler.nop();
         m_assembler.jal();
         m_assembler.nop();

@@ -1055,6 +1055,7 @@ private:
         if ((*(insn + 2) & 0xfc000000) == 0x0c000000) { // jal
             if ((reinterpret_cast<intptr_t>(from) - 4) >> 28
                 == reinterpret_cast<intptr_t>(to) >> 28) {
+                *insn = 0x00000000; // replace break instruction with nop
                 *(insn + 2) = 0x0c000000 | ((reinterpret_cast<intptr_t>(to) >> 2) & 0x3ffffff);
                 return sizeof(MIPSWord);
             }
