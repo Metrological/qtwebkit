@@ -1057,7 +1057,7 @@ private:
                 == reinterpret_cast<intptr_t>(to) >> 28) {
                 *insn = 0x00000000; // replace break instruction with nop
                 *(insn + 2) = 0x0c000000 | ((reinterpret_cast<intptr_t>(to) >> 2) & 0x3ffffff);
-                return 2 * sizeof(MIPSWord);
+                return 3 * sizeof(MIPSWord);
             }
 
             /* lui $25, (to >> 16) & 0xffff */
