@@ -881,7 +881,7 @@ public:
         ++insn;
         // ori
         *insn = 0x34000000 | (rt << OP_SH_RS) | (rt << OP_SH_RT) | (imm & 0xffff);
-        cacheFlush(insn, 2 * sizeof(MIPSWord));
+        cacheFlush(instructionStart, 2 * sizeof(MIPSWord));
     }
 
     static bool canJumpWithJ(void* instructionStart, void* to)
