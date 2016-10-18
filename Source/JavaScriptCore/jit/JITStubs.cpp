@@ -589,7 +589,7 @@ SYMBOL_STRING(ctiVMThrowTrampoline) ":" "\n"
 ".cpload $31" "\n"
     "la    $25," SYMBOL_STRING(cti_vm_throw) "\n"
 ".set nomacro" "\n"
-    "bal " SYMBOL_STRING(cti_vm_throw) "\n"
+    "jalr  $25" "\n"
     "move  $4,$29" "\n"
 #else
     "jal " SYMBOL_STRING(cti_vm_throw) "\n"
