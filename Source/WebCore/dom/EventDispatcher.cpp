@@ -47,9 +47,13 @@ namespace WebCore {
 bool EventDispatcher::dispatchEvent(Node* node, PassRefPtr<EventDispatchMediator> mediator)
 {
     ASSERT(!NoEventDispatchAssertion::isEventDispatchForbidden());
-    if (!mediator->event())
+    Event *event = mediator->event();
+    if (!event)
         return true;
-    EventDispatcher dispatcher(node, mediator->event());
+    printf("About to dispatch event %p type: %s, timestamp:%lld, target: %p \n",
+            event, event->type().characters8(), event->timeStamp(),
+            event->target());
+    EventDispatcher dispatcher(node, event);
     return mediator->dispatchEvent(&dispatcher);
 }
 
