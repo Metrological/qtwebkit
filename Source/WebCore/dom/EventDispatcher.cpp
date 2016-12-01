@@ -41,6 +41,7 @@
 #include "ShadowRoot.h"
 #include "WindowEventContext.h"
 #include <wtf/RefPtr.h>
+#include <wtf/SysLog.h>
 
 namespace WebCore {
 
@@ -50,7 +51,7 @@ bool EventDispatcher::dispatchEvent(Node* node, PassRefPtr<EventDispatchMediator
     Event *event = mediator->event();
     if (!event)
         return true;
-    printf("About to dispatch event %p type: %s, timestamp:%lld, target: %p \n",
+    WTF::sysLogF("About to dispatch event %p type: %s, timestamp:%lld, target: %p \n",
             event, event->type().characters8(), event->timeStamp(),
             event->target());
     EventDispatcher dispatcher(node, event);
