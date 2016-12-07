@@ -321,7 +321,7 @@ SOURCES += \
     runtime/StructureRareData.cpp \
     runtime/SymbolTable.cpp \
     runtime/Watchdog.cpp \
-    runtime/WatchdogNone.cpp \
+    runtime/WatchdogQt.cpp \
     tools/CodeProfile.cpp \
     tools/CodeProfiling.cpp \
     yarr/YarrJIT.cpp \

@@ -28,6 +28,8 @@
 
 #if PLATFORM(MAC) || PLATFORM(IOS)
 #include <dispatch/dispatch.h>    
+#elif PLATFORM(QT)
+#include <QThread>
 #endif
 
 namespace JSC {
@@ -60,6 +62,10 @@ public:
     void* timerDidFireAddress() { return &m_timerDidFire; }
 
 private:
+#if PLATFORM(QT)
+    class WorkItemQt;
+    void fireTimer();
+#endif
     void arm();
     void disarm();
     void startCountdownIfNeeded();
@@ -96,6 +102,10 @@ private:
 #if PLATFORM(MAC) || PLATFORM(IOS)
     dispatch_queue_t m_queue;
     dispatch_source_t m_timer;
+#elif PLATFORM(QT)
+    QThread* m_workThread;
+    WorkItemQt* m_itemQt;
+    int m_timer;
 #endif
 
     friend class Watchdog::Scope;
